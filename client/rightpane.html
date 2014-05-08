@@ -1,0 +1,114 @@
+
+<template name='sample'>
+    <h2>{{this.name}}</h2>
+    <div class=''>
+        <button type="button" id='renamesample' class="btn btn-primary">Rename</button>
+        <button type="button" id='deletesample' class="btn btn-danger">Delete</button>
+    </div>
+    <div id='sample_warning'>
+        <!--{{#if sample_not_used}}-->
+        <!--This sample is not used in any experiment.-->
+        <!--{{/if}}-->
+    </div>
+    <section>
+        <h3>Type and classes</h3>
+        <div>Type: <a href='/type/{{sampletype._id}}'><i>{{sampletype.name}}</i></a></div>
+        <div>Classes: <ul class='flatlist'>{{#each classes}}<li><i>{{name}}</i></li>{{/each}}</ul></div>
+    </section>
+    <section>
+        <h3>Experiment made</h3>
+        <span>{{exp_made.name}}</span>
+    </section>
+    <section>
+        <h3>Experiment used</h3>
+    <span>
+        {{#each exps_used}}
+
+        <a href="/exp/{{_id}}">{{name}}</a>
+        {{/each}}
+    </span>
+    </section>
+    <section>
+        <h3>Note</h3>
+        <textarea name="" id="samplenote" cols="30" rows="10">{{note}}</textarea>
+        <button type="button" id='savesamplenote' class="btn btn-primary">Save</button>
+        <button type="button" id='cancelsamplenote' class="btn btn-default">Cancel</button>
+
+    </section>
+    <section>
+
+        <h3>Data</h3>
+        <ul>
+            {{#each data}}
+            {{path}}
+            {{/each}}
+
+        </ul>
+        <input type=file />
+    </section>
+
+</template>
+
+<template name='type'>
+    <h2>{{this.name}}</h2>
+    <div class=''>
+        <button type="button" id='renamesampletype' class="btn btn-primary">Rename</button>
+        <button type="button" id='deletesampletype' class="btn btn-danger">Delete</button>
+    </div>
+    <section>
+        <h3>Classes this sample type belongs to</h3>
+        <ul>
+            {{#each classes}}
+            <li>{{name}}</li>
+            {{/each}}
+        </ul>
+        <input type="text" id='nametypeclass'/>
+        <button type="button" id='addtypeclass' class="btn btn-default">Add</button>
+
+    </section>
+    <section>
+        <h3>Samples of this type</h3>
+        <table class='table'>
+            {{#each samples}}
+            <tr>
+                <td><a href='/sample/{{_id}}'>{{name}}</a></td>
+                <td></td>
+                <td></td>
+            </tr>
+            {{/each}}
+        </table>
+    </section>
+    <section>
+        <h3>Note</h3>
+        <textarea name="" id="samplenote" cols="30" rows="10">{{note}}</textarea>
+        <button type="button" id='savesamplenote' class="btn btn-primary">Save</button>
+        <button type="button" id='cancelsamplenote' class="btn btn-default">Cancel</button>
+
+    </section>
+    <section>
+
+        <h3>Data</h3>
+        <ul>
+            {{#each data}}
+            {{path}}
+            {{/each}}
+
+        </ul>
+        <input type=file />
+    </section>
+
+</template>
+
+<template name='date'>
+    Date: {{_id}}
+
+</template>
+
+<template name='empty_right'>
+    Choose from list
+</template>
+
+<template name='loading'>
+    Loading...
+</template>
+

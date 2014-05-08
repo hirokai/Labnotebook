@@ -1,0 +1,155 @@
+<template name='exp_list'>
+    {{#if loading}}
+      <div id="lists">Loading...</div>
+    {{else}}
+      <div id="lists">
+          <span>Sort by:
+      <select name="" id="sortby">
+          <option value="">Date</option>
+          <option value="">Name</option>
+          <option value="">Kind</option>
+      </select>
+          </span>
+        {{#each lists}}
+          <div class="list {{selected}}">
+            {{#if editing}}
+              <div class="edit">
+                <input class="list-name-input" id="list-name-input" type="text" value="{{name}}" />
+              </div>
+            {{else}}
+              <div class="display">
+                <a class="list-name {{name_class}}" href="#">
+                  {{name}}
+                </a>
+              </div>
+            {{/if}}
+          </div>
+        {{/each}}
+      </div>
+      <div id="createExp">
+        <input type="text" id="new-exp" placeholder="New experiment" />
+
+      </div>
+    <!-- Split button -->
+    <div class="btn-group">
+        <button type="button" id="newexpbtn" class="btn btn-default">New experiment</button>
+        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+            <span class="caret"></span>
+            <span class="sr-only">Toggle Dropdown</span>
+        </button>
+        <ul class="dropdown-menu" role="menu">
+            <li><a href="#">From template</a></li>
+            <li><a href="#">Copy previous exp</a></li>
+        </ul>
+    </div>
+    {{/if}}
+</template>
+
+<template name='sample_list'>
+    {{#if loading}}
+      <div id="lists">Loading...</div>
+    {{else}}
+
+    <div id="lists">
+        <span>Sort by:
+    <select name="" id="sortby">
+        <option value="">Date</option>
+        <option value="">Experiment</option>
+        <option value="">Name</option>
+        <option value="">Kind</option>
+    </select>
+        </span>
+        {{#each lists}}
+          <div class="list  {{selected}}">
+            {{#if editing}}
+              <div class="edit">
+                <input class="list-name-input" id="list-name-input" type="text" value="{{name}}" />
+              </div>
+            {{else}}
+              <div class="display">
+                <a class="list-name {{name_class}}" href="#">
+                  {{name}}
+                </a>
+              </div>
+            {{/if}}
+          </div>
+        {{/each}}
+      </div>
+    <div id="createSample">
+      <input type="text" id="new-sample" placeholder="New sample" />
+    </div>
+    {{/if}}
+</template>
+
+<template name='type_list'>
+    {{#if loading}}
+    <div id="lists">Loading...</div>
+    {{else}}
+
+    <div id="lists">
+        <span>Sort by:
+    <select name="" id="sortby">
+        <option value="">Date</option>
+        <option value="">Experiment</option>
+        <option value="">Name</option>
+        <option value="">Kind</option>
+    </select>
+        </span>
+        {{#each lists}}
+        <div class="list  {{selected}}">
+            {{#if editing}}
+            <div class="edit">
+                <input class="list-name-input" id="list-name-input" type="text" value="{{name}}" />
+            </div>
+            {{else}}
+            <div class="display">
+                <a class="list-name {{name_class}}" href="#">
+                    <i>{{name}}</i>
+                </a>
+            </div>
+            {{/if}}
+        </div>
+        {{/each}}
+    </div>
+    <div id="createSample">
+        <input type="text" id="new-sample-type" placeholder="New sample type" />
+    </div>
+    {{/if}}
+</template>
+
+<template name='date_list'>
+    {{#if loading}}
+      <div id="lists">Loading...</div>
+    {{else}}
+      <div id="lists">
+        {{#each lists}}
+          <div class="list {{selected}}">
+            {{#if editing}}
+              <div class="edit">
+                <input class="list-name-input" id="list-name-input" type="text" value="{{name}}" />
+              </div>
+            {{else}}
+              <div class="display">
+                <a class="list-name {{name_class}}" href="#">
+                  {{name}}
+                </a>
+              </div>
+            {{/if}}
+          </div>
+        {{/each}}
+      </div>
+    <div id="createDate">
+      <input type="text" id="new-date" placeholder="New date" />
+    </div>
+    {{/if}}
+</template>
+
+<template name='op_list'>
+
+</template>
+
+
+<template name='notfound'>
+    Not found.
+
+</template>

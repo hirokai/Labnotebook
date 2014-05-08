@@ -1,0 +1,597 @@
+<template name="exp">
+    <div id='expinfo_header'>
+
+    {{#if editing_title}}
+    <h2>
+        <input value='{{exp_name}}' id='exptitle_input'/>
+
+    </h2>{{else}}
+    <h2 id='exptitle'>{{exp_name}}</h2>
+    {{/if}}
+
+    <div id='date_exp'>
+        Date: <input type="text" id="exp_datepicker" value='{{formatDate date}}'/>
+        <button type="button" id='saveexp' class="btn btn-primary">Save</button>
+        <button type="button" id='deleteexp' class="btn btn-danger">Delete</button>
+
+    </div>
+    </div>
+
+    <div class='row'>
+
+    {{> d3graph}}
+    <div id='sampleandprotocol'>
+        <div class="btn-group" id='info_shown' data-toggle="buttons">
+            <label class="btn btn-default  {{#if info_active 'sample'}}active{{/if}}"  id='sample_shown'>
+                <input type="checkbox"> Samples
+            </label>
+            <label class="btn btn-default {{#if info_active 'step'}}active{{/if}}" id='step_shown'>
+                <input type="checkbox"> Steps
+            </label>
+            <label class="btn btn-default {{#if info_active 'sheet'}}active{{/if}}" id='sheet_shown'>
+                <input type="checkbox"> Sheet
+            </label>
+        </div>
+        <section id='sec-sample' class="{{#unless info_active 'sample'}}hidden{{/unless}}">
+            <h3>Samples</h3>
+            <table class='table' id='sampleinfotable'>
+                <tr>
+                    <th class='name'>Name</th>
+                    <th class='sampletype'>Type</th>
+                    <th class='sampleedit'>Delete</th>
+                    {{#each runs}}
+                    <th align='center'>
+                        {{name}}
+                        <button class='deleterunbtn btn btn-xs btn-default' type="button">
+                            <span class="glyphicon glyphicon-remove"></span>
+                        </button>                    </th>
+                    {{/each}}
+                    <th>
+                        <button id='addrunbtn' class="btn btn-xs btn-default" type="button">
+                            <span class="glyphicon glyphicon-plus"></span>
+                        </button>
+                    </th>
+                </tr>
+                {{#each protocol_samples}}
+                <tr class='sample {{sample_selected}}'>
+                    <td class='name'>{{#if editing_sample_name}}
+                        <input class='input-xs' id='samplename_edit_input' type="text" value='{{name}}'/>
+                        {{else}}
+                        <span class='sample_name link'>
+                            {{name}}
+                        </span>
+                        {{/if}}</td>
+                    <td class='sampletype'>
+                    {{#if editing_sample_type}}
+                        <select name="" id="sampletype_select">
+                            {{#each all_sampletypes}}
+                            <option value='{{name}}'>{{name}}</option>
+                            {{/each}}
+                        </select>
+                        {{else}}
+                        <a href='#' class='sampletype'><i>{{sampletype}}</i></a>
+                        {{/if}}
+                    </td>
+                    <td class='sampleedit' align='center'>
+                        <!--<a href='#' class='sampleedit' style='margin-right: 10px;'>-->
+                            <!--<span class='glyphicon glyphicon-pencil'></span>-->
+                        <!--</a>-->
+                        <a href='#' class='sampledelete'>
+                            <span class='glyphicon glyphicon-remove'></span>
+                    </a>
+                    </td>
+                    {{#each ./runs}}
+                        <td class='sample_run_cell' align='center' data-runidx='{{./index}}' data-sample='{{../_id}}' data-samplerun={{_id}}>
+                            {{#if _id}}
+                            <!--<a href="/sample/{{_id}}">{{name}}</a>-->
+                            <span class='link sampleinrun'>{{name}}</span>
+                            {{else}}
+                            <button class='makenewsamplebtn btn btn-sm btn-primary {{#if assignsample_possible ../_id}}twobtns{{/if}}' alt='Add reference' type="button" data-runidx='{{./index}}'  data-sample='{{../_id}}'>
+                              <span class="glyphicon glyphicon-plus"></span>
+                            </button>
+                            {{#if assignsample_possible ../_id}}
+                            <button class='assignsamplebtn btn btn-xs btn-default twobtns' type="button" data-runidx='{{./index}}'  data-sample='{{../_id}}'>
+                              <span class="glyphicon glyphicon-import"></span>
+                                                        </button>
+                            {{/if}}
+
+                            {{/if}}
+                        </td>
+                    {{/each}}
+
+                </tr>
+                {{/each}}
+            </table>
+        </section>
+        <section id='sec-protocol' class="{{#unless info_active 'step'}}hidden{{/unless}}">
+        <h3>Protocol</h3>
+            <div class='explain'><ul>
+                <li>Click operation name to change settings</li>
+                <li>Click button to enter time point. Alt-click to remove it.</li>
+            </ul>
+                </div>
+        <table class='table' id='protocoltable'>
+            <thead>
+            <tr>
+                <th>Operation</th>
+                <th>Input</th>
+                <th>Output</th>
+                <th>Params</th>
+                <th>Edit</th>
+                {{#each runs}}
+                <th>{{name}}</th>
+                {{/each}}
+            </tr>
+
+            </thead>
+            <tbody>
+            {{#each protocol_operations}}
+            <tr class='step {{op_selected}}'>
+                <td class='step_table'>
+                    <span class='step_table_name link'>
+                    {{index}}:&nbsp;
+                    {{this.name}}
+                    </span>
+                </td>
+                <td><ul class='flatlist'>{{#each step_input}}
+                    <li><span class='step_sample_list'>{{name}}</span></li>
+                    {{/each}}
+                </ul>
+                </td>
+                <td><ul class='flatlist'>{{#each step_output}}
+                    <li><span class='step_sample_list'>{{name}}</span></li>
+                    {{/each}}
+                </ul>
+                </td>
+                <td class='params'>
+                    <ul class='flatlist'>
+                        {{#each params}}
+                        <li>
+                            {{name}}
+                        </li>
+                        {{/each}}
+
+                    </ul>
+                </td>
+                <td class='step_table step_table_edit'>
+                        <span class='glyphicon glyphicon-remove link stepdelete'></span>
+                </td>
+                {{#each runs_time}}
+                <td class='stepcell'>
+                    {{#if timestamp}}
+                    <span class='timepoint link'  data-runidx='{{./index}}' data-operation='{{../_id}}'>
+                                              {{formatTime timestamp}}
+
+                    </span>                    {{else}}
+                    <button class="entertime btn btn-xs btn-primary" type="button" data-operation='{{../_id}}' data-runidx='{{index}}'>
+                        <span class="glyphicon glyphicon-ok"></span>
+                    </button>
+                     {{/if}}
+                </td>
+                {{/each}}
+            </tr>
+            {{/each}}
+
+            </tbody>
+        </table>
+        <!--<a href="#" id='addsteplink'><span id='addstepexpand'>{{#if addstephidden}}+{{else}}-{{/if}}</span>&nbsp;Add a step</a>-->
+        <!--<div id='definenewstepdiv' style='{{#if addstephidden}}display:none;{{/if}}'>-->
+            <!--{{> define_step}}-->
+        <!--</div>-->
+        </section>
+        <section id='sec-run' class="{{#unless info_active 'sheet'}}hidden{{/unless}}">
+            <h3>Sheet</h3>
+            <div id='spreadsheet'></div>
+        </section>
+    </div>
+    </div>
+
+    <div class="modal fade" id="sample_chooser" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h4 class="modal-title" id="myModalLabel">Choose previous sample</h4>
+          </div>
+          <div class="modal-body">
+                <table class='table' id='sample_chooser_table'>
+                    <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Date made</th>
+                    </tr>
+                    </thead>
+                    <tbody id='sample_chooser_samples'>
+
+                    </tbody>
+                </table>
+
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary">Save changes</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {{> sample_info}}
+    {{> op_info}}
+
+
+</template>
+
+
+<template name='sample_info'>
+
+
+    <div class="modal fade" id="sample_info" tabindex="-1" role="dialog" aria-labelledby="sampleInfoLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="sampleInfoLabel">Sample info</h4>
+                </div>
+                <div class="modal-body">
+                    <table class='table' id='sample_info_table'>
+                        <tbody>
+                        {{#with sample}}
+                        <tr>
+                            <td>
+                                <a class='btn btn-default twobtns' type="button" id='seesampledetailbtn' data-sample='{{_id}}'>See Detail</a>
+                            </td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>Name</td>
+                            <td><input id='sampleinfo_name' type="text" value='{{name}}' tabindex='1'/></td>
+                        </tr>
+                        <tr>
+                            <td>Sample type</td>
+                            <td><a href='#' id='sample_info_type' data-sampletype='{{type.name}}'>{{type.name}}</a></td>
+                        </tr>
+                        <tr>
+                            <td>Sample created</td>
+                            <td>{{time_made}}</td>
+                        </tr>
+                        <tr>
+                            <td>Recorded</td>
+                            <td>{{time_recorded}}</td>
+                        </tr>
+                        <tr>
+                            <td>Note</td>
+                            <td><textarea name="" id="sample_note" cols="20" rows="10" tabindex='2'>{{note}}</textarea></td>
+                        </tr>
+                        {{/with}}
+                        </tbody>
+                    </table>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id='close_sample_info' class="btn btn-default" data-dismiss="modal" tabindex='4'>Close</button>
+                    <button type="button" id='save_sample_info' class="btn btn-primary"  tabindex='3'>Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+            <div class="modal fade" id="sample_info" tabindex="-1" role="dialog" aria-labelledby="sampleInfoLabel" aria-hidden="true">
+                 <div class="modal-dialog">
+                   <div class="modal-content">
+                     <div class="modal-header">
+                       <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                       <h4 class="modal-title" id="sampleInfoLabel">Sample info</h4>
+                     </div>
+                     <div class="modal-body">
+                           <table class='table' id='sample_info_table'>
+                               <tbody>
+    {{#with sample}}
+    <tr>
+        <td>
+            <a class='btn btn-default twobtns' type="button" id='seesampledetailbtn' data-sample='{{_id}}'>See Detail</a>
+        </td>
+        <td></td>
+    </tr>
+        <tr>
+            <td>Name</td>
+            <td><input id='sampleinfo_name' type="text" value='{{name}}' tabindex='1'/></td>
+        </tr>
+    <tr>
+        <td>Sample type</td>
+        <td><a href='#' id='sample_info_type' data-sampletype='{{type.name}}'>{{type.name}}</a></td>
+    </tr>
+        <tr>
+            <td>Sample created</td>
+            <td>{{time_made}}</td>
+        </tr>
+        <tr>
+                    <td>Recorded</td>
+                    <td>{{time_recorded}}</td>
+                </tr>
+    <tr>
+        <td>Note</td>
+        <td><textarea name="" id="sample_note" cols="20" rows="10" tabindex='2'>{{note}}</textarea></td>
+    </tr>
+    {{/with}}
+                               </tbody>
+                           </table>
+
+                     </div>
+                     <div class="modal-footer">
+                       <button type="button" id='close_sample_info' class="btn btn-default" data-dismiss="modal" tabindex='4'>Close</button>
+                       <button type="button" id='save_sample_info' class="btn btn-primary"  tabindex='3'>Save changes</button>
+                     </div>
+                   </div>
+                 </div>
+               </div>
+
+            <div class="modal fade" id="protocol_sample_info" tabindex="-1" role="dialog" aria-labelledby="protocolsampleInfoLabel" aria-hidden="true">
+                            <div class="modal-dialog">
+                              <div class="modal-content">
+                                <div class="modal-header">
+                                  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                                  <h4 class="modal-title" id="protocolsampleInfoLabel">Sample info</h4>
+                                </div>
+                                <div class="modal-body">
+                                      <table class='table' id='protocol_sample_info_table'>
+                                          <tbody>
+               {{#with protocol_sample}}
+
+                   <tr>
+                       <td>Name</td>
+                       <td><input id='psampleinfo_name' type="text" value='{{name}}' tabindex='1'/></td>
+                   </tr>
+               <tr>
+                   <td>Sample type</td>
+                   <td>
+                       <select id='psample_info_type'>
+                       {{#each alltypes}}
+                           <option value="{{_id}}" {{type_selected ../sampletype_id}}>{{name}}</option>
+                       {{/each}}
+                       </select >
+                       </td>
+                       <!--<a href='#' data-sampletype='{{type.name}}'>{{type.name}}</a></td>-->
+               </tr>
+                   <tr>
+                       <td>Sample created</td>
+                       <td>{{time_made}}</td>
+                   </tr>
+                   <tr>
+                               <td>Recorded</td>
+                               <td>{{time_recorded}}</td>
+                           </tr>
+               <tr>
+                   <td>Note</td>
+                   <td><textarea name="" id="psample_note" cols="20" rows="10" tabindex='2'>{{note}}</textarea></td>
+               </tr>
+               {{/with}}
+                                          </tbody>
+                                      </table>
+
+                                </div>
+                                <div class="modal-footer">
+                                  <button type="button" id='close_psample_info' class="btn btn-default" data-dismiss="modal" tabindex='4'>Close</button>
+                                  <button type="button" id='save_psample_info' class="btn btn-primary"  tabindex='3'>Save changes</button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+        </template>
+
+<template name='op_info'>
+
+    <div class="modal fade" id="op_info" tabindex="-1" role="dialog" aria-labelledby="opInfoLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="opInfoLabel">Operation info</h4>
+                </div>
+                <div class="modal-body">
+                    <table class='table' id='op_info_table'>
+                        <tbody>
+                        {{#with operation}}
+
+                        <tr>
+                            <td>Name</td>
+                            <td><input id='opinfo_name' type="text" value='{{name}}' tabindex='1'/></td>
+                        </tr>
+
+                        <tr>
+                            <td>Input</td>
+                            <td>
+                                <ul>
+                                    {{#each input}}
+                                    {{#with sample .}}
+
+                                    <li>{{name}}</li>
+                                    {{/with}}
+                                    {{/each}}
+                                </ul>
+
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Output</td>
+                            <td>
+                                <ul>
+                                    {{#each output}}
+                                    {{#with sample .}}
+
+                                    <li>{{name}}</li>
+                                    {{/with}}
+                                    {{/each}}
+                                </ul>
+
+                            </td>
+                        </tr>                        <tr>
+                            <td>Params</td>
+
+
+                            <td>
+                                <table id='paramtable' class='table'>
+                                    <thead>
+                                    <tr>
+                                        <td>Rows with an empty name will be removed.</td>
+
+                                    </tr>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Type/Unit</th>
+                                    </tr>
+
+                                    </thead>
+                                    <tbody>
+
+                                    {{#each params}}
+                                    <tr>
+                                        <td class='paramname_op'>
+                                            <input type="text" value='{{name}}' class='paramname'  data-index='{{index}}' />
+                                        </td>
+                                        <td>
+                                            <select name=""  class='paramtype' data-index='{{index}}'>
+                                                {{#each types}}
+                                                <option value="{{id}}" {{match_paramtype ../type ../unit}}>{{name}}</option>
+
+                                                {{/each}}
+                                            </select>
+                                        </td>
+
+                                    </tr>
+                                    {{/each}}
+                                    <tr>
+                                        <td>                            <button id='makenewparambtn' class='btn btn-sm btn-default' type="button" data-runidx='{{./index}}'  data-sample='{{../_id}}'>
+                                            <span class="glyphicon glyphicon-plus"></span>
+                                        </button></td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+
+                            </td>                        </tr>
+                        <tr>
+                            <td>Note</td>
+                            <td><textarea name="" id="op_note" cols="20" rows="10" tabindex='2'>{{note}}</textarea></td>
+                        </tr>
+                        {{/with}}
+                        </tbody>
+                    </table>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id='close_op_info' class="btn btn-default" data-dismiss="modal" tabindex='4'>Close</button>
+                    <button type="button" id='save_op_info' class="btn btn-primary"  tabindex='3'>Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</template>
+
+<template name='d3graph'>
+    <div class="graphWrapper">
+
+        <div id='graph_buttons'></div>
+        <div>
+            <span class='btnlabel'>For sample:</span>
+            <button id='newsamplebtn'  class="btn btn-xs btn-default" type="button">New sample</button>
+            <button id='deletesamplebtn'  class="btn btn-xs btn-default" {{onenode_edit_disabled}}  type="button">Delete sample</button>
+        </div>
+        <div>
+
+            <span class='btnlabel'>For sample:</span>
+            <button id='addprevstepbtn'  class="btn btn-xs btn-default" {{onenode_edit_disabled}} type="button">Add prev step</button>
+            <button id='addnextstepbtn'  class="btn btn-xs btn-default" {{onenode_edit_disabled}} type="button">Add next step</button>
+
+            <button id='insertnodebeforebtn'  class="btn btn-xs btn-default" {{onenode_edit_disabled}} type="button">Insert before</button>
+        </div>
+        <div>
+            <span class='btnlabel'>For two samples:</span>
+            <button id='connectnodes' class="btn btn-xs btn-default" {{twonodes_edit_disabled}} type="button">Connect nodes</button>
+            <button id='insertnode'  class="btn btn-xs btn-default" {{twonodes_edit_disabled}} type="button">Insert</button>
+        </div>
+        <div>
+            <span class='btnlabel'>For operation:</span>
+            <button id='newinputbtn'  class="btn btn-xs btn-default"  {{oneedge_edit_disabled}} type="button">Add new input</button>
+            <button id='newoutputbtn'  class="btn btn-xs btn-default"  {{oneedge_edit_disabled}} type="button">Add new output</button>
+      </div>
+        <div>
+            <button id='deselect' class="btn btn-xs btn-default" type="button">Select none</button>
+            <button id='resetzoom' class="btn btn-xs btn-default" type="button">Reset zoom</button>
+
+        </div>
+        <svg>
+        </svg>
+    </div>
+</template>
+
+
+<!--<template name='define_step'>-->
+    <!--<div class='row' id='addstepdiv'>-->
+        <!--<div class="col-lg-6">-->
+            <!--<div class="input-group" id='addstep'>-->
+                <!--<div>-->
+                    <!--<label for="stepinput">Input sample types</label>-->
+                    <!--<select id='stepinput' class="form-control">-->
+                        <!--<option value="null">-- Select input --</option>-->
+                        <!--{{#each all_samples}}-->
+                        <!--<option value="{{_id}}">{{this.name}}</option>-->
+                        <!--{{/each}}-->
+                    <!--</select>-->
+                    <!--<ul id='insamplelist' class='flatlist'>-->
+                        <!--{{#each input_samples}}-->
+                        <!--<li data-index='{{index}}'>{{name}} <a href='#' class='delete_in_sample'>x</a></li>-->
+                        <!--{{/each}}-->
+                    <!--</ul>-->
+                <!--</div>-->
+                <!--<div>-->
+                    <!--<label for="stepoutput">Output sample types</label>-->
+                    <!--<select id='stepoutput' class="form-control">-->
+                        <!--<option value="null">-- Select output --</option>-->
+                        <!--{{#each all_samples}}-->
+                        <!--<option value="{{_id}}">{{this.name}}</option>-->
+                        <!--{{/each}}-->
+                    <!--</select>-->
+                    <!--<ul id='outsamplelist' class='flatlist'>-->
+                        <!--{{#each output_samples}}-->
+                        <!--<li data-index='{{index}}'>{{name}} <a href='#' class='delete_out_sample'>x</a></li>-->
+                        <!--{{/each}}-->
+                    <!--</ul>-->
+
+                <!--</div>-->
+                <!--<div>-->
+                    <!--<label for="stepname">Step name</label>-->
+                    <!--<input id='stepname' type="text" class="form-control" placeholder='e.g. Mix two protein solutions'>-->
+                <!--</div>-->
+                <!--<div class='inline'>-->
+                    <!--<label for="paramtype">Parameters</label>-->
+                    <!--<select name="" id="paramtype">-->
+                        <!--<option value="text">Text</option>-->
+                        <!--<option value="number">Number</option>-->
+                        <!--<option value="volume">Volume</option>-->
+                        <!--<option value="mass">Mass</option>-->
+                        <!--<option value="time">Time</option>-->
+                    <!--</select>-->
+                    <!--<select name="" id="paramunit">-->
+                        <!--{{#each units}}-->
+                        <!--<option value="{{value}}" {{selected}}>{{{name}}}</option>-->
+                        <!--{{/each}}-->
+                    <!--</select>-->
+                    <!--<input id='paramname' type="text" class="form-control" placeholder='Enter param name'>-->
+                    <!--<div>-->
+                        <!--<button id='addparambtn' class="btn btn-default" type="button">Add param</button>-->
+                    <!--</div>-->
+                <!--</div>-->
+                <!--<ul id='paramlist'>-->
+                    <!--{{#each params}}-->
+                    <!--<li data-index='{{index}}'><a href='#' class='delete_param'>x</a>&nbsp;&nbsp;{{name}}&nbsp;[{{unit}}]</li>-->
+                    <!--{{/each}}-->
+                <!--</ul>-->
+                <!--<div>-->
+                    <!--<button id='addstepbtn' class="btn btn-primary" type="button" style='float:right'>Add</button>-->
+                    <!--<button id='cancelstepbtn' class="btn btn-default" type="button" style='float:right'>Cancel</button>-->
+                <!--</div>-->
+            <!--</div>-->
+        <!--</div>&lt;!&ndash; /input-group &ndash;&gt;-->
+    <!--</div>&lt;!&ndash; /.col-lg-6 &ndash;&gt;-->
+<!--</template>-->
