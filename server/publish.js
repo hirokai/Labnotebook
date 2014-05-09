@@ -28,11 +28,7 @@ var denyObj = {
 
 Experiments = new Meteor.Collection("experiments");
 Meteor.publish('experiments', function() {
-    if(this.userId){
-	    return Experiments.find({owner: this.userId});
-    }else {
-        return Experiments.find({owner: 'sandbox'});
-    }
+    return Experiments.find({owner: this.userId || 'sandbox'});
 });
 Experiments.allow(allowObj);
 Experiments.deny(denyObj);
@@ -40,14 +36,19 @@ Experiments.deny(denyObj);
 ExpRuns  = new Meteor.Collection("expruns");
 ExpRuns.allow(allowObj);
 ExpRuns.deny(denyObj);
+Meteor.publish('expruns', function(eid) {
+	var obj = {};
+	obj.owner = this.userId || 'sandbox';
+	if(eid){
+		obj.exp = eid;
+	}
+    return ExpRuns.find(obj,{sort: {timestamp: 1}});
+});
+
 // Presets -- {name: String}
 Presets = new Meteor.Collection("presets");
 Meteor.publish('presets', function() {
-    if(this.userId){
-    	return Presets.find({owner: this.userId});
-    }else{
-        return Presets.find({owner: 'sandbox'});
-    }
+	return Presets.find({owner: this.userId || 'sandbox'});
 });
 Presets.allow(allowObj);
 Presets.deny(denyObj);

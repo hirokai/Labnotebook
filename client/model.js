@@ -83,12 +83,21 @@ guid = function() {
 };
 
 getCurrentExp = function(){
-    var eid = Session.get('current_view_id');
+    var eid = getCurrentExpId();
     return eid ? Experiments.findOne(eid) : null;
 };
 
 getCurrentExpId = function(){
-    return Session.get('current_view_id');
+    return Session.equals('list_type', 'exp') ? Session.get('current_view_id') : null;
+};
+
+getCurrentSample = function(){
+    var id = getCurrentExpId();
+    return id ? Samples.findOne(id) : null;
+};
+
+getCurrentSampleId = function(){
+    return Session.equals('list_type', 'sample') ? Session.get('current_view_id') : null;
 };
 
 
@@ -96,34 +105,29 @@ findSamplePosInList = function(sid){
     return 0;
 };
 
-assignSampleInRun = function(eid,runidx,sample,newsample){
-    var key = 'runs.'+runidx+'.samples.'+sample;
-    var obj = {};
-    obj[key] = newsample;
-    Experiments.update(eid,{$set: obj});
+assignSampleInRun = function(runid,sample,newsample){
+    console.log(runid,ExpRuns.findOne());
+    var samples = ExpRuns.findOne(runid,{samples: 1}).samples;
+    samples[sample] = newsample;
+    ExpRuns.update(runid,{$set: {samples: samples}, $push: {samplelist: newsample}});
 };
 
-removeSampleInRun = function(eid,runidx,sample,old_sid){
-    var key = 'runs.'+runidx+'.samples.'+sample;
+removeSampleInRun = function(runid,sample,old_sid){
     var obj = {};
+    var key = 'samples.'+sample;
     obj[key] = null;
-    Experiments.update(eid,{$set: obj});
-    console.log(old_sid);
-    if(sampleNotUsedAtAll(old_sid)){
-        Samples.remove(old_sid);
-    }
-};
+    console.log(runid,obj,ExpRuns.findOne(runid));
+    ExpRuns.update(runid,{$set: obj, $pull: {samplelist: old_sid}});
+}
 
 sampleNotUsedAtAll = function(sid){
-    var runcount = 0;
-//    var es = Experiments.find({},{'runs.$.samples': 1}).fetch();
-//    console.log(es);
-    return Experiments.find({'protocol.samples': sid}).count() == 0
-      && runcount == 0;
+    return ExpRuns.find({samplelist: sid}).count() == 0;
 };
 
 getRunSamplesOf = function(exp,sid){
-    var res = _.compact(_.map(exp.runs,function(run){
+    var eid = exp._id;
+    var runs = ExpRuns.find({exp: eid}).fetch();
+    var res = _.compact(_.map(runs,function(run){
         var s = run.samples[sid];
         return s;
     }));
@@ -132,52 +136,60 @@ getRunSamplesOf = function(exp,sid){
 };
 
 getRunOpsOf = function(exp,opid){
-    return _.compact(_.map(exp.runs,function(run){
-        var s = run.operations[opid];
+    var eid = exp._id;
+    var runs = ExpRuns.find({exp: eid}).fetch();
+    return _.compact(_.map(runs,function(run){
+        var s = run.ops[opid];
         return s;
     }));
-}
+};
 
-getOpParam = function(exp,opid,runidx,name){
+
+getOpParam = function(runid,opid,name){
+//    console.log(runid,opid,name);
     try{
-    var run = exp.runs[runidx];
-    var op = run ? run.operations[opid] : null;
+        var run = ExpRuns.findOne(runid);
+    var op = run ? run.ops[opid] : null;
     var params = op ? op.params : null;
     var p = _.findWhere(params,{name: name});
     return p ? p.value : null;
     }catch(e){
+        console.log(e);
         return null;
     }
 }
 
-getOpTimestamp = function(exp,runidx,opid) {
-    var run = exp.runs[runidx];
-    var op = run ? run.operations[opid] : null
+getOpTimestamp = function(runid,opid) {
+    var run = ExpRuns.findOne(runid);
+    var op = run ? run.ops[opid] : null
     return op ? op.timestamp : null;
 };
 
-setOpTimestamp = function(exp,runidx,opid,timestamp) {
-    console.log(exp,runidx,opid,timestamp);
-    if(runidx!=null && runidx!=undefined && opid){
-        var op = exp.runs[runidx].operations[opid];
+setOpTimestamp = function(runid,opid,timestamp) {
+    console.log(runid,opid,timestamp);
+    if(runid && opid){
+        var run = ExpRuns.findOne(runid);
+        var op = run.ops[opid];
+        var k,v;
         if(op){
-            op.timestamp = timestamp;
+            k = 'ops.'+opid+'.timestamp';
+            v = timestamp;
         }else{
-            exp.runs[runidx].operations[opid] = {};
-            exp.runs[runidx].operations[opid].timestamp = timestamp;
+            k = 'ops.'+opid;
+            v = {timestamp: timestamp};
         }
-
-        Experiments.update(exp._id,{$set: {runs: exp.runs}});
+        var obj = {};
+        obj[k] = v;
+        ExpRuns.update(runid,{$set: obj});
     }
 };
 
-updateDBAccordingToCell = function(eid,opid,runidx,paramname,newval){
-    console.log(eid,opid,runidx,paramname,newval    );
+updateDBAccordingToCell = function(runid,opid,paramname,newval){
     if(!paramname || paramname == ''){
         return;
     }
-    var exp = Experiments.findOne(eid);
-    var op = exp.runs[runidx].operations[opid];
+    var op = ExpRuns.findOne(runid).ops[opid];
+    var k,v;
     if(op){
         var params = op.params;
         var newparams = _.map(params,function(param){
@@ -188,29 +200,39 @@ updateDBAccordingToCell = function(eid,opid,runidx,paramname,newval){
                return param;
            }
         });
-        exp.runs[runidx].operations[opid].params = newparams;
+        op.params = newparams;
+        k = 'ops.'+opid+'.params';
+        v = newparams;
     }else{
-        exp.runs[runidx].operations[opid] = {};
-        exp.runs[runidx].operations[opid].params = {name: paramname, value: newval};
+        op = {};
+        op.params = {name: paramname, value: newval};
+        k = 'ops.'+opid;
+        v = op;
     }
-    Experiments.update(eid,{$set: {runs: exp.runs}});
+    var obj = {};
+    obj[k] = v;
+    console.log(obj);
+    ExpRuns.update(runid,{$set: obj});
 };
 
 addNewRunToExp = function(eid){
     var e = Experiments.findOne(eid);
-    var run = {};
-    run.name = 'Run '+ (e.runs.length+1);
-    run.operations = {};
+    var ops = {};
     _.each(e.protocol.operations,function(opid){
         var op = Operations.findOne(opid);
         if(op){
             var ps = _.map(op.params,function(p){return {name: p.name, value: null}});
             var ins = repeat(op.input.length);
             var outs = repeat(op.output.length);
-            run.operations[opid] = {params:ps, input: ins, output: outs, timestamp: null};
+            ops[opid] = {params:ps, input: ins, output: outs, timestamp: null};
         }
     });
-    run.samples = {};
-    console.log(run);
-    Experiments.update(eid,{$push: {runs: run}});
+    return ExpRuns.insert({owner: Meteor.userId() || 'sandbox',
+        exp: eid, name: 'Run', date: new Date().getTime(),
+        samples: {},
+        ops: ops});
 };
+
+deleteRun = function(runid){
+    ExpRuns.remove(runid);
+}

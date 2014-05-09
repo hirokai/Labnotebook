@@ -70,6 +70,19 @@ getEdges = function(eid){
     return edges;
 };
 
+
+Template.d3graph.twonodes_edit_disabled = function(){
+    return (Session.get('selected_nodes').length == 2) ? '' : 'disabled';
+};
+
+Template.d3graph.onenode_edit_disabled = function(){
+    return (Session.get('selected_nodes').length == 1) ? '' : 'disabled';
+};
+
+Template.d3graph.oneedge_edit_disabled = function(){
+    return (Session.get('selected_edges').length == 1) ? '' : 'disabled';
+};
+
 function genGraphvizGraph(){
     var eid = Session.get('current_view_id');
     var samples = findProtocolSamplesInExp(eid);

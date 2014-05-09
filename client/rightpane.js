@@ -37,11 +37,13 @@ Template.sample.events({
       });
     },
     'click #deletesample': function(){
+        if(sampleNotUsedAtAll(getCurrentSampleId())){
         Samples.remove(this._id);
         var pos = findSamplePosInList(this._id);
         console.log(Samples.find({},{skip: Math.max(0,pos - 1), limit: 1}).fetch());
         var s = Samples.find({},{skip: Math.max(0,pos - 1), limit: 1})[0]._id;
         Router.go('sample',{_id: s});
+        }
     },
     'click #renamesample': function(){
         var name = Samples.findOne(this._id).name;
@@ -55,14 +57,53 @@ Template.sample.events({
     }
 });
 
+Template.sample.formatDate = function(d){
+    return formatDate(d);
+}
+
 Template.sample.sample_not_used = function(){
     return sampleNotUsedAtAll(this._id);
 };
+
+Template.sample.exps_used = function(){
+    var runs = ExpRuns.find({samplelist: this._id}).fetch();
+    var eids = _.uniq(_.map(runs,function(run){
+        return run.exp;
+    }));
+    return Experiments.find({_id: {$in: eids}});
+}
 
 Template.sample.rendered = function(){
 //    var editor = new EpicEditor().load();
 
 };
+
+Template.sample.editing_title = function(){
+    return  Session.get('editing_sample_title');
+};
+
+
+Template.sample.events({
+    'dblclick #sampletitle': function(evt,tmpl){
+        Session.set('editing_sample_title',true);
+        Deps.flush(); // force DOM redraw, so we can focus the edit field
+        activateInput(tmpl.find("#sampletitle_input"));
+    }
+})
+
+Template.sample.events(okCancelEvents(
+    '#sampletitle_input',
+    {
+        ok: function (value) {
+            var sid = getCurrentSampleId()
+            Samples.update(sid,{$set: {name: value}});
+            Session.set('editing_sample_title',false);
+        },
+        cancel: function () {
+            Session.set('editing_sample_title',false);
+        }
+    }));
+
 
 Template.type.events({
 //    'click #savesamplenote': function(evt,tmpl){

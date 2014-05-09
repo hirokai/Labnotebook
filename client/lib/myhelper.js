@@ -51,11 +51,16 @@ formatDateTime = function(v){
     }
 };
 
-formatDate = function(date){
+formatDate = function(d){
+    if(d){
+    var date = new Date(d);
     var m = (date.getMonth() + 1);
     var d = date.getDate();
     var y = date.getFullYear();
     return (m < 10 ? '0'+m : ''+m)+'/'+(d < 10 ? '0'+d : ''+d)+"/"+ y;
+    }else{
+        return null;
+    }
 };
 
 formatTime = function(v){
@@ -80,10 +85,15 @@ sortById = function(arr,ids){
     _.each(ids,function(id){
         res.push(_.findWhere(arr,{_id: id}));
     });
-    console.log(res);
     return _.compact(res);
 };
 
 repeat = function(n,item){
     return _.map(_.range(0,n),function(){return item;});
+}
+
+getButton = function(el){
+    var e = $(el);
+    var ee = e.prop('tagName') == 'BUTTON' ? e : e.parent('button');
+    return ee;
 }

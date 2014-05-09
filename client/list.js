@@ -3,12 +3,12 @@ Template.lists.group_selected = function(type) {
 };
 
 Template.exp_list.lists = function(){
-    console.log(experimentsHandle.ready());
+//    console.log(experimentsHandle.ready());
     if(!experimentsHandle.ready()){
         return [{name: 'hoge'}];
     }else{
         var exps = Experiments.find({},{sort: {date: -1}}).fetch();
-        console.log(exps);
+//        console.log(exps);
         return exps;
     }
     return Experiments.find();

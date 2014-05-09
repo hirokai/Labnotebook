@@ -42,7 +42,7 @@
                     {{#each runs}}
                     <th align='center'>
                         {{name}}
-                        <button class='deleterunbtn btn btn-xs btn-default' type="button">
+                        <button class='deleterunbtn btn btn-xs btn-default' type="button" data-runid='{{_id}}'>
                             <span class="glyphicon glyphicon-remove"></span>
                         </button>                    </th>
                     {{/each}}
@@ -80,23 +80,26 @@
                             <span class='glyphicon glyphicon-remove'></span>
                     </a>
                     </td>
-                    {{#each ./runs}}
-                        <td class='sample_run_cell' align='center' data-runidx='{{./index}}' data-sample='{{../_id}}' data-samplerun={{_id}}>
-                            {{#if _id}}
-                            <!--<a href="/sample/{{_id}}">{{name}}</a>-->
-                            <span class='link sampleinrun'>{{name}}</span>
+                    {{#each runs}}
+                        {{#with sample_run ../_id _id}}
+                        <td class='sample_run_cell' align='center' data-runidx='{{./index}}' data-runid='{{../_id}}' data-protocolsample='{{../../_id}}' data-sample={{_id}}>
+                            {{#if stub}}
+                                <button class='makenewsamplebtn btn btn-sm btn-primary {{#if assignsample_possible ../_id}}twobtns{{/if}}'
+                                        alt='Add reference' type="button" data-runid='{{../_id}}'  data-protocolsample='{{../../_id}}'>
+                                    <span class="glyphicon glyphicon-plus"></span>
+                                </button>
+                                {{#if assignsample_possible ../../_id}}
+                                    <button class='assignsamplebtn btn btn-xs btn-default twobtns' type="button" data-runidx='{{./index}}'
+                                            data-runid='{{../_id}}' data-protocolsample='{{../../_id}}'>
+                                        <span class="glyphicon glyphicon-import"></span>
+                                    </button>
+                                {{/if}}
                             {{else}}
-                            <button class='makenewsamplebtn btn btn-sm btn-primary {{#if assignsample_possible ../_id}}twobtns{{/if}}' alt='Add reference' type="button" data-runidx='{{./index}}'  data-sample='{{../_id}}'>
-                              <span class="glyphicon glyphicon-plus"></span>
-                            </button>
-                            {{#if assignsample_possible ../_id}}
-                            <button class='assignsamplebtn btn btn-xs btn-default twobtns' type="button" data-runidx='{{./index}}'  data-sample='{{../_id}}'>
-                              <span class="glyphicon glyphicon-import"></span>
-                                                        </button>
-                            {{/if}}
+                                <span class='link sampleinrun'>{{name}}</span>
 
                             {{/if}}
                         </td>
+                        {{/with}}
                     {{/each}}
 
                 </tr>
@@ -156,18 +159,20 @@
                 <td class='step_table step_table_edit'>
                         <span class='glyphicon glyphicon-remove link stepdelete'></span>
                 </td>
-                {{#each runs_time}}
+                {{#each runs}}
+                {{#with operation_run ../_id _id}}
                 <td class='stepcell'>
                     {{#if timestamp}}
-                    <span class='timepoint link'  data-runidx='{{./index}}' data-operation='{{../_id}}'>
+                    <span class='timepoint link'  data-runid='{{../_id}}' data-operation='{{../../_id}}'>
                                               {{formatTime timestamp}}
 
                     </span>                    {{else}}
-                    <button class="entertime btn btn-xs btn-primary" type="button" data-operation='{{../_id}}' data-runidx='{{index}}'>
+                    <button class="entertime btn btn-xs btn-primary" type="button" data-operation='{{../../_id}}' data-runid='{{../_id}}'>
                         <span class="glyphicon glyphicon-ok"></span>
                     </button>
                      {{/if}}
                 </td>
+                {{/with}}
                 {{/each}}
             </tr>
             {{/each}}
@@ -274,56 +279,6 @@
             </div>
         </div>
     </div>
-
-            <div class="modal fade" id="sample_info" tabindex="-1" role="dialog" aria-labelledby="sampleInfoLabel" aria-hidden="true">
-                 <div class="modal-dialog">
-                   <div class="modal-content">
-                     <div class="modal-header">
-                       <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                       <h4 class="modal-title" id="sampleInfoLabel">Sample info</h4>
-                     </div>
-                     <div class="modal-body">
-                           <table class='table' id='sample_info_table'>
-                               <tbody>
-    {{#with sample}}
-    <tr>
-        <td>
-            <a class='btn btn-default twobtns' type="button" id='seesampledetailbtn' data-sample='{{_id}}'>See Detail</a>
-        </td>
-        <td></td>
-    </tr>
-        <tr>
-            <td>Name</td>
-            <td><input id='sampleinfo_name' type="text" value='{{name}}' tabindex='1'/></td>
-        </tr>
-    <tr>
-        <td>Sample type</td>
-        <td><a href='#' id='sample_info_type' data-sampletype='{{type.name}}'>{{type.name}}</a></td>
-    </tr>
-        <tr>
-            <td>Sample created</td>
-            <td>{{time_made}}</td>
-        </tr>
-        <tr>
-                    <td>Recorded</td>
-                    <td>{{time_recorded}}</td>
-                </tr>
-    <tr>
-        <td>Note</td>
-        <td><textarea name="" id="sample_note" cols="20" rows="10" tabindex='2'>{{note}}</textarea></td>
-    </tr>
-    {{/with}}
-                               </tbody>
-                           </table>
-
-                     </div>
-                     <div class="modal-footer">
-                       <button type="button" id='close_sample_info' class="btn btn-default" data-dismiss="modal" tabindex='4'>Close</button>
-                       <button type="button" id='save_sample_info' class="btn btn-primary"  tabindex='3'>Save changes</button>
-                     </div>
-                   </div>
-                 </div>
-               </div>
 
             <div class="modal fade" id="protocol_sample_info" tabindex="-1" role="dialog" aria-labelledby="protocolsampleInfoLabel" aria-hidden="true">
                             <div class="modal-dialog">

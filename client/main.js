@@ -49,7 +49,9 @@ Session.setDefault('editing_sampletype_id',null);
 Session.setDefault('choosing_sample_for',{run: null, sample: null})
 
 
-Session.setDefault('info_shown',{sample: false, step: true, sheet: true});
+Session.setDefault('info_shown',{sample: true, step: true, sheet: true});
+
+Session.setDefault('editing_sample_title',false);
 
 //Reset every time reloaded.
 Session.set('editing_node_in_graph',null);
@@ -99,21 +101,11 @@ Template.lists.loading = function () {
 
 
 Template.lists.events({
-//
-//  'change #grouping_select': function(evt){
-//      console.log(evt,this);
-//    Router.go(evt.target.value+"empty");
-//  },
     'click .listmenu':function(evt){
         //console.log($(evt.target));
         Router.go($(evt.target).attr('data-value'));
 //            Router.go($(evt.target).attr('data-value')+"empty");
-    },
-  'dblclick .list': function (evt, tmpl) { // start editing list name
-    Session.set('editing_listname', this._id);
-    Deps.flush(); // force DOM redraw, so we can focus the edit field
-    activateInput(tmpl.find("#list-name-input"));
-  }
+    }
 });
 
 // Attach events to keydown, keyup, and blur on "New list" input box.
@@ -155,174 +147,7 @@ Template.lists.editing = function () {
   return Session.equals('editing_listname', this._id);
 };
 
-////////// Todos //////////
 
-Template.todos.loading = function () {
-  return todosHandle && !todosHandle.ready();
-};
-
-Template.todos.any_list_selected = function () {
-  return !Session.equals('list_id', null);
-};
-
-Template.todos.events(okCancelEvents(
-  '#new-todo',
-  {
-    ok: function (text, evt) {
-      var tag = Session.get('tag_filter');
-      Todos.insert({
-        text: text,
-        list_id: Session.get('list_id'),
-        done: false,
-        timestamp: (new Date()).getTime(),
-        tags: tag ? [tag] : []
-      });
-      evt.target.value = '';
-    }
-  }));
-
-Template.todos.todos = function () {
-  // Determine which todos to display in main pane,
-  // selected based on list_id and tag_filter.
-
-  var list_id = Session.get('list_id');
-  if (!list_id)
-    return {};
-
-  var sel = {list_id: list_id};
-  var tag_filter = Session.get('tag_filter');
-  if (tag_filter)
-    sel.tags = tag_filter;
-
-  return Todos.find(sel, {sort: {timestamp: 1}});
-};
-//
-//Template.todos.presets = function(){
-//	console.log(Presets.find().fetch());
-//	return Presets.find();
-//}
-//
-//Template.todo_item.tag_objs = function () {
-//  var todo_id = this._id;
-//  return _.map(this.tags || [], function (tag) {
-//    return {todo_id: todo_id, tag: tag};
-//  });
-//};
-//
-//Template.todo_item.done_class = function () {
-//  return this.done ? 'done' : '';
-//};
-//
-//Template.todo_item.editing = function () {
-//  return Session.equals('editing_itemname', this._id);
-//};
-//
-//Template.todo_item.adding_tag = function () {
-//  return Session.equals('editing_addtag', this._id);
-//};
-//
-//Template.todo_item.time_formatted = function() {
-//	var t = new Date(this.timestamp);
-//	return ""+(t.getMonth()+1)+"/"+t.getDate()+"/"+t.getFullYear()+" "+t.getHours()+":"+t.getMinutes();
-//}
-//
-//Template.todo_item.events({
-//  'click .check': function () {
-//    Todos.update(this._id, {$set: {done: !this.done}});
-//  },
-//
-//  'click .destroy': function () {
-//    Todos.remove(this._id);
-//  },
-//
-//  'click .addtag': function (evt, tmpl) {
-//    Session.set('editing_addtag', this._id);
-//    Deps.flush(); // update DOM before focus
-//    activateInput(tmpl.find("#edittag-input"));
-//  },
-//
-//  'dblclick .display .todo-text': function (evt, tmpl) {
-//    Session.set('editing_itemname', this._id);
-//    Deps.flush(); // update DOM before focus
-//    activateInput(tmpl.find("#todo-input"));
-//  },
-//
-//  'click .remove': function (evt) {
-//    var tag = this.tag;
-//    var id = this.todo_id;
-//
-//    evt.target.parentNode.style.opacity = 0;
-//    // wait for CSS animation to finish
-//    Meteor.setTimeout(function () {
-//      Todos.update({_id: id}, {$pull: {tags: tag}});
-//    }, 300);
-//  }
-//});
-//
-//Template.todo_item.events(okCancelEvents(
-//  '#todo-input',
-//  {
-//    ok: function (value) {
-//      Todos.update(this._id, {$set: {text: value}});
-//      Session.set('editing_itemname', null);
-//    },
-//    cancel: function () {
-//      Session.set('editing_itemname', null);
-//    }
-//  }));
-//
-//Template.todo_item.events(okCancelEvents(
-//  '#edittag-input',
-//  {
-//    ok: function (value) {
-//      Todos.update(this._id, {$addToSet: {tags: value}});
-//      Session.set('editing_addtag', null);
-//    },
-//    cancel: function () {
-//      Session.set('editing_addtag', null);
-//    }
-//  }));
-
-////////// Tag Filter //////////
-
-// Pick out the unique tags from all todos in current list.
-Template.tag_filter.tags = function () {
-  var tag_infos = [];
-  var total_count = 0;
-
-  Todos.find({list_id: Session.get('list_id')}).forEach(function (todo) {
-    _.each(todo.tags, function (tag) {
-      var tag_info = _.find(tag_infos, function (x) { return x.tag === tag; });
-      if (! tag_info)
-        tag_infos.push({tag: tag, count: 1});
-      else
-        tag_info.count++;
-    });
-    total_count++;
-  });
-
-  tag_infos = _.sortBy(tag_infos, function (x) { return x.tag; });
-  tag_infos.unshift({tag: null, count: total_count});
-
-  return tag_infos;
-};
-
-Template.tag_filter.tag_text = function () {
-  return this.tag || "All items";
-};
-
-Template.tag_filter.selected = function () {
-  return Session.equals('tag_filter', this.tag) ? 'selected' : '';
-};
-
-Template.tag_filter.events({
-  'mousedown .tag': function () {
-    if (Session.equals('tag_filter', this.tag))
-      Session.set('tag_filter', null);
-    else
-      Session.set('tag_filter', this.tag);
-  }
-});
 
 Template.top_bar.userId = function(){
     return Meteor.userId();

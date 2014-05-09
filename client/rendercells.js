@@ -1,43 +1,31 @@
 
 renderCells = function(eid) {
 
-    console.log('renderCells()');
+//    console.log('renderCells()');
     var exp = getCurrentExp();
 
     var row_opids = [];
     var row_paramnames = [];
+    var runs = ExpRuns.find({exp: eid},{sort: {timestamp: 1}}).fetch();
+    var runids = _.map(runs,function(run){return run._id;});
 
     function getTableData() {
-        function sf(id){
-            if(id){
-                var s = SampleTypes.findOne(id);
-                if(s){
-                    return s.name;
-                }else{
-                    return null;
-                }
-            }else{
-                return null;
-            }
-        }
 
-        var exp = getCurrentExp();
-
-        console.log(exp.protocol.operations);
+//        console.log(exp.protocol.operations);
         var arr = _.map(exp.protocol.operations,function(opid){
             var op = Operations.findOne(opid);
             if(op){
             row_opids.push(opid);
             row_paramnames.push('');
-            var pss = [_.map(exp.runs,function(run,idx){
-                return formatDateTime(getOpTimestamp(exp,idx,opid));
+            var pss = [_.map(runs,function(run,idx){
+                return formatDateTime(getOpTimestamp(run._id,opid));
             })
             ];
             pss = pss.concat(_.map(op.params,function(param){
                 var row = getRowData(exp,opid,param);
                 row_opids.push(opid);
                 row_paramnames.push(param.name);
-                console.log(row);
+//                console.log(row);
                 return row;
             }));
             return pss;}
@@ -46,20 +34,21 @@ renderCells = function(eid) {
             }
 
         });
-        console.log(arr);
+    //    console.log(arr);
         return _.flatten(arr,true);
     }
 
     function colNames(){
-        return _.map(exp.runs, function(run){
+        return _.map(ExpRuns.find({exp: eid}).fetch(), function(run){
             return run.name;
         });
     }
 
     function getRowData(exp,opid,param){
-        console.log(param);
-        return _.map(exp.runs,function(run,runidx){
-            return getOpParam(exp,opid,runidx,param.name);
+        var runs = ExpRuns.find({exp: eid}).fetch();
+     //   console.log(param);
+        return _.map(runs,function(run,runidx){
+            return getOpParam(run._id,opid,param.name);
         });
     }
 
@@ -107,8 +96,6 @@ renderCells = function(eid) {
     var colnames = colNames();
     var rownames = rowNames();
 
-    console.log(dat);
-
     $("#spreadsheet").handsontable({
         data: dat,
         manualColumnResize: true,
@@ -133,9 +120,9 @@ renderCells = function(eid) {
             var opid = row_opids[change[0][0]];
             var paramname = row_paramnames[change[0][0]];
             var newval = change[0][3];
-            var runidx = change[0][1];
-            console.log(change,opid,paramname,newval);
-            updateDBAccordingToCell(getCurrentExpId(),opid,runidx,paramname,newval);
+            var runid = runids[(change[0][1])];
+//            console.log(change,opid,paramname,newval);
+            updateDBAccordingToCell(runid,opid,paramname,newval);
         }
     });
 

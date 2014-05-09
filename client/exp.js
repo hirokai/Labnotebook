@@ -7,14 +7,15 @@
  */
 
 Template.exp.exp_name = function(){
-    var eid = Session.get('current_view_id');
-    return Experiments.findOne(eid).name;
+//  var e = getCurrentExp();
+//  //  console.log(e);
+    return  getCurrentExp().name;
 };
 
 Template.exp.samples = function() {
     var eid = getCurrentExpId();
     var edges = getEdges(eid);
-    //console.log(edges,es);
+    //console.log(edges);
     var es = _.map(edges,function(edge){
         return [edge.from._id,edge.to._id];
     });
@@ -28,7 +29,7 @@ Template.exp.samples = function() {
 Template.exp.protocol_samples = function() {
     var eid = getCurrentExpId();
     var edges = getEdges(eid);
-    //console.log(edges,es);
+//    console.log(edges);
     var es = _.map(edges,function(edge){
         return [edge.from._id,edge.to._id];
     });
@@ -38,13 +39,7 @@ Template.exp.protocol_samples = function() {
     var sids = e.protocol.samples;
     var samples = Samples.find({_id: {$in: sids}}).fetch();
     var res =  _.map(sorted,function(id,i){
-        var sample = _.findWhere(samples,{_id: id});
-        sample.runs = _.map(e.runs,function(run, i){
-            var sid = run.samples[sample._id];
-            var s = Samples.findOne(sid);
-            return {_id: sid, name: s ? s.name : null, index: i};
-        });
-        return sample;
+        return _.findWhere(samples,{_id: id});
     });
     return res;
 };
@@ -54,7 +49,19 @@ Template.exp.sample_link_in_run = function(){
 };
 
 Template.exp.runs = function(){
-  return _.map(getCurrentExp().runs,function(run,i){return {name: run.name, index: i}});
+  return ExpRuns.find({exp: getCurrentExpId()});
+};
+
+Template.exp.sample_run = function(sid,runid){
+    var sid = ExpRuns.findOne(runid).samples[sid];
+    return Samples.findOne(sid) || {stub: true};
+//    console.log(s);
+//    return s ? s : {stub: true};
+};
+
+Template.exp.operation_run = function(opid,runid){
+ //   console.log(opid,runid,ExpRuns.findOne(runid));
+    return ExpRuns.findOne(runid).ops[opid];
 };
 
 Template.exp.eid = function(){
@@ -98,143 +105,6 @@ Template.exp.editing_sample_type = function(){
     return Session.equals('editing_sampletype_id',this._id);
 };
 
-//Template.define_step.all_samples = function() {
-//    return Samples.find({protocol: false});
-//};
-//
-//Template.define_step.input_samples = function(){
-//    var ids = Session.get('input_samples');
-//    //Include duplicates like the following.
-//    return _.map(ids,function(id,i){
-//        var obj = SampleTypes.findOne(id);
-//        obj.index = i;
-//        return obj;
-//    });
-////    return SampleTypes.find({_id: {$in: ids}});
-//};
-//
-//Template.define_step.output_samples = function(){
-//    var ids = Session.get('output_samples');
-//    //Include duplicates like the following.
-//    return _.map(ids,function(id,i){
-//        var obj = Samples.findOne(id);
-//        obj.type = SampleTypes.fineOne(obj.sampletype_id);
-//        obj.index = i;
-//        return obj;
-//    });
-////    return SampleTypes.find({_id: {$in: ids}});
-//};
-//
-//Template.define_step.rendered = function(){
-//    var tags = _.map(SampleTypes.find().fetch(),function(s){
-//        return s.name;
-//    });
-////  $('#outsamplelist').tagit({
-////      availableTags: tags,
-////      allowDuplicates: true});
-//};
-//
-//
-//Template.define_step.events({
-//    'change #stepinput': function(evt,tmpl){
-//        var id = tmpl.find('#stepinput').value;
-//        var ids = Session.get('input_samples');
-//        ids.push(id);
-//        Session.set('input_samples',ids);
-//        tmpl.find('#stepinput').value = null;
-//    },
-//    'change #stepoutput': function(evt,tmpl){
-//        var id = tmpl.find('#stepoutput').value;
-//        var ids = Session.get('output_samples');
-//        ids.push(id);
-//        Session.set('output_samples',ids);
-//        tmpl.find('#stepoutput').value = null;
-//    },
-//    'click #addstepbtn': function(evt,tmpl){
-//        var name = tmpl.find('#stepname').value;
-//        var v1s = Session.get('input_samples');
-//        var v2s = Session.get('output_samples');
-//        if(name != '' && v1s.length > 0 && v2s.length > 0){
-//            $('#addstep').removeClass('has-error');
-//            var ps = Session.get('newstep_params');
-//            var op = insertOp(this._id,name,ps);
-//            //Stub this is a direct product of v1s and v2s
-//            _.map(v1s,function(v1){
-//                _.map(v2s,function(v2){
-//                    insertArrow(op,v1,v2);
-//                });
-//            });
-//            Session.set('input_samples',[]);
-//            Session.set('output_samples',[]);
-//            Session.set('newstep_params',[]);
-//
-//        }else{
-//            $('#addstepdiv').addClass('has-error');
-//            $("#addstepdiv").stop().css("background-color", "#FFFF9C")
-//                .animate({ backgroundColor: "#FFFFFF"}, 1000);
-//        }
-//    },
-//    'click #cancelstepbtn': function(evt,tmpl){
-//        Session.set('input_samples',[]);
-//        Session.set('output_samples',[]);
-//        Session.set('newstep_params',[]);
-//        tmpl.find('#paramname').value = '';
-//        tmpl.find('#stepname').value = '';
-//    },
-//    'click .delete_in_sample': function(evt,tmpl){
-//        var ids = Session.get('input_samples');
-//        var i = evt.target.parentNode.attributes['data-index'].value;
-//        ids.splice(i,1);
-//        Session.set('input_samples', ids);
-//    },
-//    'click .delete_out_sample': function(evt,tmpl){
-//        var ids = Session.get('output_samples');
-//        var i = evt.target.parentNode.attributes['data-index'].value;
-//        ids.splice(i,1);
-//        Session.set('output_samples', ids);
-//    },
-//    'change #paramtype': function(evt){
-//        Session.set('selected_param_type', evt.target.value);
-//    },
-//    'click #addparambtn': function(evt,tmpl){
-//        var name = tmpl.find('#paramname').value;
-//        var type = tmpl.find('#paramtype').value;
-//        var unit = tmpl.find('#paramunit').value;
-//        var ps = Session.get('newstep_params');
-//        ps.push({name: name, type: type, unit: unit});
-//        Session.set('newstep_params',ps);
-//    }
-//});
-//
-//Template.define_step.units = function(){
-//    var t = Session.get('selected_param_type');
-//    if(t == 'volume'){
-//        return [{name: "&micro;L", value: "uL", selected: 'selected'},
-//            {name: "mL", value: "mL"},
-//            {name: "L", value: "L"}
-//        ];
-//    }else if(t == 'mass'){
-//        return [{name: "&micro;g", value: "ug"},
-//            {name: "mg", value: "mg", selected: 'selected'},
-//            {name: "g", value: "g"},
-//            {name: "kg", value: "kg"}];
-//    }else if(t == 'time'){
-//        return [{name: "&micro;s", value: "us"},
-//            {name: "ms", value: "ms"},
-//            {name: "s", value: "s"},
-//            {name: "min", value: "min", selected: 'selected'},
-//            {name: "hour", value: "hour"},
-//            {name: "day", value: "day"}
-//        ];
-//    }else {
-//        return [];
-//    }
-//};
-//
-//Template.define_step.params = function(){
-//    return Session.get('newstep_params');
-//};
-
 Template.exp.protocol_operations = function(){
     var e = getCurrentExp();
     var opids = e.protocol.operations;
@@ -243,10 +113,6 @@ Template.exp.protocol_operations = function(){
     var ops = sortById(Operations.find({_id: {$in: opids}}).fetch(),opids);
     return _.map(ops,function(op,i){
         op.index = i+1;
-        op.runs = _.map(e.runs,function(r){
-            var rop = r.operations[op._id];
-            return rop;
-        });
         return op;
     });
 };
@@ -265,19 +131,6 @@ Template.exp.step_output = function(){
         return Samples.find({_id: {$in: op.output}, protocol: true});
     else
         return [];
-};
-
-
-Template.d3graph.twonodes_edit_disabled = function(){
-    return (Session.get('selected_nodes').length == 2) ? '' : 'disabled';
-};
-
-Template.d3graph.onenode_edit_disabled = function(){
-    return (Session.get('selected_nodes').length == 1) ? '' : 'disabled';
-};
-
-Template.d3graph.oneedge_edit_disabled = function(){
-    return (Session.get('selected_edges').length == 1) ? '' : 'disabled';
 };
 
 Template.exp.events({
@@ -305,10 +158,7 @@ Template.exp.events({
             // console.log(toname);
             var from = insertSampleType(name);
             var op = insertOp(this._id, name);
-//            var to = SampleTypes.findOne({name: toname})._id // stub
-            //     console.log(name,from,to,toname,op);
-            insertArrow(op,from,to);
-            Arrows.update({owner: Meteor.userId(), to: to},{$set: {to: from}});
+
         }
     },
     'change #exp_datepicker': function(evt){
@@ -324,12 +174,6 @@ Template.exp.events({
 //        $('#addstepexpand').text('-');
     },
     'click .sample_name': function(evt,tmpl){
-//        Session.set('editing_sample_id',this._id);
-//        Deps.flush(); // force DOM redraw, so we can focus the edit field
-//        activateInput(tmpl.find("#samplename_edit_input"));
-
-   //     var html = mkHtmlForSampleChooser(sid);
-     //   $('#protocol_sample_info').html(html);
         Session.set('protocol_sampleinfo_for',this._id);
         $('#protocol_sample_info').modal();
     },
@@ -363,21 +207,17 @@ Template.exp.events({
         Session.set('editing_sampletype_id',null);
     },
     'click .entertime': function(evt,tmpl){
-        var e = $(evt.target);
-        var ee = e.prop('tagName') == 'BUTTON' ? e : e.parent('button');
+        var ee = getButton(evt.target);
         var opid = ee.attr('data-operation');
-       // console.log(opid,this.index);
-        var eid = getCurrentExpId();
-        var exp = getCurrentExp();
-        var runidx = parseInt(ee.attr('data-runidx'));
-        setOpTimestamp(exp,runidx,opid,new Date().getTime());
+        var runid = ee.attr('data-runid');
+        setOpTimestamp(runid,opid,new Date().getTime());
     },
     'click .timepoint':function(evt){
         if(evt.altKey){
             var e = $(evt.target);
             var opid = e.attr('data-operation');
-            var runidx = parseInt(e.attr('data-runidx'));
-            setOpTimestamp(getCurrentExp(),runidx,opid,null);
+            var runid = e.attr('data-runid');
+            setOpTimestamp(runid,opid,null);
         }
     },
     'change #sample_shown': function(evt){
@@ -399,50 +239,48 @@ Template.exp.events({
         addNewRunToExp(getCurrentExpId());
     },
     'click .deleterunbtn': function(evt){
-        var e = getCurrentExp();
-        var eid = e._id;
-        var runs = e.runs;
-        var idx = this.index;
-        runs.splice(idx,1);
-        Experiments.update(eid,{$set: {runs: runs}});
+        var e = getButton(evt.target);
+        var id = e.attr('data-runid');
+        deleteRun(id);
     },
     'click .assignsamplebtn': function(evt){
-        var e = $(evt.target);
-        var ee = e.prop('tagName') == 'BUTTON' ? e : e.parent('button');
-        console.log(ee,ee.attr('data-runidx'), ee.attr('data-sample'));
-        //evt.target.attributes['data-runidx'].value
-        var sid = ee.attr('data-sample');
-        Session.set('choosing_sample_for',{run: ee.attr('data-runidx'), sample: sid});
-        var html = mkHtmlForSampleChooser(sid);
+        var ee = getButton(evt.target);
+        var sid = ee.attr('data-protocolsample');
+        var runid = ee.attr('data-runid');
+        Session.set('choosing_sample_for',{run: runid, sample: sid});
+        var html = mkHtmlForSampleChooser(sid,runid);
         $('#sample_chooser_samples').html(html);
         $('#sample_chooser').modal();
     },
     'click .makenewsamplebtn': function(evt){
-        var e = $(evt.target);
-        var ee = e.prop('tagName') == 'BUTTON' ? e : e.parent('button');
-       // console.log(ee,ee.attr('data-runidx'), ee.attr('data-sample'));
+        var ee = getButton(evt.target);
         var eid = getCurrentExpId();
-        var runidx = parseInt(ee.attr('data-runidx'));
-        var protocol_sid = ee.attr('data-sample');
+        var runid = ee.attr('data-runid');
+        var protocol_sid = ee.attr('data-protocolsample');
         var protocol_sample = Samples.findOne(protocol_sid);
-        var sid = newSample(protocol_sample.name+"-"+(runidx+1),protocol_sample.sampletype_id);
-        assignSampleInRun(eid,runidx,protocol_sid,sid);
+        console.log(runid,protocol_sid,protocol_sample);
+        var sid = newSample(protocol_sample.name,protocol_sample.sampletype_id);
+        assignSampleInRun(runid,protocol_sid,sid);
 
     },
     'click .choose_sample': function(evt){
-        var sid = $(evt.target).attr('data-id');
+        var sid = $(evt.target).attr('data-sid');
         var eid = getCurrentExpId();
         var obj = Session.get('choosing_sample_for');
-        assignSampleInRun(eid,obj.run,obj.sample,sid);
+        var runid = $(evt.target).attr('data-runid')
+        assignSampleInRun(runid,obj.sample,sid);
         $('#sample_chooser').modal('hide');
     },
     'click .sampleinrun': function(evt){
         var e = $(evt.target);
         var ee = e.prop('tagName') == 'TD' ? e : e.parent('td');
-        console.log(ee,ee.attr('data-runidx'), ee.attr('data-sample'));
-        var currentid = ee.attr('data-samplerun');
+        var runid = ee.attr('data-runid');
+        console.log(ee,runid, ee.attr('data-sample'));
+        var currentid = ee.attr('data-sample');
         if(evt.altKey){
-            removeSampleInRun(getCurrentExpId(),ee.attr('data-runidx'),ee.attr('data-sample'),currentid);
+            var sid = ee.attr('data-protocolsample');
+            console.log(sid);
+            removeSampleInRun(runid,sid,currentid);
         }else{
             Session.set('sampleinfo_for',currentid);
             $('#sample_info').modal();
@@ -468,16 +306,15 @@ Template.exp.events({
     }
 });
 
-Template.exp.assignsample_possible = function(sid){
+Template.exp.assignsample_possible = function(protocol_sid){
     var e = getCurrentExp();
     var ops = Operations.find({_id: {$in: e.protocol.operations}}).fetch();
     var outs = _.flatten(_.map(ops,function(op){return op.output;}));
-    return !_.contains(outs,sid);
+    return !_.contains(outs,protocol_sid);
 };
 
 Template.exp.editing_title = function(){
     return  Session.get('editing_exp_title');
-
 };
 
 Template.exp.events(okCancelEvents(
@@ -539,13 +376,14 @@ Template.exp.rendered = function () {
 };
 
 
-function mkHtmlForSampleChooser(sid){
+function mkHtmlForSampleChooser(sid,runid){
+//    console.log(sid,Samples.findOne(sid));
     var stid = Samples.findOne(sid).sampletype_id;
     var samples = Samples.find({sampletype_id: stid, protocol: false}).fetch();
     return _.map(samples,function(s){
         return "<tr class='chooser_tr'>"+"<td class='name'>" + s.name + "</td>"
         + "<td class='expmade'>" + formatDate(new Date(s.timestamp)) + "</td>"
-        + "<td class='choose_sample' data-id='"+ s._id+"'>Choose</td></tr>";
+        + "<td class='choose_sample' data-sid='"+ s._id+"' data-runid='"+ runid +"'"+">Choose</td></tr>";
     }).join('\n');
 }
 
@@ -572,18 +410,18 @@ Template.sample_info.type = function(){
 Template.sample_info.time_made = function(){
     return formatDateTime(this.timestamp);
 };
-
-Template.exp.runs_time = function(){
-    console.log(this);
-    var opid = this._id;
-    var eid = getCurrentExpId();
-    var runs = Experiments.findOne(eid).runs;
-  return _.map(runs,function(run,i){
-   //   console.log(run,i);
-      var op = run ? run.operations[opid] : null;
-      return op ? {timestamp: op.timestamp, index: i} : {};
-  });
-};
+//
+//Template.exp.runs_time = function(){
+//    console.log(this);
+//    var opid = this._id;
+//    var eid = getCurrentExpId();
+//    var runs = Experiments.findOne(eid).runs;
+//  return _.map(runs,function(run,i){
+//   //   console.log(run,i);
+//      var op = run ? run.operations[opid] : null;
+//      return op ? {timestamp: op.timestamp, index: i} : {};
+//  });
+//};
 
 Template.sample_info.events({
     'click #sample_info_type': function(evt){
@@ -671,7 +509,7 @@ Template.sample_info.type_selected = function(tid){
 Template.op_info.operation = function(){
     var opid = Session.get('opinfo_for');
     var op = Operations.findOne(opid);
-    console.log(op);
+//    console.log(op);
     return op;
 };
 
@@ -794,31 +632,7 @@ Template.op_info.match_paramtype = function(type,unit){
     var d = paramTypeDict[this.id];
     return d ? (d[0] == type && d[1] == unit ? 'selected' : '') : '';
 }
-//
-//Template.op_info.units = function(){
-//    var t = Session.get('selected_param_type');
-//    if(t == 'volume'){
-//        return [{name: "&micro;L", value: "uL", selected: 'selected'},
-//            {name: "mL", value: "mL"},
-//            {name: "L", value: "L"}
-//        ];
-//    }else if(t == 'mass'){
-//        return [{name: "&micro;g", value: "ug"},
-//            {name: "mg", value: "mg", selected: 'selected'},
-//            {name: "g", value: "g"},
-//            {name: "kg", value: "kg"}];
-//    }else if(t == 'time'){
-//        return [{name: "&micro;s", value: "us"},
-//            {name: "ms", value: "ms"},
-//            {name: "s", value: "s"},
-//            {name: "min", value: "min", selected: 'selected'},
-//            {name: "hour", value: "hour"},
-//            {name: "day", value: "day"}
-//        ];
-//    }else {
-//        return [];
-//    }
-//};
+
 
 Template.op_info.types = function(){
     return [{id: 'text', name: "Text"},
