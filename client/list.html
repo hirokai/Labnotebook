@@ -5,11 +5,110 @@
       <div id="lists">
           <span>Sort by:
       <select name="" id="sortby">
-          <option value="">Date</option>
-          <option value="">Name</option>
-          <option value="">Kind</option>
+          <option value="date" {{sortby_selected 'date'}}>Date</option>
+          <option value="name" {{sortby_selected 'name'}}>Name</option>
+              <!--<option value="kind">Kind</option>-->
       </select>
           </span>
+        {{#each lists}}
+          <div class="list {{selected}}">
+            {{#if editing}}
+              <div class="edit">
+                <input class="list-name-input" id="list-name-input" type="text" value="{{name}}" />
+              </div>
+            {{else}}
+              <div class="display list-name-div">
+                  <a class="list-name {{name_class}}" href="#">
+                      {{name}}
+                  </a>
+                  <span class='list_date'>
+                      {{formatDate date}}
+                  </span>
+              </div>
+            {{/if}}
+          </div>
+        {{/each}}
+      </div>
+
+    <div class="input-group">
+        <input type="text" id="new-exp" class="form-control input-sm" placeholder="New experiment">
+        <div class="input-group-btn">
+            <button type="button" class="btn btn-sm btn-default dropdown-toggle" data-toggle="dropdown">
+                <span class="glyphicon glyphicon-add"></span>
+                <span class="caret"></span></button>
+            <ul class="dropdown-menu pull-right">
+                <!--<li><a href="#" id='newexpbtn'>Default</a></li>-->
+                <li><a href="#" id='newexpfrompreset'>From preset</a></li>
+                <li><a href="#" id='copyprevprotocl'>Copy previous protocol</a></li>
+
+            </ul>
+        </div><!-- /btn-group -->
+    </div><!-- /input-group -->
+
+    {{/if}}
+</template>
+
+<template name='sample_list'>
+    {{#if loading}}
+      <div id="lists">Loading...</div>
+    {{else}}
+    <div id="create_sample">
+        <input type="text" id="new-sample" placeholder="New sample" />
+    </div>
+    <div id="lists">
+        <span>Sort by:
+    <select name="" id="sample_sortby">
+        <option value="date" {{sortby_selected 'date'}}>Date</option>
+        <!--<option value="exp">Experiment</option>-->
+        <option value="name" {{sortby_selected 'name'}}>Name</option>
+        <option value="type" {{sortby_selected 'type'}}>Type</option>
+    </select>
+        </span>
+        {{#each lists}}
+          <div class="list  {{selected}}">
+            {{#if editing}}
+              <div class="edit">
+                <input class="list-name-input" id="list-name-input" type="text" value="{{name}}" />
+              </div>
+            {{else}}
+              <div class="display list-name-div">
+                <a class="list-name {{name_class}}" href="#">
+                  {{name}}
+                </a>
+                  <span class='list_date'>
+                      {{first_expdate}}
+                  </span>
+              </div>
+            {{/if}}
+          </div>
+        {{/each}}
+      </div>
+
+    {{/if}}
+</template>
+
+<template name='type_list'>
+    <div id="createSample">
+        <input type="text" id="new-sample-type" placeholder="New sample type" />
+    </div>
+    <div id="lists">
+        <div id='typetree'>
+            <div id='tree1'></div>
+        </div>
+
+    </div>
+
+
+</template>
+
+<template name='preset_list'>
+    {{#if loading}}
+      <div id="lists">Loading...</div>
+    {{else}}
+    <div id="createPreset">
+        <input type="text" id="new-preset" placeholder="New preset" />
+    </div>
+    <div id="lists">
         {{#each lists}}
           <div class="list {{selected}}">
             {{#if editing}}
@@ -26,33 +125,18 @@
           </div>
         {{/each}}
       </div>
-      <div id="createExp">
-        <input type="text" id="new-exp" placeholder="New experiment" />
 
-      </div>
-    <!-- Split button -->
-    <div class="btn-group">
-        <button type="button" id="newexpbtn" class="btn btn-default">New experiment</button>
-        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
-            <span class="caret"></span>
-            <span class="sr-only">Toggle Dropdown</span>
-        </button>
-        <ul class="dropdown-menu" role="menu">
-            <li><a href="#">From template</a></li>
-            <li><a href="#">Copy previous exp</a></li>
-        </ul>
-    </div>
     {{/if}}
 </template>
 
-<template name='sample_list'>
+<template name='multiexp_list'>
     {{#if loading}}
       <div id="lists">Loading...</div>
     {{else}}
 
     <div id="lists">
         <span>Sort by:
-    <select name="" id="sortby">
+    <select name="" id="sample_sortby">
         <option value="">Date</option>
         <option value="">Experiment</option>
         <option value="">Name</option>
@@ -66,86 +150,47 @@
                 <input class="list-name-input" id="list-name-input" type="text" value="{{name}}" />
               </div>
             {{else}}
-              <div class="display">
+              <div class="display list-name-div">
                 <a class="list-name {{name_class}}" href="#">
                   {{name}}
                 </a>
+                  <span class='list_date'>
+                      {{first_expdate}}
+                  </span>
               </div>
             {{/if}}
           </div>
         {{/each}}
       </div>
-    <div id="createSample">
-      <input type="text" id="new-sample" placeholder="New sample" />
+    <div id="create_analysis">
+      <input type="text" id="new-analysis" placeholder="New analysis" />
     </div>
     {{/if}}
 </template>
 
-<template name='type_list'>
-    {{#if loading}}
-    <div id="lists">Loading...</div>
-    {{else}}
-
-    <div id="lists">
-        <span>Sort by:
-    <select name="" id="sortby">
-        <option value="">Date</option>
-        <option value="">Experiment</option>
-        <option value="">Name</option>
-        <option value="">Kind</option>
-    </select>
-        </span>
-        {{#each lists}}
-        <div class="list  {{selected}}">
-            {{#if editing}}
-            <div class="edit">
-                <input class="list-name-input" id="list-name-input" type="text" value="{{name}}" />
-            </div>
-            {{else}}
-            <div class="display">
-                <a class="list-name {{name_class}}" href="#">
-                    <i>{{name}}</i>
-                </a>
-            </div>
-            {{/if}}
-        </div>
-        {{/each}}
-    </div>
-    <div id="createSample">
-        <input type="text" id="new-sample-type" placeholder="New sample type" />
-    </div>
-    {{/if}}
-</template>
-
-<template name='date_list'>
+<template name='log_list'>
     {{#if loading}}
       <div id="lists">Loading...</div>
     {{else}}
-      <div id="lists">
+
+    <div id="lists">
         {{#each lists}}
-          <div class="list {{selected}}">
+          <div class="list  {{selected}}">
             {{#if editing}}
               <div class="edit">
                 <input class="list-name-input" id="list-name-input" type="text" value="{{name}}" />
               </div>
             {{else}}
-              <div class="display">
+              <div class="display list-name-div">
                 <a class="list-name {{name_class}}" href="#">
-                  {{name}}
+                  {{date}}
                 </a>
               </div>
             {{/if}}
           </div>
         {{/each}}
       </div>
-    <div id="createDate">
-      <input type="text" id="new-date" placeholder="New date" />
-    </div>
     {{/if}}
-</template>
-
-<template name='op_list'>
-
 </template>
 
 

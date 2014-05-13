@@ -38,11 +38,34 @@ Template.d3graph.rendered = function () {
     self.node = self.find("svg");
     if (!self.handle) {
         self.handle = Deps.autorun(function () {
-            var eid = Session.get('current_view_id');
+            var eid = getCurrentExpId();
         //    var ops = eid ? Operations.find({exp_id: eid}).fetch() : [];
             var graph = genGraphvizGraph();
             if(graph){
-                tryDraw(graph);
+                try{
+                    tryDraw(graph);
+                }catch(e){
+                    console.log(e);
+                }
+                var wrapper = $('#graphWrapper');
+                var setSize = function(el){
+                    var div = $('#sampleandprotocol');
+                    div.css('left',el.width()+80);
+                    var h = $('#graph_buttons').height() + 73;
+                    $('#svgWrapper').height(el.height()-h);
+                };
+                wrapper.resizable({
+                    maxHeight: 1000,
+                    maxWidth: 800,
+                    minHeight: 100,
+                    minWidth: 100,
+                    resize: function(evt){
+                        setSize($(evt.target));
+                    }
+                });
+                wrapper.width(300);
+                wrapper.height(700);
+                setSize(wrapper);
             }
         });
     }
@@ -84,33 +107,23 @@ Template.d3graph.oneedge_edit_disabled = function(){
 };
 
 function genGraphvizGraph(){
-    var eid = Session.get('current_view_id');
+    var eid = getCurrentExpId();
     var samples = findProtocolSamplesInExp(eid);
     var edges = getEdges(eid);
     var graph = new dagreD3.Digraph();
 //    console.log(samples,edges);
     _.each(samples,function(s){
         var l = "<div style='padding: 10px;' class='id_in_graph' data-id='"+s._id+"'>"+ s.name+"</div>";
-      graph.addNode(s._id, {label: l, data_id: s._id});
+      graph.addNode(s._id, {label: l, custom_id: s._id});
     });
     _.map(edges,function(e){
-        graph.addEdge(null, e.from._id, e.to._id, {label: "<div style='padding: 5px;font-size: 10px;' class='id_in_edge' data-id='"+e.id+"'>"+ e.name+"</div>"});
+        graph.addEdge(null, e.from._id, e.to._id, {label: "<div style='padding: 5px;font-size: 10px;' class='id_in_edge' data-id='"+e.id+"'>"+ e.name+"</div>", custom_id: e.id});
     });
     return graph;
 }
 
 Template.d3graph.destroyed = function () {
     this.handle && this.handle.stop();
-};
-
-Template.d3graph.twonodes_edit_disabled = function() {
-//    console.log('template called...')
-    return $('rect.selected').length == 2 ? '' : 'disabled';
-};
-
-Template.d3graph.onenodes_edit_disabled = function() {
-//    console.log('template called...')
-    return $('rect.selected').length == 1 ? '' : 'disabled';
 };
 
 Template.d3graph.events({
@@ -122,7 +135,7 @@ Template.d3graph.events({
         var op2 = insertOp(eid,'Step',[s],[sids[1]]);
     },
         'click #connectnodes': function(){
-            var eid = Session.get('current_view_id');
+            var eid = getCurrentExpId();
             var sids = Session.get('selected_nodes');
             var edges = getEdges(eid);
             var es = new Array(edges.length + 1);
@@ -145,7 +158,7 @@ Template.d3graph.events({
     //Adding next step along with op.
     'click #addnextstepbtn': function(){
         var from = Session.get('selected_nodes')[0];
-        var eid = Session.get('current_view_id');
+        var eid = getCurrentExpId();
         if(from && eid){
             var to = newSampleToProtocol(eid,generalSampleType(),'Sample');
             var op = insertOp(eid, 'Step',[from],[to]);
@@ -157,7 +170,7 @@ Template.d3graph.events({
     },
     'click #addprevstepbtn': function(){
         var to = Session.get('selected_nodes')[0];
-        var eid = Session.get('current_view_id');
+        var eid = getCurrentExpId();
         if(to && eid){
             var from = newSampleToProtocol(eid,generalSampleType(),'Sample');
             return insertOp(eid, 'Step',[from],[to]);
@@ -215,20 +228,13 @@ Template.d3graph.events({
         resetZoom();
     },
     'click #newsamplebtn': function(evt,tmpl){
-        var eid = Session.get('current_view_id');
-        var tid = SampleTypes.findOne({name: 'General sample'})._id;
-        newSampleToProtocol(eid,tid,'Sample');
-    },
-    'click #importsamplebtn': function(evt,tmpl){
-//        var eid = Session.get('current_view_id');
-//        var tid = SampleTypes.findOne({name: 'General sample'})._id;
-//        var sid = Samples.insert({owner: owner, sampletype_id: type_id, name: name, timestamp: new Date().getTime()});
-//        Experiments.update(eid,{$push: {samples: sid}});
+        var eid = getCurrentExpId();
+        newSampleToProtocol(eid,generalSampleType(),'Sample');
     },
     'click #deletesamplebtn': function(){
         var sid = Session.get('selected_nodes')[0];
         //Keep sample in DB.
-        var eid = Session.get('current_view_id');
+        var eid = getCurrentExpId();
         Experiments.update(eid,{$pull: {'protocol.samples': sid}});
         removeOpsAboutSample(eid,sid);
     },
@@ -249,6 +255,10 @@ Template.d3graph.events({
             //console.log(sid,opid);
             Operations.update(opid,{$push: {output: sid}});
         }
+    },
+    'click #deleteopbtn': function(){
+        var edge = Session.get('selected_edges')[0];
+        removeOp(edge);
     }
 });
 
@@ -293,17 +303,17 @@ tryDraw = function(graph) {
         //console.log('Hey',n);
         d3.selectAll('g.edgeLabel div.id_in_edge').on('mousedown',mouseDownEdge);
 
-        //This assumes label is unique.
-        var eid = Session.get('current_view_id');
-        if(eid){
-            var samples = findSamplesInExp(eid);
-            _.each($('g.node'),function(el){
-                var label = $(el).text();
-                var id = _.findWhere(samples,{name: label});
-                $(el).attr('data-label',label);
-                $(el).attr('data-id',id ? id._id : null);
-            });
-        }
+//        //This assumes label is unique.
+//        var eid = Session.get('current_view_id');
+//        if(eid){
+//            var samples = findSamplesInExp(eid);
+//            _.each($('g.node'),function(el){
+//                var label = $(el).text();
+//                var id = _.findWhere(samples,{name: label});
+////                $(el).attr('data-label',label);
+////                $(el).attr('data-id',id ? id._id : null);
+//            });
+//        }
      //   myDraw(layout);
 
 //      d3.select("svg")
@@ -330,6 +340,7 @@ tryDraw = function(graph) {
       //  svg.attr('transform',defaultTransform());
 
       zm = d3.behavior.zoom().scaleExtent([0.2, 1.5]).scale(defaultScale()).on("zoom", redraw);
+      //  zm.on('dblclick.zoom',null);
        svg.call(zm);
 
      //  svg.on("mousemove", null);

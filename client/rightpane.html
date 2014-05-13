@@ -10,9 +10,10 @@
 
     <div class=''>
         {{#if sample_not_used}}
-        <button type="button" id='deletesample' class="btn btn-danger">Delete</button>
+        <a type="button" id='deletesample' title='Delete sample' class="btn btn-danger">Delete</a>
         {{else}}
-        <button type="button" id='deletesample' disabled class="btn btn-danger">Delete</button>
+        <a type="button" id='deletesample'  alt='Delete sample' disabled class="btn btn-danger">Delete</a>
+        <span class='explain_small'>You cannot delete samples that are used in experiments.</span>
         {{/if}}
     </div>
     <div id='sample_warning'>
@@ -21,9 +22,9 @@
         {{/if}}
     </div>
     <section>
-        <h3>Type and classes</h3>
+        <h3>Sample type</h3>
         <div>Type: <a href='/type/{{sampletype._id}}'><i>{{sampletype.name}}</i></a></div>
-        <div>Classes: <ul class='flatlist'>{{#each classes}}<li><i>{{name}}</i></li>{{/each}}</ul></div>
+        <!--<div>Classes: <ul class='flatlist'>{{#each classes}}<li><i>{{name}}</i></li>{{/each}}</ul></div>-->
     </section>
     <section>
         <h3>Experiments using this sample</h3>
@@ -58,72 +59,109 @@
         <button type="button" id='cancelsamplenote' class="btn btn-default">Cancel</button>
 
     </section>
-    <section>
+    <!--<section>-->
 
-        <h3>Data</h3>
-        <ul>
-            {{#each data}}
-            {{path}}
-            {{/each}}
+        <!--<h3>Data</h3>-->
+        <!--<ul>-->
+            <!--{{#each data}}-->
+            <!--{{path}}-->
+            <!--{{/each}}-->
 
-        </ul>
-        <input type=file />
-    </section>
+        <!--</ul>-->
+        <!--<input type=file />-->
+    <!--</section>-->
 
 </template>
 
 <template name='type'>
-    <h2>{{this.name}}</h2>
-    <div class=''>
-        <button type="button" id='renamesampletype' class="btn btn-primary">Rename</button>
-        <button type="button" id='deletesampletype' class="btn btn-danger">Delete</button>
-    </div>
-    <section>
-        <h3>Classes this sample type belongs to</h3>
-        <ul>
-            {{#each classes}}
-            <li>{{name}}</li>
-            {{/each}}
-        </ul>
-        <input type="text" id='nametypeclass'/>
-        <button type="button" id='addtypeclass' class="btn btn-default">Add</button>
+    {{#if editing_title}}
+    <h2>
+        <input value='{{name}}' id='typetitle_input'/>
 
+    </h2>{{else}}
+    <h2 id='typetitle'>{{name}}</h2>
+    {{/if}}
+
+    <div class=''>
+        {{#if is_systemtype}}
+            <a type="button" id='deletesampletype'  alt='Delete sample' disabled class="btn btn-danger">Delete</a>
+            <span class='explain_small'>You cannot delete a reserved sample type.</span>
+        {{else}}
+            {{#if sampletype_not_used}}
+                {{#if has_children}}
+                    <a type="button" id='deletesampletype'  alt='Delete sample' disabled class="btn btn-danger">Delete</a>
+                    <span class='explain_small'>You cannot delete a sample type that has children.</span>
+                {{else}}
+                    <a type="button" id='deletesampletype' title='Delete sample' class="btn btn-danger">Delete</a>
+                {{/if}}
+            {{else}}
+                <a type="button" id='deletesampletype'  alt='Delete sample' disabled class="btn btn-danger">Delete</a>
+                <span class='explain_small'>You cannot delete a sample type that is used in experiments.</span>
+            {{/if}}
+        {{/if}}
+    </div>
+    <section id='type_hierarchy'>
+        <h3>Type hierarchy</h3>
+        {{{hierarchy}}}
     </section>
+    <!--<section>-->
+        <!--<h3>Classes this sample type belongs to</h3>-->
+        <!--<ul>-->
+            <!--{{#each classes}}-->
+            <!--<li>{{name}}</li>-->
+            <!--{{/each}}-->
+        <!--</ul>-->
+        <!--<input type="text" id='nametypeclass'/>-->
+        <!--<button type="button" id='addtypeclass' class="btn btn-default">Add</button>-->
+
+    <!--</section>-->
     <section>
         <h3>Samples of this type</h3>
-        <table class='table'>
+        <table class='table' id='type_samples'>
+            <tr>
+                <th>Name</th>
+                <th>Experiments made and used</th>
+            </tr>
             {{#each samples}}
             <tr>
                 <td><a href='/sample/{{_id}}'>{{name}}</a></td>
-                <td></td>
-                <td></td>
+                <td>
+                    <ul class='flatlist'>
+                    {{#if sample_used}}
+                        {{#each exps_used}}
+                    <li><a href='/exp/{{_id}}'>{{name}}</a></li>
+                    {{/each}}
+                        {{else}}
+                        (not associated)
+                    {{/if}}
+                    </ul></td>
             </tr>
             {{/each}}
         </table>
     </section>
     <section>
         <h3>Note</h3>
-        <textarea name="" id="sampletypenote" cols="30" rows="10">{{note}}</textarea>
-        <button type="button" id='savesampletypenote' class="btn btn-primary">Save</button>
-        <button type="button" id='cancelsampletypenote' class="btn btn-default">Cancel</button>
+        <textarea name="" id="typenote" cols="30" rows="10">{{note}}</textarea>
+        <button type="button" id='savetypenote' class="btn btn-primary">Save</button>
+        <button type="button" id='canceltypenote' class="btn btn-default">Cancel</button>
 
     </section>
-    <section>
+    <!--<section>-->
 
-        <h3>Data</h3>
-        <ul>
-            {{#each data}}
-            {{path}}
-            {{/each}}
+        <!--<h3>Data</h3>-->
+        <!--<ul>-->
+            <!--{{#each data}}-->
+            <!--{{path}}-->
+            <!--{{/each}}-->
 
-        </ul>
-        <input type=file />
-    </section>
+        <!--</ul>-->
+        <!--<input type=file />-->
+    <!--</section>-->
 
 </template>
 
-<template name='date'>
-    Date: {{_id}}
+<template name='preset'>
+    Not supported yet.
 
 </template>
 
@@ -135,3 +173,34 @@
     Loading...
 </template>
 
+
+<template name='log'>
+    <h2>Logs on {{date}}</h2>
+    <table class='table' id='log_table'>
+        <thead>
+        <tr>
+
+            <th>Operation</th>
+            <th>Detail</th>
+           <!--<th>ID</th>-->
+            <th>Time</th>
+        </tr>
+        </thead>
+        <tbody>
+
+            {{#each this}}
+    <tr>
+        <td>{{{operation}}}</td>
+        <td>{{{detail}}}</td>
+        <!--<td>{{id}}</td>-->
+        <td>{{formatTime timestamp}}</td>
+    </tr>
+    {{/each}}
+        </tbody>
+    </table>
+
+</template>
+
+<template name='multiexp'>
+    Multi exp: not supported yet.
+</template>

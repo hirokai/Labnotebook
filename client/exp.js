@@ -9,7 +9,7 @@
 Template.exp.exp_name = function(){
 //  var e = getCurrentExp();
 //  //  console.log(e);
-    return  getCurrentExp().name;
+    return  this.name;
 };
 
 Template.exp.samples = function() {
@@ -65,7 +65,7 @@ Template.exp.operation_run = function(opid,runid){
 };
 
 Template.exp.eid = function(){
-    return Session.get('current_view_id');
+    return getCurrentExpId();
 };
 
 Template.exp.sample_selected = function(){
@@ -77,9 +77,7 @@ Template.exp.op_selected = function(){
 };
 
 Template.exp.formatTime = function(v){
-//    console.log(v);
-    var d = new Date(v);
-         return ''+d.getHours()+ ':' + d.getMinutes() + "'" + d.getSeconds() + '"';
+    return v ? moment(new Date(v)).format("H:mm") : null;
 };
 
 Template.exp.formatDate = function(v){
@@ -106,8 +104,8 @@ Template.exp.editing_sample_type = function(){
 };
 
 Template.exp.protocol_operations = function(){
-    var e = getCurrentExp();
-    var opids = e.protocol.operations;
+   // var e = getCurrentExp();
+    var opids = this.protocol.operations;
 
     //A bit ad hoc...
     var ops = sortById(Operations.find({_id: {$in: opids}}).fetch(),opids);
@@ -135,8 +133,8 @@ Template.exp.step_output = function(){
 
 Template.exp.events({
     'mousedown .stepdelete': function(e){
-        var eid = Session.get('current_view_id');
-        Operations.remove(this._id);
+//        var eid = getCurrentExpId();
+        removeOp(this._id);
     },
     'click #deselect': function(){
         Session.set('selected_nodes',[]);
@@ -186,9 +184,9 @@ Template.exp.events({
         Samples.remove(this._id);
     },
     'click #deleteexp': function(){
-        var eid = Session.get('current_view_id');
+        var eid = getCurrentExpId();
         if(window.confirm('Are you sure you want to delete this exp?')){
-            Experiments.remove(eid);
+            deleteExp(eid);
             Router.go('exp');
         }
     },
@@ -212,12 +210,27 @@ Template.exp.events({
         var runid = ee.attr('data-runid');
         setOpTimestamp(runid,opid,new Date().getTime());
     },
-    'click .timepoint':function(evt){
+    'click .edittime': function(evt,tmpl){
+        var ee = getButton(evt.target);
+        var opid = ee.attr('data-operation');
+        var runid = ee.attr('data-runid');
+
+        Session.set('runopinfo_for',{op: opid, run: runid});
+  //      $('#runop_timepicker').timepicker();
+        $('#runop_info').modal();
+    },
+    'mousedown .timepoint':function(evt){
         if(evt.altKey){
-            var e = $(evt.target);
-            var opid = e.attr('data-operation');
-            var runid = e.attr('data-runid');
+            var ee = $(evt.target);
+            var opid = ee.attr('data-operation');
+            var runid = ee.attr('data-runid');
             setOpTimestamp(runid,opid,null);
+        }else{
+            var ee = $(evt.target);
+            var opid = ee.attr('data-operation');
+            var runid = ee.attr('data-runid');
+            Session.set('runopinfo_for',{op: opid, run: runid});
+            $('#runop_info').modal();
         }
     },
     'change #sample_shown': function(evt){
@@ -307,8 +320,8 @@ Template.exp.events({
 });
 
 Template.exp.assignsample_possible = function(protocol_sid){
-    var e = getCurrentExp();
-    var ops = Operations.find({_id: {$in: e.protocol.operations}}).fetch();
+    var p_ops = Experiments.findOne(getCurrentExpId(),{fields: {'protocol.operations': 1}}).protocol.operations;
+    var ops = Operations.find({_id: {$in: p_ops}}).fetch();
     var outs = _.flatten(_.map(ops,function(op){return op.output;}));
     return !_.contains(outs,protocol_sid);
 };
@@ -321,8 +334,13 @@ Template.exp.events(okCancelEvents(
     '#exptitle_input',
     {
         ok: function (value) {
-            var eid = Session.get('current_view_id');
-            Experiments.update(eid,{$set: {name: value}});
+            console.log(_.trim(value));
+            if(_.trim(value) == ''){
+                window.alert('Title cannot be empty or only spaces.');
+            }else{
+                var eid = getCurrentExpId();
+                Experiments.update(eid,{$set: {name: value}});
+            }
             Session.set('editing_exp_title',false);
         },
         cancel: function () {
@@ -357,20 +375,23 @@ Template.exp.info_active = function(name) {
 };
 
 Template.exp.date = function(){
-    var eid = Session.get('current_view_id');
-    var e = Experiments.findOne(eid);
+//    var eid = getCurrentExpId();
+//    var e = Experiments.findOne(eid);
+    var e = this;
     var d = e ? e.date : null;
     return d ? formatDate(new Date(d)) : null;
 };
 
 Template.exp.rendered = function () {
     $( "#exp_datepicker" ).datepicker({ autoSize: true });
+
     var self = this;
     self.node = self.find("svg");
     if (!self.handle) {
         self.handle = Deps.autorun(function () {
             var eid = getCurrentExpId();
             renderCells(eid);
+            //`ga('send', 'event', 'view', 'exp', Meteor.userId(),eid);
         });
     }
 };
@@ -379,9 +400,11 @@ Template.exp.rendered = function () {
 function mkHtmlForSampleChooser(sid,runid){
 //    console.log(sid,Samples.findOne(sid));
     var stid = Samples.findOne(sid).sampletype_id;
-    var samples = Samples.find({sampletype_id: stid, protocol: false}).fetch();
+    var samples = findCompatibleSamples(stid);
     return _.map(samples,function(s){
+        var type = SampleTypes.findOne(s.sampletype_id).name;
         return "<tr class='chooser_tr'>"+"<td class='name'>" + s.name + "</td>"
+            + "<td class='type'>" + type + "</td>"
         + "<td class='expmade'>" + formatDate(new Date(s.timestamp)) + "</td>"
         + "<td class='choose_sample' data-sid='"+ s._id+"' data-runid='"+ runid +"'"+">Choose</td></tr>";
     }).join('\n');
@@ -646,3 +669,105 @@ Template.op_info.types = function(){
     ];
 };
 
+
+Template.runop_info.runop = function(){
+    var ids = Session.get('runopinfo_for') || {run: null, op: null};
+    return getRunOp(ids.op,ids.run);
+//    console.log(ids);
+}
+
+function getRunOp(opid,runid){
+    var run = ExpRuns.findOne(runid);
+    var pop = run ? Operations.findOne(opid) : null;
+    var res = {};
+    if(run && pop){
+        res.name = pop ? pop.name : null;
+        var op = run.ops[opid];
+        res.params = op.params;
+        res.timestamp = op.timestamp
+        res.note = op.note;
+        return res;
+    }else{
+        return null;
+    }
+}
+//
+//Template.runop_info.op = function(){
+//    var ids = Session.get('runopinfo_for') || {run: null, op: null};
+//    return Operations.findOne(ids.op);
+//}
+
+Template.runop_info.title = function(){
+    var ids = Session.get('runopinfo_for') || {run: null, op: null};
+//    console.log(ids);
+    var run = ExpRuns.findOne(ids.run);
+    var runname = run ? run.name : '';
+    var op = Operations.findOne(ids.op);
+    var opname = op ? op.name : '';
+    return runname + ': ' + opname;
+};
+
+Template.runop_info.events({
+  'click #close_runop_info': function(){
+      $('#runop_info').modal('hide');
+  },
+    'click #save_runop_info': function(){
+        var s = $('#runop_datepicker').val() + ' ' + $('#runop_timepicker').val();
+        var ids = Session.get('runopinfo_for') || {run: null, op: null};
+        setOpTimestamp(ids.run,ids.op,new Date(s).getTime());
+        var note = $('#runop_note').val();
+        setRunOpNote(ids.run,ids.op,note);
+        $('#runop_info').modal('hide');
+    },
+    'hidden.bs.modal #runop_info': function(){
+        Session.set('runopinfo_for',null);
+
+//        $('.bootstrap-datetimepicker-widget').hide();
+    }
+});
+
+Template.runop_info.formatTime = function(v){
+//    console.log(v);
+    if(v){
+        var s = moment(new Date(v)).format("h:m:s A");
+        console.log(s);
+        return s;
+    }else{
+        return moment().format("h:m:s A");
+    }
+};
+
+Template.runop_info.formatDate = function(v){
+    //Use exp's date for new entry.
+    return v ? moment(new Date(v)).format("M/D/YYYY") : moment(new Date(getCurrentExp().date)).format("M/D/YYYY");
+};
+
+Template.runop_info.rendered = function(){
+    var self = this;
+    $( "#runop_datepicker" ).datepicker({ autoSize: true });
+    $('#runop_timepicker').timepicker();
+
+    self.node = self.find("#runop_timepicker");
+    if (!self.handle) {
+        self.handle = Deps.autorun(function () {
+//            console.log('rendered');
+            var ids = Session.get('runopinfo_for') || {run: null, op: null};
+            var runop = getRunOp(ids.op,ids.run);
+            var t = runop ? runop.timestamp : null;
+            var ts = t ? moment(new Date(t)).format("h:m:s A") : null;
+            console.log(t,ts);
+            if(ts){
+                $('#runop_timepicker').timepicker('setTime',ts);
+            }else{
+                $('#runop_timepicker').timepicker();
+//                $('#timepicker').timepicker('setTime',null);
+          //      $('#runop_timepicker').val('');
+            }
+        });
+    }
+
+};
+
+Template.exp.runop_shown = function(){
+    return !!Session.get('runopinfo_for');
+}

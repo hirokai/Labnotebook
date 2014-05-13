@@ -248,16 +248,9 @@ function defaultDrawNodes(g, root) {
       .append('g')
         .style('opacity', 0)
       //Hiro Kai added.
-      .attr('data-id',function(d){return d;})
-        .attr('class', function(d){
-          var ids = Session.get('selected_nodes');
-          //console.log(ids);
-          return 'node enter' + (_.contains(ids,d) ? " selected" : "");
-      });
-//      .classed('selected',function(d){
-//          var ids = Session.get('selected_nodes');
-//          return _.contains(ids,d);
-//      });
+//      .attr('data-id',function(d){return d;})
+        .attr('class', 'node enter');
+
 
   svgNodes.each(function(u) { addLabel(g.node(u), d3.select(this), 10, 10); });
 
@@ -272,7 +265,13 @@ function defaultDrawEdgeLabels(g, root) {
   var svgEdgeLabels = root
     .selectAll('g.edgeLabel')
     .classed('enter', false)
-    .data(g.edges(), function (e) { return e; });
+    .data(g.edges(), function (e) { return e; })
+    //Hiro Kai added
+      .attr('data-id',function(e){return g.edge(e).custom_id;})
+  //    .classed({'selected': function(e){return _.contains(Session.get('selected_edges'),g.edge(e).custom_id);}})
+    .attr({'data-selected': function(e){return _.contains(Session.get('selected_edges'),g.edge(e).custom_id) ? 'selected' : null;}});
+
+    //Hiro Kai added end
 
   svgEdgeLabels.selectAll('*').remove();
 
@@ -281,9 +280,15 @@ function defaultDrawEdgeLabels(g, root) {
       .append('g')
         .style('opacity', 0)
       //Hiro Kai added.
-        .attr('data-id',function(d){//console.log(d);
-        return d;})
-        .attr('class', 'edgeLabel enter');
+//        .attr('data-id',function(d){//console.log(d);
+//        return d;})
+        .attr('class', 'edgeLabel enter')
+//      .attr('data-id',function(e){return 'hoge'})
+      .attr('data-id',function(e){return g.edge(e).custom_id;})
+      .attr({'data-selected': function(e){
+        //  console.log(g.edge(e).custom_id, Session.get('selected_edges'));
+          return _.contains(Session.get('selected_edges'),g.edge(e).custom_id) ? 'selected' : null;
+      }});
 
   svgEdgeLabels.each(function(e) { addLabel(g.edge(e), d3.select(this), 0, 0); });
 
@@ -408,8 +413,22 @@ function defaultPostRender(graph, root) {
 function addLabel(node, root, marginX, marginY) {
   // Add the rect first so that it appears behind the label
   var label = node.label;
+    //This is only for nodes, not edges.
+  root
+      .classed('selected',function(d){
+//          console.log(d);
+          return _.contains(Session.get('selected_nodes'),d);
+      })
+      .classed('selected-first',function(d){
+          return Session.get('selected_nodes')[0] == d;
+      });
+
   var rect = root.append('rect');
   var labelSvg = root.append('g');
+
+    //Hiro Kai added
+    var custom_id = node.custom_id;
+//    labelSvg.attr('data-id',custom_id);
 
   if (label[0] === '<') {
     addForeignObjectLabel(label, labelSvg);
@@ -430,15 +449,6 @@ function addLabel(node, root, marginX, marginY) {
   rect
     .attr('rx', 5)
     .attr('ry', 5)
-      //Hiro Kai modified on 4/29/2014
-      .classed({selected: function(d){
-          return _.contains(Session.get('selected_nodes'),d)
-            || _.contains(Session.get('selected_edges'),d);
-      },
-        'selected-first': function(d){
-            return Session.get('selected_nodes')[0] == d
-                || Session.get('selected_edges')[0] == d;
-        }})
     .attr('x', -(bbox.width / 2 + marginX))
     .attr('y', -(bbox.height / 2 + marginY))
     .attr('width', bbox.width + 2 * marginX)

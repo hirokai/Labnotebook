@@ -7,10 +7,25 @@ Meteor.startup(function () {
 
 // Support for playing D&D: Roll 3d6 for dexterity
 Accounts.onCreateUser(function (options, user) {
-    //console.log(user);
     initializeDB(user._id);
     return user;
 });
+
+removeUser = function(uid){
+    if(uid){
+        Dates.remove({owner: uid});
+        Experiments.remove({owner: uid});
+        Samples.remove({owner: uid});
+        SampleTypes.remove({owner: uid});
+        TypeClasses.remove({owner: uid});
+        Operations.remove({owner: uid});
+        Presets.remove({owner: uid});
+     //   SampleGroups.remove({owner: uid});
+        ExpRuns.remove({owner: uid});
+        Logs.remove({owner: uid});
+        Meteor.users.remove(uid);
+    }
+};
 
 //Create user DB for the user of user ID uid.
 initializeDB = function(uid) {
@@ -48,13 +63,14 @@ initializeDB = function(uid) {
 
     SampleTypes.remove({owner: uid});
     var st0, st, st1, st2, st3, st4, st5;
-    st = SampleTypes.insert({owner: uid, name: "DOPC", timestamp: new Date().getTime(), data: [], tags: [], classes: [c1, c2]});
-    st1 = SampleTypes.insert({owner: uid, name: "TR", timestamp: new Date().getTime(), data: [], tags: [], classes: [c1, c2]});
-    st2 = SampleTypes.insert({owner: uid, name: "Lipids in CHCl3", timestamp: new Date().getTime(), data: [], tags: [], classes: []});
-    st3 = SampleTypes.insert({owner: uid, name: "Lipids evaporated", timestamp: new Date().getTime(), data: [], tags: [], classes: []});
-    st4 = SampleTypes.insert({owner: uid, name: "Lipids dried", timestamp: new Date().getTime(), tags: [], classes: []});
-    st5 = SampleTypes.insert({owner: uid, name: "DOPC 100% SUVs", timestamp: new Date().getTime(), data: [], tags: ["SUV"], classes: []});
-    st0 = SampleTypes.insert({owner: uid, name: "General sample", timestamp: new Date().getTime(), data: [], tags: [], classes: []});
+    mkSampleTypes(uid);
+
+    st = SampleTypes.findOne({owner: uid, name: 'DOPC'})._id;
+    st1 = SampleTypes.findOne({owner: uid, name: 'Texas Red'})._id;
+    st2 = SampleTypes.findOne({owner: uid, name: 'Lipids in CHCl3'})._id;
+    st3 = SampleTypes.findOne({owner: uid, name: 'Lipids evaporated'})._id;
+    st4 = SampleTypes.findOne({owner: uid, name: 'Lipids dried'})._id;
+    st5 = SampleTypes.findOne({owner: uid, name: 'SUVs'})._id;
 
     //These samples are used in the protocol in the exp.
     Samples.remove({owner: uid});
@@ -97,6 +113,8 @@ initializeDB = function(uid) {
     ss = _.uniq(ss);
     Experiments.update(eid,{$set: {samples: ss}});
 
+    Logs.remove({owner: uid});
+
 };
 
 function verifyExperiment(eid){
@@ -116,4 +134,21 @@ function verifyExperiment(eid){
         return false;
     }
     return true;
+}
+
+function mkSampleTypes(uid) {
+    st0 = SampleTypes.insert({owner: uid, name: "Any", timestamp: new Date().getTime(), data: [], tags: [], classes: [], system: true});
+    var st1 = addSampleType(uid,'Phospholipid',st0);
+    var st2 = addSampleType(uid,'DOPC',st1);
+    var st3 = addSampleType(uid,'Texas Red',st1);
+    var st4 = addSampleType(uid,'Mixed lipids',st0);
+    var st5 = addSampleType(uid,'Lipids in CHCl3',st4);
+    var st6 = addSampleType(uid,'Lipids evaporated',st4);
+    var st7 = addSampleType(uid,'Lipids dried',st4);
+    var st8 = addSampleType(uid,'SUVs',st0);
+    addSampleType(uid,'Organic compound',st0);
+}
+
+function addSampleType(uid,name,parent){
+    return SampleTypes.insert({owner: uid, name: name, timestamp: new Date().getTime(), data: [], tags: [], parent: parent, classes: []});
 }

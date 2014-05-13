@@ -5,7 +5,14 @@
       "bootstrap-3": {},
       "iron-router": {},
       "jquery-ui": {},
-      "jquery-ui-bootstrap": {}
+      "jquery-ui-bootstrap": {},
+      "moment": {},
+      "bootstrap3-datetimepicker": {},
+      "bootstrap-3-timepicker": {},
+      "underscore-string-latest": {},
+      "event-hooks": {},
+      "jqTree": {},
+      "Handsontable": {}
     },
     "packages": {
       "bootstrap-3": {
@@ -27,6 +34,41 @@
         "git": "https://github.com/TimHeckel/meteor-jquery-ui-bootstrap.git",
         "tag": "v0.1.2",
         "commit": "fa742a85639307003e105898e15b631394b63509"
+      },
+      "moment": {
+        "git": "https://github.com/acreeger/meteor-moment.git",
+        "tag": "v2.6.0",
+        "commit": "26156df681750fd6e6ed77043eef32b6653ebbdf"
+      },
+      "bootstrap3-datetimepicker": {
+        "git": "https://github.com/tsega/meteor-bootstrap3-datetimepicker.git",
+        "tag": "v0.0.5",
+        "commit": "30b5fa0759f98b75761772ad891876408f7cc8c4"
+      },
+      "bootstrap-3-timepicker": {
+        "git": "https://github.com/ianserlin/meteor-bootstrap-timepicker.git",
+        "tag": "v0.2.5",
+        "commit": "12dd7c5dd0e67f0f307e7c5aefed74777be808f1"
+      },
+      "underscore-string-latest": {
+        "git": "https://github.com/TimHeckel/meteor-underscore-string.git",
+        "tag": "v2.3.3",
+        "commit": "4a5d70eee48fbd90a6e6fc78747250d704a0b3bb"
+      },
+      "event-hooks": {
+        "git": "https://github.com/BenjaminRH/meteor-event-hooks.git",
+        "tag": "v1.4.3",
+        "commit": "ba4f3d7887748458618d29615492906f0c88d31c"
+      },
+      "jqTree": {
+        "git": "https://github.com/terryschen/meteor-jqTree.git",
+        "tag": "v0.19.0",
+        "commit": "ac0ee4e40c8127a411b38b7810869c77e2b54c22"
+      },
+      "Handsontable": {
+        "git": "https://github.com/olragon/meteor-handsontable.git",
+        "tag": "v0.9.9",
+        "commit": "4b86606255d20bb69ae033800406bee6d8ed83a8"
       },
       "blaze-layout": {
         "git": "https://github.com/EventedMind/blaze-layout.git",

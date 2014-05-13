@@ -1,20 +1,28 @@
 <template name="exp">
+{{#if this}}
     <div id='expinfo_header'>
+        <div id='deleteexpdiv'>
+            <button type="button" id='deleteexp' class="btn btn-danger">Delete Exp</button>
 
+        </div>
+        <div>
     {{#if editing_title}}
     <h2>
         <input value='{{exp_name}}' id='exptitle_input'/>
 
-    </h2>{{else}}
+    </h2>
+
+        {{else}}
     <h2 id='exptitle'>{{exp_name}}</h2>
-    {{/if}}
 
-    <div id='date_exp'>
-        Date: <input type="text" id="exp_datepicker" value='{{formatDate date}}'/>
-        <button type="button" id='saveexp' class="btn btn-primary">Save</button>
-        <button type="button" id='deleteexp' class="btn btn-danger">Delete</button>
+          {{/if}}
+        </div>
+        <div id='date_exp'>
+            Date: <input type="text" id="exp_datepicker" value='{{formatDate date}}'/>
+        </div>
 
-    </div>
+
+
     </div>
 
     <div class='row'>
@@ -22,13 +30,13 @@
     {{> d3graph}}
     <div id='sampleandprotocol'>
         <div class="btn-group" id='info_shown' data-toggle="buttons">
-            <label class="btn btn-default  {{#if info_active 'sample'}}active{{/if}}"  id='sample_shown'>
+            <label class="btn btn-sm btn-default  {{#if info_active 'sample'}}active{{/if}}"  id='sample_shown'>
                 <input type="checkbox"> Samples
             </label>
-            <label class="btn btn-default {{#if info_active 'step'}}active{{/if}}" id='step_shown'>
+            <label class="btn btn-sm btn-default {{#if info_active 'step'}}active{{/if}}" id='step_shown'>
                 <input type="checkbox"> Steps
             </label>
-            <label class="btn btn-default {{#if info_active 'sheet'}}active{{/if}}" id='sheet_shown'>
+            <label class="btn btn-sm btn-default {{#if info_active 'sheet'}}active{{/if}}" id='sheet_shown'>
                 <input type="checkbox"> Sheet
             </label>
         </div>
@@ -84,12 +92,12 @@
                         {{#with sample_run ../_id _id}}
                         <td class='sample_run_cell' align='center' data-runidx='{{./index}}' data-runid='{{../_id}}' data-protocolsample='{{../../_id}}' data-sample={{_id}}>
                             {{#if stub}}
-                                <button class='makenewsamplebtn btn btn-sm btn-primary {{#if assignsample_possible ../_id}}twobtns{{/if}}'
-                                        alt='Add reference' type="button" data-runid='{{../_id}}'  data-protocolsample='{{../../_id}}'>
+                                <button class='makenewsamplebtn btn btn-sm btn-primary {{#if assignsample_possible ../../_id}}twobtns{{/if}}'
+                                        title='Define new sample' type="button" data-runid='{{../_id}}'  data-protocolsample='{{../../_id}}'>
                                     <span class="glyphicon glyphicon-plus"></span>
                                 </button>
                                 {{#if assignsample_possible ../../_id}}
-                                    <button class='assignsamplebtn btn btn-xs btn-default twobtns' type="button" data-runidx='{{./index}}'
+                                    <button class='assignsamplebtn btn btn-xs btn-default twobtns' title='Assign previous sample to this point' type="button" data-runidx='{{./index}}'
                                             data-runid='{{../_id}}' data-protocolsample='{{../../_id}}'>
                                         <span class="glyphicon glyphicon-import"></span>
                                     </button>
@@ -166,11 +174,17 @@
                     <span class='timepoint link'  data-runid='{{../_id}}' data-operation='{{../../_id}}'>
                                               {{formatTime timestamp}}
 
-                    </span>                    {{else}}
+                    </span>
+                    {{else}}
+
+
                     <button class="entertime btn btn-xs btn-primary" type="button" data-operation='{{../../_id}}' data-runid='{{../_id}}'>
                         <span class="glyphicon glyphicon-ok"></span>
                     </button>
-                     {{/if}}
+                    <button class="edittime btn btn-xs btn-primary" type="button" data-operation='{{../../_id}}' data-runid='{{../_id}}'>
+                        <span class="glyphicon glyphicon-pencil"></span>
+                    </button>
+                    {{/if}}
                 </td>
                 {{/with}}
                 {{/each}}
@@ -179,6 +193,7 @@
 
             </tbody>
         </table>
+
         <!--<a href="#" id='addsteplink'><span id='addstepexpand'>{{#if addstephidden}}+{{else}}-{{/if}}</span>&nbsp;Add a step</a>-->
         <!--<div id='definenewstepdiv' style='{{#if addstephidden}}display:none;{{/if}}'>-->
             <!--{{> define_step}}-->
@@ -199,10 +214,12 @@
             <h4 class="modal-title" id="myModalLabel">Choose previous sample</h4>
           </div>
           <div class="modal-body">
+              <p>This table shows samples that are compatible with the protocol. Any sample with the type or subtypes of the type in the protocol is compatible.</p>
                 <table class='table' id='sample_chooser_table'>
                     <thead>
                     <tr>
                         <th>Name</th>
+                        <th>Type</th>
                         <th>Date made</th>
                     </tr>
                     </thead>
@@ -222,7 +239,10 @@
 
     {{> sample_info}}
     {{> op_info}}
-
+    {{> runop_info}}
+{{else}}
+Not found.
+{{/if}}
 
 </template>
 
@@ -443,110 +463,144 @@
 
 </template>
 
+
+<template name='runop_info'>
+{{#with runop}}
+    <div class="modal fade" id="runop_info" tabindex="-1" role="dialog" aria-labelledby="runopInfoLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="runopInfoLabel">{{title}}</h4>
+                </div>
+                <div class="modal-body">
+                    <table class='table' id='runop_info_table'>
+                        <tbody>
+
+                        <tr>
+                            <td>Name</td>
+                            <td>{{name}}</td>
+                        </tr>
+                        <tr>
+                            <td>Time</td>
+                            <td>
+                                <input type="text" id="runop_datepicker" value='{{formatDate timestamp}}'/>
+                                <div class="bootstrap-timepicker">
+
+                                    <input id="runop_timepicker" value='{{formatTime timestamp}}' data-minute-step="1" data-show-seconds='true' data-modal-backdrop="true" type="text"/>
+                </div>
+
+                            </td>
+                        </tr>
+
+
+                        <tr>
+                            <td>Input</td>
+                            <td>
+                                <ul>
+                                    {{#each input}}
+                                    {{#with sample .}}
+
+                                    <li>{{name}}</li>
+                                    {{/with}}
+                                    {{/each}}
+                                </ul>
+
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Output</td>
+                            <td>
+                                <ul>
+                                    {{#each output}}
+                                    {{#with sample .}}
+
+                                    <li>{{name}}</li>
+                                    {{/with}}
+                                    {{/each}}
+                                </ul>
+
+                            </td>
+                        </tr>                        <tr>
+                            <td>Params</td>
+
+
+                            <td>
+                                <table id='runparamtable' class='table'>
+                                    <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Type/Unit</th>
+                                    </tr>
+
+                                    </thead>
+                                    <tbody>
+
+                                    {{#each params}}
+                                    <tr>
+                                        <td>{{name}}</td>
+                                        <td>{{value}}</td>
+                                        </tr>
+                                    {{/each}}
+                                    </tbody>
+                                </table>
+
+                            </td>                        </tr>
+                        <tr>
+                            <td>Note</td>
+                            <td><textarea name="" id="runop_note" cols="20" rows="10" tabindex='2'>{{note}}</textarea></td>
+                        </tr>
+                        </tbody>
+                    </table>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id='close_runop_info' class="btn btn-default" data-dismiss="modal" tabindex='4'>Close</button>
+                    <button type="button" id='save_runop_info' class="btn btn-primary"  tabindex='3'>Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{{/with}}
+</template>
+
 <template name='d3graph'>
-    <div class="graphWrapper">
+    <div id='graphWrapper'>
+        <h3>Protocol</h3>
+        <div id='graph_buttons'>
+            <div>
+                <span class='btnlabel'>For sample:</span>
+                <button id='newsamplebtn'  class="btn btn-xs btn-default" type="button">New sample</button>
+                <button id='deletesamplebtn'  class="btn btn-xs btn-default" {{onenode_edit_disabled}}  type="button">Delete</button>
+            </div>
+            <div>
 
-        <div id='graph_buttons'></div>
-        <div>
-            <span class='btnlabel'>For sample:</span>
-            <button id='newsamplebtn'  class="btn btn-xs btn-default" type="button">New sample</button>
-            <button id='deletesamplebtn'  class="btn btn-xs btn-default" {{onenode_edit_disabled}}  type="button">Delete sample</button>
-        </div>
-        <div>
+                <span class='btnlabel'>For sample:</span>
+                <button id='addprevstepbtn'  class="btn btn-xs btn-default" {{onenode_edit_disabled}} type="button">Add prev step</button>
+                <button id='addnextstepbtn'  class="btn btn-xs btn-default" {{onenode_edit_disabled}} type="button">Add next step</button>
+            </div>
+            <div>
+                <span class='btnlabel'>For two samples:</span>
+                <button id='connectnodes' class="btn btn-xs btn-default" {{twonodes_edit_disabled}} type="button">Connect nodes</button>
+                <button id='insertnode'  class="btn btn-xs btn-default" {{twonodes_edit_disabled}} type="button">Insert</button>
+            </div>
+            <div>
+                <span class='btnlabel'>For operation:</span>
+                <button id='newinputbtn'  class="btn btn-xs btn-default"  {{oneedge_edit_disabled}} type="button">New input</button>
+                <button id='newoutputbtn'  class="btn btn-xs btn-default"  {{oneedge_edit_disabled}} type="button">New output</button>
+                <button id='deleteopbtn'  class="btn btn-xs btn-default"  {{oneedge_edit_disabled}} type="button">Delete</button>
+          </div>
+            <div style='margin: 8px 0px;'>
+                <button id='deselect' class="btn btn-xs btn-default" type="button">Select none</button>
+                <button id='resetzoom' class="btn btn-xs btn-default" type="button">Reset zoom</button>
 
-            <span class='btnlabel'>For sample:</span>
-            <button id='addprevstepbtn'  class="btn btn-xs btn-default" {{onenode_edit_disabled}} type="button">Add prev step</button>
-            <button id='addnextstepbtn'  class="btn btn-xs btn-default" {{onenode_edit_disabled}} type="button">Add next step</button>
-
-            <button id='insertnodebeforebtn'  class="btn btn-xs btn-default" {{onenode_edit_disabled}} type="button">Insert before</button>
-        </div>
-        <div>
-            <span class='btnlabel'>For two samples:</span>
-            <button id='connectnodes' class="btn btn-xs btn-default" {{twonodes_edit_disabled}} type="button">Connect nodes</button>
-            <button id='insertnode'  class="btn btn-xs btn-default" {{twonodes_edit_disabled}} type="button">Insert</button>
-        </div>
-        <div>
-            <span class='btnlabel'>For operation:</span>
-            <button id='newinputbtn'  class="btn btn-xs btn-default"  {{oneedge_edit_disabled}} type="button">Add new input</button>
-            <button id='newoutputbtn'  class="btn btn-xs btn-default"  {{oneedge_edit_disabled}} type="button">Add new output</button>
-      </div>
-        <div>
-            <button id='deselect' class="btn btn-xs btn-default" type="button">Select none</button>
-            <button id='resetzoom' class="btn btn-xs btn-default" type="button">Reset zoom</button>
+            </div>
 
         </div>
+    <div id="svgWrapper">
         <svg>
         </svg>
     </div>
+    </div>
+
 </template>
-
-
-<!--<template name='define_step'>-->
-    <!--<div class='row' id='addstepdiv'>-->
-        <!--<div class="col-lg-6">-->
-            <!--<div class="input-group" id='addstep'>-->
-                <!--<div>-->
-                    <!--<label for="stepinput">Input sample types</label>-->
-                    <!--<select id='stepinput' class="form-control">-->
-                        <!--<option value="null">-- Select input --</option>-->
-                        <!--{{#each all_samples}}-->
-                        <!--<option value="{{_id}}">{{this.name}}</option>-->
-                        <!--{{/each}}-->
-                    <!--</select>-->
-                    <!--<ul id='insamplelist' class='flatlist'>-->
-                        <!--{{#each input_samples}}-->
-                        <!--<li data-index='{{index}}'>{{name}} <a href='#' class='delete_in_sample'>x</a></li>-->
-                        <!--{{/each}}-->
-                    <!--</ul>-->
-                <!--</div>-->
-                <!--<div>-->
-                    <!--<label for="stepoutput">Output sample types</label>-->
-                    <!--<select id='stepoutput' class="form-control">-->
-                        <!--<option value="null">-- Select output --</option>-->
-                        <!--{{#each all_samples}}-->
-                        <!--<option value="{{_id}}">{{this.name}}</option>-->
-                        <!--{{/each}}-->
-                    <!--</select>-->
-                    <!--<ul id='outsamplelist' class='flatlist'>-->
-                        <!--{{#each output_samples}}-->
-                        <!--<li data-index='{{index}}'>{{name}} <a href='#' class='delete_out_sample'>x</a></li>-->
-                        <!--{{/each}}-->
-                    <!--</ul>-->
-
-                <!--</div>-->
-                <!--<div>-->
-                    <!--<label for="stepname">Step name</label>-->
-                    <!--<input id='stepname' type="text" class="form-control" placeholder='e.g. Mix two protein solutions'>-->
-                <!--</div>-->
-                <!--<div class='inline'>-->
-                    <!--<label for="paramtype">Parameters</label>-->
-                    <!--<select name="" id="paramtype">-->
-                        <!--<option value="text">Text</option>-->
-                        <!--<option value="number">Number</option>-->
-                        <!--<option value="volume">Volume</option>-->
-                        <!--<option value="mass">Mass</option>-->
-                        <!--<option value="time">Time</option>-->
-                    <!--</select>-->
-                    <!--<select name="" id="paramunit">-->
-                        <!--{{#each units}}-->
-                        <!--<option value="{{value}}" {{selected}}>{{{name}}}</option>-->
-                        <!--{{/each}}-->
-                    <!--</select>-->
-                    <!--<input id='paramname' type="text" class="form-control" placeholder='Enter param name'>-->
-                    <!--<div>-->
-                        <!--<button id='addparambtn' class="btn btn-default" type="button">Add param</button>-->
-                    <!--</div>-->
-                <!--</div>-->
-                <!--<ul id='paramlist'>-->
-                    <!--{{#each params}}-->
-                    <!--<li data-index='{{index}}'><a href='#' class='delete_param'>x</a>&nbsp;&nbsp;{{name}}&nbsp;[{{unit}}]</li>-->
-                    <!--{{/each}}-->
-                <!--</ul>-->
-                <!--<div>-->
-                    <!--<button id='addstepbtn' class="btn btn-primary" type="button" style='float:right'>Add</button>-->
-                    <!--<button id='cancelstepbtn' class="btn btn-default" type="button" style='float:right'>Cancel</button>-->
-                <!--</div>-->
-            <!--</div>-->
-        <!--</div>&lt;!&ndash; /input-group &ndash;&gt;-->
-    <!--</div>&lt;!&ndash; /.col-lg-6 &ndash;&gt;-->
-<!--</template>-->

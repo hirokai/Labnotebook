@@ -36,13 +36,17 @@ Experiments.deny(denyObj);
 ExpRuns  = new Meteor.Collection("expruns");
 ExpRuns.allow(allowObj);
 ExpRuns.deny(denyObj);
+Meteor.publish('all-expruns', function() {
+	return ExpRuns.find({owner: this.userId || 'sandbox'},{fields: {samplelist: 1, exp: 1}});
+});
+
 Meteor.publish('expruns', function(eid) {
-	var obj = {};
-	obj.owner = this.userId || 'sandbox';
+    var owner = this.userId || 'sandbox';
 	if(eid){
-		obj.exp = eid;
-	}
-    return ExpRuns.find(obj,{sort: {timestamp: 1}});
+        return ExpRuns.find({owner: owner, exp: eid},{sort: {timestamp: 1}});
+    }else{
+        return [];
+    }
 });
 
 // Presets -- {name: String}
@@ -115,12 +119,49 @@ Operations.allow(allowObj);
 Operations.deny(denyObj);
 
 
-SampleGroups = new Meteor.Collection("samplegroups");
-Meteor.publish('samplegroups', function() {
-	return this.userId ? SampleGroups.find({owner: this.userId}) : SampleGroups.find({owner: 'sandbox'});
+//SampleGroups = new Meteor.Collection("samplegroups");
+//Meteor.publish('samplegroups', function() {
+//	return this.userId ? SampleGroups.find({owner: this.userId}) : SampleGroups.find({owner: 'sandbox'});
+//});
+//SampleGroups.allow(allowObj);
+//SampleGroups.deny(denyObj);
+
+Logs = new Meteor.Collection('logs');
+Meteor.publish('logs', function(date) {
+    var uid = this.userId || 'sandbox';
+    return Logs.find({owner: uid, date: date});
 });
-SampleGroups.allow(allowObj);
-SampleGroups.deny(denyObj);
+
+Meteor.publish('alllogs', function() {
+    var uid = this.userId || 'sandbox';
+    return Logs.find({owner: uid},{fields: {date: 1, timestamp: 1}});
+});
+
+Logs.allow({
+    insert: function (userId, doc) {
+        // the user must be logged in, and the document must be owned by the user
+        return (userId && doc.owner === userId) || (!userId && doc.owner === 'sandbox');
+    },
+    update: function (userId, doc, fields, modifier) {
+        return false;
+    },
+    remove: function (userId, doc) {
+        return false;
+    },
+    fetch: ['owner']
+});
+
+Logs.deny({
+    update: function (userId, docs, fields, modifier) {
+        // can't change owners
+        return true;
+    },
+    remove: function (userId, doc) {
+        // can't remove locked documents
+        return true;
+    },
+    fetch: ['locked'] // no need to fetch 'owner'
+});
 
 //
 //Arrows = new Meteor.Collection("arrows");
@@ -138,4 +179,29 @@ function isAdmin(uid){
     }catch(e){
         return false;
     }
+}
+
+addLog = function(o){
+  var obj = {};
+  obj.owner = Meteor.userId() || 'sandbox';
+  obj.timestamp = new Date().getTime();
+  obj.date = moment(obj.timestamp).format('YYYYMMDD');
+  obj.server = true;
+
+  obj.type = o.type;
+  obj.op = o.op;
+  obj.id = o.id;
+  obj.params = o.params;
+  Logs.insert(obj);
+};
+
+dump_allmydb = function(owner){
+var exp = Experiments.find({owner: owner}).fetch();
+var sample = Samples.find({owner: owner}).fetch();
+var op = Operations.find({owner: owner}).fetch();
+var run = ExpRuns.find({owner: owner}).fetch();
+var st = SampleTypes.find({owner: owner}).fetch();
+var cls = TypeClasses.find({owner: owner}).fetch();
+    var log = Logs.find({owner: owner}).fetch();
+    return {experiments: exp, samples: sample, operations: op, runs: run, types: st, classes: cls, logs: log};
 }

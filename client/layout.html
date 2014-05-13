@@ -6,6 +6,29 @@
 </head>
 
 <body>
+{{> googleAnalytics}}
+
+
+<div class="btn-group" id='top_menu'>
+  <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+    <span class='glyphicon glyphicon-cog'></span> <span class="caret"></span>
+  </button>
+  <ul class="dropdown-menu pull-right" role="menu">
+      <li><a href="#" id='showhelp'>Show help</a></li>
+    <li>                <span id='loginButtons'>
+      {{> loginButtons}}
+          </span></li>
+      <li class="divider"></li>
+      <li><a id='dumpdb' class='' href='#'>Backup all database</a></li>
+      {{#if loggedin}}
+      <li><a id='senddb' class='' href='#'>Send the log to {{email}}</a></li>
+      {{/if}}
+    <li class="divider"></li>
+    <li><a id='resetdb' class='danger' href='#'>Reset Database</a></li>
+    <li><a id='removeuser' class='danger' href='#'>Remove user account</a></li>
+  </ul>
+</div>
+
   <div id="top-tag-filter">
     {{> top_bar}}
   </div>
@@ -18,39 +41,79 @@
     {{> lists}}
   </div>
 </body>
+
+
+    <div class="modal fade" id="help_modal" tabindex="-1" role="dialog" aria-labelledby="helpLabel" aria-hidden="true">
+          <div class="modal-dialog">
+              <div class="modal-content">
+                  <div class="modal-header">
+                      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                      <h4 class="modal-title" id="helpLabel">Help</h4>
+                  </div>
+                  <div class="modal-body">
+                      <div><h3>
+                      How to use
+                      </h3>
+                          <ol>
+                      <li>Add a new experiment from 'Exp' tab.</li>
+                      <li>Define a protocol in Exp tab. A protocol has samples with specifics types in each step of experiment. You can add your own sample types.</li>
+                      <li>Add runs to the experiment.</li>
+                      <li>You can assign a sample to any point of experimental step.</li>
+                          </ol>
+
+                      </div>
+                      <div>
+                          <h3>Progress of implementation</h3>
+                          <table class='table'>
+                              <tr><td>Multi Exp tab</td><td>0%</td></tr>
+                              <tr><td>Preset tab</td><td>0%</td></tr>
+
+                          </table>
+                      <li>Multi Exp and Preset tabs are not implemented yet.</li>
+                      <li>Experimental version, and not intended for serious use.</li>
+                       <li>Log functions are.</li>
+
+                      </div>
+
+                      <p>Author: Hiro Kai (hkai@berkeley.edu)</p>
+
+                      <p>Github repo: <a href="https://github.com/hirokai/Labnotebook">https://github.com/hirokai/Labnotebook</a></p>
+                  </div>
+                  <div class="modal-footer">
+
+                      <button type="button" id='save_sample_info' class="btn btn-primary"  tabindex='3'>OK</button>
+                  </div>
+              </div>
+          </div>
+      </div>
+
 </template>
 
         <template name='top_bar'>
+            <span id='message'>
 
-                  <span id='loginButtons'>
-  {{> loginButtons}}
-      </span>
+            </span>
+
             <span id='username' style='float: right;font-size: 11px;margin-top:4px;'>
                 {{#if loggedin}}
                     Signed in as {{user.name}} <br>({{user.email}})
                 {{/if}}
             </span>
-            <button id='resetdb' class="btn btn-sm btn-danger" type="button" style='float: right;'>Reset Database</button>
+
         </template>
 
 <template name="lists">
-    <div>
+    <div id='listmenu-wrapper'>
 
-    <a href="#" class='listmenu {{group_selected "sample"}}'><div data-value='sample'>Sample</div></a>
-    <a href="#" class='listmenu {{group_selected "exp"}}'><div data-value='exp'>Exp</div></a>
-    <a href="#" class='listmenu {{group_selected "exps"}}'><div data-value='exps'>Multi Exp</div></a>
+    <a href="#" class='listmenu {{group_selected "sample"}}' id='listmenu-sample'><div data-value='sample'>Sample</div></a>
+    <a href="#" class='listmenu {{group_selected "exp"}}' id='listmenu-exp'><div data-value='exp'>Exp</div></a>
+    <a href="#" class='listmenu {{group_selected "multiexp"}}' id='listmenu-multiexp'><div data-value='multiexp'>Multi Exp</div></a>
 
-    <a href="#" class='listmenu {{group_selected "date"}}'><div data-value='date'>Date</div></a>
-    <a href="#" class='listmenu {{group_selected "type"}}'><div data-value='type'>Sample types</div></a>
-        <a href="#" class='listmenu {{group_selected "log"}}'><div data-value='log'>Log</div></a>
+    <a href="#" class='listmenu {{group_selected "preset"}}' id='listmenu-preset'><div data-value='preset'>Preset</div></a>
+    <a href="#" class='listmenu {{group_selected "type"}}' id='listmenu-type'><div data-value='type'>Type</div></a>
+        <a href="#" class='listmenu {{group_selected "log"}}' id='listmenu-log'><div data-value='log'>Log</div></a>
         <div style='clear: both;'></div>
     </div>
-
-<!-- <select id='grouping_select'>
-    <option value="exp" {{group_selected 'exp'}}>Experiments</option>
-    <option value="sample" {{group_selected 'sample'}}>Sample types</option>
-    <option value="date" {{group_selected 'date'}}>Dates</option>
-</select> -->
 
     {{> yield region='left_pane'}}
 </template>
@@ -146,4 +209,8 @@
       </div>
     {{/each}}
  <!-- </div> -->
+</template>
+
+<template name='googleAnalytics'>
+    <a id='analyticsstub'></a>
 </template>

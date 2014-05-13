@@ -12,18 +12,22 @@ okCancelEvents = function(selector, callbacks) {
     var events = {};
     events['keyup '+selector+', keydown '+selector+', focusout '+selector] =
         function (evt) {
+         //   console.log(evt,evt.which);
             if (evt.type === "keydown" && evt.which === 27) {
                 // escape = cancel
                 cancel.call(this, evt);
 
-            } else if (evt.type === "keyup" && evt.which === 13 ||
-                evt.type === "focusout") {
+            } else if (evt.type === "keyup" && evt.which === 13
+                //|| evt.type === "focusout"
+                ) {
                 // blur/return/enter = ok/submit if non-empty
                 var value = String(evt.target.value || "");
-                if (value)
+//                if (value)
                     ok.call(this, value, evt);
-                else
-                    cancel.call(this, evt);
+//                else
+//                    cancel.call(this, evt);
+            }else if(evt.type === "focusout"){
+                cancel.call(this,evt);
             }
         };
 
@@ -51,7 +55,7 @@ formatDateTime = function(v){
     }
 };
 
-formatDate = function(d){
+formatDate2 = function(d){
     if(d){
     var date = new Date(d);
     var m = (date.getMonth() + 1);
@@ -62,6 +66,19 @@ formatDate = function(d){
         return null;
     }
 };
+
+formatDate = function(d){
+    if(d){
+        var date = new Date(d);
+        var m = (date.getMonth() + 1);
+        var d = date.getDate();
+        var y = date.getFullYear();
+        return ''+m+'/'+d+"/"+ y;
+    }else{
+        return null;
+    }
+};
+
 
 formatTime = function(v){
 //    console.log(v);
@@ -90,10 +107,29 @@ sortById = function(arr,ids){
 
 repeat = function(n,item){
     return _.map(_.range(0,n),function(){return item;});
-}
+};
 
 getButton = function(el){
     var e = $(el);
     var ee = e.prop('tagName') == 'BUTTON' ? e : e.parent('button');
     return ee;
-}
+};
+
+
+getCurrentExp = function(){
+    var eid = getCurrentExpId();
+    return eid ? Experiments.findOne(eid) : null;
+};
+
+getCurrentExpId = function(){
+    return Session.get('current_view_id').exp;
+};
+
+getCurrentSample = function(){
+    var id = getCurrentExpId();
+    return id ? Samples.findOne(id) : null;
+};
+
+getCurrentSampleId = function(){
+    return Session.get('current_view_id').sample;
+};

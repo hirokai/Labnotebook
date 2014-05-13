@@ -1,4 +1,4 @@
-
+@import url(http://fonts.googleapis.com/css?family=Droid+Serif);
 
 * {
     padding: 0;
@@ -27,20 +27,64 @@ a, a:visited, a:active {
     color: #258;
 }
 
-.listmenu > div {
+#listmenu-wrapper {
+  height: 80px;
+}
+
+.listmenu {
   width: 60px;
   height: 30px;
-  float: left;
+  position: absolute;
+  padding: 0px;
+  margin: 0px;
+  text-decoration: none ! important;
+}
+
+
+#listmenu-sample > div{
+  left: 0px;
+  top: 0px;
+}
+
+#listmenu-exp {
+  left: 65px;
+  top: 0px;
+}
+
+#listmenu-multiexp {
+  left: 130px;
+  top: 0px;
+}
+
+#listmenu-preset {
+  left: 0px;
+  top: 35px;
+}
+
+#listmenu-type {
+  left: 65px;
+  top: 35px;
+}
+
+#listmenu-log {
+  left: 130px;
+  top: 35px;
+}
+
+
+.listmenu > div {
+//  float: left;
+  height: 100%;
+  width: 100%;
   background: #A75283;
   text-align: center;
   vertical-align: middle;
-  padding: auto;
-  margin: 3px;
+  padding-top: 8px;
   font-size: 12px;
   color: #FFEDBC;
   &:hover{
     background: #EC7263;
-
+    transition: background 0.2s linear;
   }
   word-wrap: break-word;
 }
@@ -66,11 +110,15 @@ h3 {
     overflow: hidden;
 }
 
-#loginButtons {
-  float: right;
+#top_menu {
+  position: absolute;
+  right: 3px;
+  top: 3px;
+  z-index: 1000;
 }
 
 #top-tag-filter {
+  z-index: 0;
   padding: 5px 5px 0px 10px;
     left: 200px;
     height: 44px;
@@ -115,6 +163,11 @@ h3 {
     font-weight: bold;
 }
 
+.list:hover{
+  background: #d76985;
+  transition: background 0.2s linear;
+}
+
 #lists .list-name {
     cursor: pointer;
     color: black;
@@ -157,7 +210,7 @@ h3 {
   transition: opacity 0.1s;
   opacity: 0;
   cursor: pointer;
-  width: 100%;
+  width: 100% ! important;
   height: 100% ;
   margin: 0;
   padding: 0;
@@ -167,7 +220,7 @@ h3 {
   opacity: 0;
   transition: opacity 0.1s;
   cursor: pointer;
-  width: 45%;
+  width: 45% ! important;
   height: 100% ;
   margin: 0;
   padding: 0;
@@ -239,12 +292,13 @@ div.floatright {
   }
 }
 
-.graphWrapper {
+#graphWrapper {
   margin: 30px;
+  padding: 0px;
   width: 400px;
   position: absolute;
   left: 10px;
-  top: 30px;
+  top: 50px;
 }
 
 #addstepdiv {
@@ -259,7 +313,7 @@ div.floatright {
   width: 180px;
 }
 
-#samplenote {
+#samplenote, #typenote {
   width: 500px;
   height: 150px;
 }
@@ -317,13 +371,30 @@ line.links {
   stroke-width:2;
 }
 
+#svgWrapper {
+  background: #d4e6bd;
+//  border: 2px solid black;
+  -webkit-box-shadow: 2px 4px 22px 1px rgba(0,0,0,0.75);
+  -moz-box-shadow: 2px 4px 22px 1px rgba(0,0,0,0.75);
+  box-shadow: 2px 4px 22px 1px rgba(0,0,0,0.75);
+}
+
+#svgWrapper {
+
+  width: 100%;
+ // height: 100%;
+  padding: 0;
+  margin: 0;
+}
 
 //Graph
 svg {
-  width: 300px;
-  height: 500px;
+//  width: 300px;
+//  height: 500px;
+  width: 100%;
+  height: 100%;
   border: 1px solid #999;
-  background: #FFEDBC;
+//  background: #FFEDBC;
   overflow: hidden;
   cursor: -webkit-grab;
   cursor: -moz-grab;
@@ -376,25 +447,32 @@ svg {
     stroke-width:1;
     stroke:rgb(0,0,0);
   }
-  rect.selected {
-    fill: rgb(255, 146, 82);
-  }
-  rect.selected-first {
-    stroke-width:3;
-    stroke:rgb(0,0,0);
-    //fill: rgb(233, 160, 255);
-  }
+//  rect.selected-first {
+//    stroke-width:3;
+//    stroke:rgb(0,0,0);
+//    //fill: rgb(233, 160, 255);
+//  }
 
   .edgeLabel rect {
     fill: pink;
     stroke-width: 0;
   }
 
+  .node.selected rect {
+    fill: #FF9252;
+  }
+  .edgeLabel[data-selected=selected] rect {
+    fill: #FF9252;
+  }
+  .node.selected-first rect {
+        stroke-width:3;
+        stroke:rgb(0,0,0);
+    }
   g.node div {
     cursor: pointer;
   }
 
-  g.edgeLabel divstepcell {
+  g.edgeLabel .divstepcell {
     cursor: pointer;
   }
 //
@@ -433,8 +511,8 @@ table.table {
 
 #sampleandprotocol {
   position: absolute;
-  left: 400px;
-  top: 70px;
+  left: 380px;
+  top: 50px;
 }
 
 #expinfo_header {
@@ -442,12 +520,20 @@ table.table {
   left: 0px;
   top: 0px;
   width: 100%;
+  > div {
+    display: inline-block;
+  }
 }
 
-#date_exp {
-  position: absolute;
-  left: 600px;
-  top: 20px;
+#deleteexpdiv {
+  float: right;
+  margin: 10px 10px 0px 0px;
+}
+
+#deleteexp {
+//  position: absolute;
+//  left: 600px;
+//  top: 20px;
 }
 
 #sample_warning {
@@ -456,7 +542,7 @@ table.table {
 }
 
 td.stepcell {
-  width: 50px;
+  width: 60px;
   height: 50px;
 }
 
@@ -542,21 +628,136 @@ td.stepcell {
   &:hover, &.active{
     background: #FEBE7E;
   }
+  &.open.dropdown-toggle{
+    background: #FEBE7E;
+  }
 }
 
-.entertime{
+.entertime, .edittime{
   padding: 0px;
   margin: 0;
-  width: 30px;
-  height: 30px;
+  width: 20px;
+  height: 20px;
   opacity: 0;
   transition: opacity 0.1s linear;
 }
 
-td:hover .entertime{
+td:hover .entertime, td:hover .edittime{
   opacity: 1;
 }
 
 #sample_exptable {
  width: 500px;
+}
+
+h2 {
+  font-family: 'Droid Serif', serif;
+}
+
+.list_date {
+  font-size: 10px;
+  margin-left: 15px;
+}
+
+.list-name-div {
+  cursor: pointer;
+  padding: 0;
+  margin: 0px;
+}
+//
+//.datetimepicker{
+// width: 100px;
+//}
+//
+//.input-group-addon, i.fa-calendar {
+//  height: 20px ! important;
+//}
+//
+//.datetimepicker_input {
+//  height: 20px ! important;
+//  width: 3px ! important;
+//}
+
+span.timepoint {
+  width: 40px;
+  height: 20px;
+  padding: 5px;
+  &:hover{
+    background: pink;
+  }
+  border-radius: 3px;
+}
+
+span.explain_small {
+  color: gray;
+  font-size: 10px;
+}
+
+.danger {
+  color: red ! important;
+  font-weight: bold ! important;
+}
+
+#username {
+  color: #fbe7b4;
+  margin-right: 60px;
+}
+
+#message {
+  color: #fbe7b4;
+  opacity: 1;
+//  transition: opacity 0.5s linear;
+  &.hidden{
+    opacity: 0;
+    transition: opacity 0.5s linear;
+  }
+}
+
+#log_table {
+  td {
+    width: 300px;
+  }
+}
+
+#typetree {
+  width: 90%;
+  margin-left: 10px;
+  .treeselected {
+    background: #9be ! important;
+    font-weight: bold;
+  }
+}
+
+ul.jqtree-tree li.jqtree-selected > .jqtree-element, ul.jqtree-tree li.jqtree-selected > .jqtree-element:hover {
+  background: #9be ! important;
+  text-shadow: none;
+  font-weight: bold;
+}
+
+.jqtree-element:hover {
+  background: #d76985;
+  transition: background 0.2s linear;
+}
+
+#type_hierarchy ul {
+  margin-left: 20px;
+  span {
+    margin: 2px;
+    padding: 3px;
+  }
+}
+
+.hierarchy_this {
+  font-weight: bold;
+  background: yellow;
+}
+
+
+#date_exp {
+  margin-left: 15px;
+  padding-bottom: 10px;
+}
+
+#type_samples {
+  width: 600px;
 }

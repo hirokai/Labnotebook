@@ -12,6 +12,7 @@ renderCells = function(eid) {
     function getTableData() {
 
 //        console.log(exp.protocol.operations);
+        var exp = getCurrentExp();
         var arr = _.map(exp.protocol.operations,function(opid){
             var op = Operations.findOne(opid);
             if(op){
@@ -119,10 +120,11 @@ renderCells = function(eid) {
 //            console.log(change,source);
             var opid = row_opids[change[0][0]];
             var paramname = row_paramnames[change[0][0]];
+            var oldval = change[0][2];
             var newval = change[0][3];
             var runid = runids[(change[0][1])];
 //            console.log(change,opid,paramname,newval);
-            updateDBAccordingToCell(runid,opid,paramname,newval);
+            updateDBAccordingToCell(runid,opid,paramname,newval,oldval);
         }
     });
 

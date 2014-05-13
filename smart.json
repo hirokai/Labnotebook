@@ -3,6 +3,13 @@
     "bootstrap-3": {},
     "iron-router": {},
     "jquery-ui": {},
-    "jquery-ui-bootstrap": {}
+    "jquery-ui-bootstrap": {},
+    "moment": {},
+    "bootstrap3-datetimepicker": {},
+    "bootstrap-3-timepicker": {},
+    "underscore-string-latest": {},
+    "event-hooks": {},
+    "jqTree": {},
+    "Handsontable": {}
   }
 }

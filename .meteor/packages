@@ -17,7 +17,13 @@ iron-router
 blaze-layout
 jquery-ui
 jquery-ui-bootstrap
-insecure
 
 bootstrap-3
 email
+moment
+bootstrap-3-timepicker
+
+underscore-string-latest
+event-hooks
+jqTree
+Handsontable
