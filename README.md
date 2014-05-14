@@ -1,6 +1,6 @@
 # Lab notebook prototype
 
-[![Build Status](https://secure.travis-ci.org/hirokai/Labnotebook.png?branch=master](https://travis-ci.org/hirokai/Labnotebook)
+[![Build Status](https://secure.travis-ci.org/hirokai/Labnotebook.png?branch=master]](https://travis-ci.org/hirokai/Labnotebook)
 
 The repository for [Electronic labnote prototype](http://labnote.meteor.com/). Alpha version.
 
