@@ -65,8 +65,8 @@ Template.sample_list.lists = function(){
         sort = {sampletype_id: 1};
     }
 
-    var samples = Samples.find({protocol: false},{sort: sort}).fetch();
-    return _.map(samples,function(s,i){
+    var samples = Samples.find({protocol: false},{sort: sort});
+    return samples.map(function(s,i){
       //  console.log(s);
         s.index = i;
         return s;
@@ -150,7 +150,7 @@ Template.type_list.rendered = function(){
     if (!self.handle) {
         self.handle = Deps.autorun(function () {
             var data = mkTypeTree();
-            console.log(data);
+//            console.log(data);
             var tr = $('#tree1');
             tr.tree({
                 data: data,
@@ -186,7 +186,7 @@ Template.type_list.rendered = function(){
                 }
             });
             var node = tr.tree('getNodeById',Session.get('current_view_id').sampletype);
-            console.log(node);
+//            console.log(node);
             tr.tree('selectNode',node);
         });
     }
@@ -245,7 +245,7 @@ Template.layout.title = function(){
 
 
 Template.log_list.lists = function(){
-    var logs = Logs.find({},{sort: {timestamp: -1}}).fetch();
+    var logs = Logs.find({},{sort: {timestamp: -1}},{fields: {timestamp: 1}}).fetch();
     return _.map(_.groupBy(logs,function(log){
             return moment(new Date(log.timestamp)).format('YYYY/M/D');
     }),function(v){return v;});

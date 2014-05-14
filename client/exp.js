@@ -23,13 +23,13 @@ Template.exp.samples = function() {
 
     var e = Experiments.findOne(eid);
     var sids = e.samples;
-    return Samples.find({_id: {$in: sids}}).fetch();
+    return Samples.find({_id: {$in: sids}});
 };
 
 Template.exp.protocol_samples = function() {
     var eid = getCurrentExpId();
     var edges = getEdges(eid);
-//    console.log(edges);
+ //   console.log(edges);
     var es = _.map(edges,function(edge){
         return [edge.from._id,edge.to._id];
     });
@@ -49,7 +49,7 @@ Template.exp.sample_link_in_run = function(){
 };
 
 Template.exp.runs = function(){
-  return ExpRuns.find({exp: getCurrentExpId()});
+  return ExpRuns.find({exp: getCurrentExpId()}, {sort: {timestamp: 1, date: 1}});
 };
 
 Template.exp.sample_run = function(sid,runid){
@@ -60,8 +60,8 @@ Template.exp.sample_run = function(sid,runid){
 };
 
 Template.exp.operation_run = function(opid,runid){
- //   console.log(opid,runid,ExpRuns.findOne(runid));
-    return ExpRuns.findOne(runid).ops[opid];
+//   console.log(opid,runid,ExpRuns.findOne(runid));
+    return ExpRuns.findOne(runid).ops[opid] || {};
 };
 
 Template.exp.eid = function(){
@@ -200,7 +200,7 @@ Template.exp.events({
     },
     'change #sampletype_select': function(evt,tmpl){
         var st = evt.target.value;
-        console.log(st);
+//        console.log(st);
         Samples.update(this._id, {$set: {sampletype_id: st}});
         Session.set('editing_sampletype_id',null);
     },
@@ -321,8 +321,8 @@ Template.exp.events({
 
 Template.exp.assignsample_possible = function(protocol_sid){
     var p_ops = Experiments.findOne(getCurrentExpId(),{fields: {'protocol.operations': 1}}).protocol.operations;
-    var ops = Operations.find({_id: {$in: p_ops}}).fetch();
-    var outs = _.flatten(_.map(ops,function(op){return op.output;}));
+    var ops = Operations.find({_id: {$in: p_ops}});
+    var outs = _.flatten(ops.map(function(op){return op.output;}));
     return !_.contains(outs,protocol_sid);
 };
 
@@ -446,12 +446,31 @@ Template.sample_info.time_made = function(){
 //  });
 //};
 
+Template.sample_info.op_sampletype = function(sid){
+    var tids = findSubTypes(tid);
+    return SampleTypes.find({_id: {$in: tids}});
+}
+
+Template.sample_info.possible_types = function(sid){
+    var rid = ExpRuns.findOne({samplelist: sid})._id;
+    var tid = Samples.findOne(findProtocolSample(rid,sid)).sampletype_id;
+    var tids = findSubTypes(tid);
+    console.log(rid,tid,tids);
+    return SampleTypes.find({_id: {$in: tids}});
+};
+
+Template.sample_info.sampletype_selected = function(sid){
+    var tid = Samples.findOne(sid).sampletype_id;
+    return this._id == tid ? 'selected' : '';
+};
+
 Template.sample_info.events({
-    'click #sample_info_type': function(evt){
-       $('#sample_info').modal("hide");
-        $('#sample_info_type').attr('data-jumping','1');
-   //     Router.go("type",{_id: $(evt.target).attr('data-sampletype')});
-    },
+//    'click #sample_info_type': function(evt){
+//       $('#sample_info').modal("hide");
+//        $('#sample_info_type').attr('data-jumping','1');
+//   //     Router.go("type",{_id: $(evt.target).attr('data-sampletype')});
+//    },
+
     'hidden.bs.modal #sample_info': function(evt){
         if($('#sample_info_type').attr('data-jumping')){
                    Router.go("type",{_id: $('#sample_info_type').attr('data-sampletype')});
@@ -465,9 +484,10 @@ Template.sample_info.events({
     'click #save_sample_info': function(evt){
         var name = $('#sampleinfo_name').val();
         var note = $('#sample_note').val();
+        var type = $('#sample_info_type').val();
         var sid = Session.get('sampleinfo_for');
         console.log(sid);
-        Samples.update(sid,{$set: {name: name, note: note}});
+        Samples.update(sid,{$set: {name: name, note: note, sampletype_id: type}});
         $('#sample_info').modal('hide');
         Session.set('sampleinfo_for',null);
     },
@@ -755,7 +775,7 @@ Template.runop_info.rendered = function(){
             var runop = getRunOp(ids.op,ids.run);
             var t = runop ? runop.timestamp : null;
             var ts = t ? moment(new Date(t)).format("h:m:s A") : null;
-            console.log(t,ts);
+    //        console.log(t,ts);
             if(ts){
                 $('#runop_timepicker').timepicker('setTime',ts);
             }else{

@@ -273,7 +273,15 @@ Not found.
                         </tr>
                         <tr>
                             <td>Sample type</td>
-                            <td><a href='#' id='sample_info_type' data-sampletype='{{type.name}}'>{{type.name}}</a></td>
+                            <td>
+                            <!--<td><a href='#' id='sample_info_type' data-sampletype='{{type.name}}'>{{type.name}}</a>-->
+                                <!--<a href="#" id='sample_info_type_change' class='btn btn-sm btn-default'>Change</a>-->
+                                <select name="" id="sample_info_type">
+                                    {{#each possible_types _id runid}}
+                                    <option value="{{_id}}" {{sampletype_selected ../_id}}>{{name}}</option>
+                                    {{/each}}
+                                </select>
+                            </td>
                         </tr>
                         <tr>
                             <td>Sample created</td>

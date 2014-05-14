@@ -10,8 +10,12 @@ Router.map(function () {
             layoutTemplate: 'layout',
             onBeforeAction: function(){
                 this.subscribe('experiments').wait();
-                this.subscribe('expruns',this.params._id).wait();
+                this.subscribe('expruns_id',this.params._id).wait();
+//                this.subscribe('expruns').wait();
                 this.subscribe('operations').wait();
+                this.subscribe('samples').wait();
+                this.subscribe('sampletypes').wait();
+                this.subscribe('config').wait();
             },
             action: function () {
                 var ids = Session.get('current_view_id');
@@ -39,7 +43,7 @@ Router.map(function () {
                 } else {
                     //Seems I need this line for correct rendering...
                     this.render('loading', {to: 'right_pane'});
-               //     this.render('loading', {to: 'left_pane'});
+           //         this.render('loading', {to: 'left_pane'});
                 }
             },
 //            waitOn: function () {
@@ -60,10 +64,10 @@ Router.map(function () {
         action: function () {
             if (this.ready()) {
 
+                Session.set('list_type', 'log');
                 var ids = Session.get('current_view_id');
             ids.log = this.params.date;
             Session.set('current_view_id', ids);
-            Session.set('list_type', 'log');
 
             this.render('log_list', {to: 'left_pane'});
             if (!this.params.date) {
@@ -83,10 +87,10 @@ Router.map(function () {
 
     this.route('multiexp', {path: '/multiexp/:_id?', layoutTemplate: 'layout',
         action: function () {
+            Session.set('list_type', 'multiexp');
             var ids = Session.get('current_view_id');
             ids.multiexp = this.params._id;
             Session.set('current_view_id', ids);
-            Session.set('list_type', 'multiexp');
 
             this.render('multiexp_list', {to: 'left_pane'});
             if (!this.params._id) {
@@ -103,14 +107,17 @@ Router.map(function () {
 
     this.route('sample', {path: '/sample/:_id?', layoutTemplate: 'layout',
         onBeforeAction: function(){
-            this.subscribe('samples',this.params._id).wait();
+            this.subscribe('samples').wait();
+            this.subscribe('expruns').wait();
+            this.subscribe('experiments').wait();
+            this.subscribe('sampletypes').wait();
         },
         action: function () {
             var ids = Session.get('current_view_id');
             ids.sample = this.params._id;
+            Session.set('list_type', 'sample');
             Session.set('current_view_id', ids);
 
-            Session.set('list_type', 'sample');
             this.render('sample_list', {to: 'left_pane'});
             this.render('sample', {to: 'right_pane'});
             if (!this.params._id) {
@@ -132,11 +139,11 @@ Router.map(function () {
             this.subscribe('sampletypes').wait();
         },
         action: function () {
+            Session.set('list_type', 'type');
             var ids = Session.get('current_view_id');
             ids.sampletype = this.params._id;
             Session.set('current_view_id', ids);
 
-            Session.set('list_type', 'type');
             if(this.ready()){
                 this.render('type_list', {to: 'left_pane'});
                 if (!this.params._id) {
@@ -155,11 +162,11 @@ Router.map(function () {
 
     this.route('preset', {path: '/preset/:_id?', layoutTemplate: 'layout',
         action: function () {
+            Session.set('list_type', 'preset');
             var ids = Session.get('current_view_id');
             ids.preset = this.params._id;
             Session.set('current_view_id', ids);
 
-            Session.set('list_type', 'preset');
             this.render('preset_list', {to: 'left_pane'});
             this.render('preset', {to: 'right_pane'});
 //            GAnalytics.pageview("/g/"+(this.params ? this.params._id : ""));

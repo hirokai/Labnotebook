@@ -3,6 +3,7 @@
 <head>
   <title>{{title}} - Lab Notebook prototype</title>
     <link rel="icon" sizes="16x16 32x32" href="/favicon.ico?v=2">
+    <meta property="og:image" content="/naughty_black_book.png" />
 </head>
 
 <body>
@@ -14,6 +15,7 @@
     <span class='glyphicon glyphicon-cog'></span> <span class="caret"></span>
   </button>
   <ul class="dropdown-menu pull-right" role="menu">
+      <li><a href="#" id='showprefs'>Preferences</a></li>
       <li><a href="#" id='showhelp'>Show help</a></li>
     <li>                <span id='loginButtons'>
       {{> loginButtons}}
@@ -21,11 +23,13 @@
       <li class="divider"></li>
       <li><a id='dumpdb' class='' href='#'>Backup all database</a></li>
       {{#if loggedin}}
-      <li><a id='senddb' class='' href='#'>Send the log to {{email}}</a></li>
+      <li><a id='senddb' class='' href='#'>Send the log to {{config.logemail}}</a></li>
       {{/if}}
     <li class="divider"></li>
     <li><a id='resetdb' class='danger' href='#'>Reset Database</a></li>
-    <li><a id='removeuser' class='danger' href='#'>Remove user account</a></li>
+      {{#if loggedin}}
+      <li><a id='removeuser' class='danger' href='#'>Remove user account</a></li>
+      {{/if}}
   </ul>
 </div>
 
@@ -42,6 +46,36 @@
   </div>
 </body>
 
+    <div class="modal fade" id="prefs_modal" tabindex="-1" role="dialog" aria-labelledby="prefsLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="prefsLabel">Preferences</h4>
+                </div>
+                <div class="modal-body">
+                    <table class='table'>
+                        <tr>
+                            <th>Name</th>
+                            <th>Value</th>
+                        </tr>
+                        <tr>
+                            <td>Email address to send log:</td>
+                            <td><input type="text" id='cfg_email' value='{{config.logemail}}'/></td>
+                        </tr>
+                        <tr>
+                            <td>Automatically sending the log daily</td>
+                            <td><input type="checkbox" id='cfg_email_auto' {{is_logemail_auto}} /></td>
+                        </tr>                    </table>
+
+                </div>
+                <div class="modal-footer">
+
+                    <button type="button" id='cfg_save' class="btn btn-primary"  tabindex='3'>OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="modal fade" id="help_modal" tabindex="-1" role="dialog" aria-labelledby="helpLabel" aria-hidden="true">
           <div class="modal-dialog">
@@ -64,14 +98,17 @@
                       </div>
                       <div>
                           <h3>Progress of implementation</h3>
+                          <p>Experimental version, and not intended for serious use.</p>
                           <table class='table'>
+                              <tr><td>Data backup by email</td><td>80%</td></tr>
+                              <tr><td>Protocol definition on flowchart</td><td>80%</td></tr>
+                              <tr><td>Editing parameters on spreadsheet</td><td>80%</td></tr>
+                              <tr><td>Cross browser support</td><td>50%</td></tr>
+                              <tr><td>Logging</td><td>30%</td></tr>
+                              <tr><td>Attachement of data</td><td>0%</td></tr>
                               <tr><td>Multi Exp tab</td><td>0%</td></tr>
                               <tr><td>Preset tab</td><td>0%</td></tr>
-
                           </table>
-                      <li>Multi Exp and Preset tabs are not implemented yet.</li>
-                      <li>Experimental version, and not intended for serious use.</li>
-                       <li>Log functions are.</li>
 
                       </div>
 

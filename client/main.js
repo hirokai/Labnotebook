@@ -15,7 +15,10 @@ Logs = new Meteor.Collection("logs");
 
 Samples = new Meteor.Collection('samples');
 
-Session.setDefault('list_type','exp');
+Config = new Meteor.Collection("config");
+
+
+    Session.setDefault('list_type','exp');
 Session.setDefault('current_view_id',{exp: null, sample: null, sampletype:null,multiexp: null,date: null,log:null});
 Session.setDefault('list_sortby',{exp: 'date',sample: 'date',sampletype: 'hierarchy', multiexp: 'date'});
 
@@ -69,21 +72,23 @@ listsHandle = Meteor.subscribe('lists', function () {
   }
 });
 
-//presetsHandle = Meteor.subscribe('presets');
-experimentsHandle = Meteor.subscribe('experiments');
+////presetsHandle = Meteor.subscribe('presets');
+//experimentsHandle = Meteor.subscribe('experiments');
+//
+//all_exprunsHandle = Meteor.subscribe('all-expruns');
+//
+////datesHandle = Meteor.subscribe('dates');
+//sampletypesHandle = Meteor.subscribe('sampletypes');
+//typeclassesHandle = Meteor.subscribe('typeclasses');
+//
+////all_operationsHandle = Meteor.subscribe('operations');
+//
+//
+////samplegroupsHandle = Meteor.subscribe('samplegroups');
+////var arrowsHandle = Meteor.subscribe('arrows');
+//samplesHandle = Meteor.subscribe('samples');
+configHandle = Meteor.subscribe('config');
 
-all_exprunsHandle = Meteor.subscribe('all-expruns');
-
-//datesHandle = Meteor.subscribe('dates');
-sampletypesHandle = Meteor.subscribe('sampletypes');
-typeclassesHandle = Meteor.subscribe('typeclasses');
-
-//all_operationsHandle = Meteor.subscribe('operations');
-
-
-//samplegroupsHandle = Meteor.subscribe('samplegroups');
-//var arrowsHandle = Meteor.subscribe('arrows');
-samplesHandle = Meteor.subscribe('samples');
 
 
 });
@@ -174,78 +179,6 @@ Template.lists.editing = function () {
   return Session.equals('editing_listname', this._id);
 };
 
-
-
-Template.top_bar.userId = function(){
-    return Meteor.userId();
-};
-
-Template.top_bar.user = function(){
-    //console.log(Meteor.user());
-    Meteor.call('currentUser',function(err,user){
-        Session.set('currentUser',user);
-    });
-    return Session.get('currentUser');
-};
-
-Template.top_bar.loggedin = function(){
- //   console.log(Meteor.user());
-    Meteor.call('currentUser',function(err,user){
-        Session.set('currentUser',user);
-    });
-    return Session.get('currentUser') != null;
-};
-
-Template.layout.email = function(){
-   var user = Session.get('currentUser');
-   return user ? user.email : null;
-};
-
-Template.layout.loggedin = function(){
- //   console.log(Meteor.user());
-    Meteor.call('currentUser',function(err,user){
-        Session.set('currentUser',user);
-    });
-    return Session.get('currentUser') != null;
-};
-
-Template.layout.events({
-   'click #resetdb': function(){
-       if(window.confirm("Are you sure you want to reset your data? (This does not affect other users' database.)")){
-           Meteor.call('resetMyDB');
-       }
-   },
-    'click #removeuser': function(){
-        if(window.confirm("Are you sure you want to remove your account. This will remove all your data from the server.")){
-            Meteor.call('removeMyAccount');
-            Meteor.logout();
-        }
-    },
-    'click #showhelp': function(){
-        $('#help_modal').modal();
-    },
-    'click #dumpdb': function(){
-        var owner = Meteor.userId() || 'sandbox';
-        window.open('/alldb_dump/'+owner);
-    },
-    'click #senddb': function(){
-        var user = Session.get('currentUser');
-        var ft = moment().startOf('day').toDate().getTime() || (new Date().getTime() - 1000*60*60*24);
-        var n = 10 - Logs.find({op: 'senddb',timestamp: {$gt: ft}}).count();
-        if(user && user.email && window.confirm('Do you want to send the backup data to '+user.email+'? You can '+
-            'send the log '+ n +' more times today.')){
-            Meteor.call('sendLogByEmail',function(err,res){
-                console.log(err,res);
-                if(res.success){
-                    showMessage('Email sent to '+user.email);
-                    addLog({op: 'senddb', type: 'database', id: null, params: {email_to: user.email}})
-                }else{
-                    showMessage('Error occured.')
-                }
-            });
-        }
-    }
-});
 
 ////////// Tracking selected list in URL //////////
 

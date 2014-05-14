@@ -24,6 +24,11 @@ insertOp = function(eid,name, input, output, params){
     var op = Operations.insert({owner: owner, name: name,  input: input, output: output, params: params,
         timestamp: new Date().getTime() + 1});
     Experiments.update(eid,{$push: {'protocol.operations': op}});
+    ExpRuns.find({exp: eid}).map(function(run){
+        var ops = run.ops;
+        ops[op] = {timestamp: null, input: [], output: [], params: []};
+        ExpRuns.update(run._id, {$set: {ops: ops}});
+    });
     addLog({type: 'exp', op: 'insertop', id: eid, params: {op: op, name: name}});
     return op;
 };
@@ -244,6 +249,10 @@ removeOp = function(opid){
 }
 
 deleteExp = function(eid){
+    var runs = ExpRuns.find({exp: eid});
+    _.each(runs,function(run){
+        deleteRun(run._id);
+    })
     Experiments.remove(eid);
     addLog({type: 'exp', op: 'remove', id: eid,params: {}});
 };
@@ -264,7 +273,7 @@ addNewRunToExp = function(eid){
     var rid = ExpRuns.insert({owner: Meteor.userId() || 'sandbox',
         exp: eid, name: name, date: new Date().getTime(),
         samples: {},
-        ops: ops});
+        ops: ops, timestamp: new Date().getTime()});
     addLog({type: 'run', op: 'insert', id: rid, params: {to: eid, name: name}});
     return rid;
 };
@@ -378,3 +387,13 @@ findCompatibleSamples = function(tid){
     tids.push(tid);
     return Samples.find({sampletype_id: {$in: tids}, protocol: false}).fetch();
 };
+
+findProtocolSample = function(rid,sid){
+    if(!sid || !rid) return null;
+
+    var run = ExpRuns.findOne(rid);
+    console.log(run);
+    console.log(_.map(run.samples,function(v,k){return v == sid ? k : null}));
+    console.log(_.compact(_.map(run.samples,function(v,k){return v == sid ? k : null})));
+    return _.compact(_.map(run.samples,function(v,k){console.log(k,v,sid); return v == sid ? k : null}))[0];
+}

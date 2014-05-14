@@ -36,17 +36,11 @@ Experiments.deny(denyObj);
 ExpRuns  = new Meteor.Collection("expruns");
 ExpRuns.allow(allowObj);
 ExpRuns.deny(denyObj);
-Meteor.publish('all-expruns', function() {
+Meteor.publish('expruns', function() {
 	return ExpRuns.find({owner: this.userId || 'sandbox'},{fields: {samplelist: 1, exp: 1}});
 });
-
-Meteor.publish('expruns', function(eid) {
-    var owner = this.userId || 'sandbox';
-	if(eid){
-        return ExpRuns.find({owner: owner, exp: eid},{sort: {timestamp: 1}});
-    }else{
-        return [];
-    }
+Meteor.publish('expruns_id', function(eid) {
+    return ExpRuns.find({owner: this.userId || 'sandbox', exp: eid});
 });
 
 // Presets -- {name: String}
@@ -65,13 +59,13 @@ Presets.deny(denyObj);
 //           tags: [String, ...]}
 Samples = new Meteor.Collection('samples');
 Meteor.publish('samples', function() {
-    if(this.userId){
-        //      console.log(isAdmin(this.userId));
-        return Samples.find({owner: this.userId});
-    }else{
-        return Samples.find({owner: 'sandbox'});
-    }
+    var owner = this.userId || 'sandbox';
+        return Samples.find({owner: owner});
 });
+//Meteor.publish('sample_id', function(id) {
+//    var owner = this.userId || 'sandbox';
+//    return Samples.find({owner: owner, _id: id});
+//});
 Samples.allow(allowObj);
 Samples.deny(denyObj);
 
@@ -113,7 +107,8 @@ Dates.deny(denyObj);
 //			timestamp: Number}
 Operations = new Meteor.Collection("operations");
 Meteor.publish('operations', function() {
-	return this.userId ? Operations.find({owner: this.userId}) : Operations.find({owner: 'sandbox'});
+    var owner =  this.userId || 'sandbox';
+	return Operations.find({owner: owner});
 });
 Operations.allow(allowObj);
 Operations.deny(denyObj);
@@ -163,13 +158,13 @@ Logs.deny({
     fetch: ['locked'] // no need to fetch 'owner'
 });
 
-//
-//Arrows = new Meteor.Collection("arrows");
-//Meteor.publish('arrows', function() {
-//    return this.userId ? Arrows.find({owner: this.userId}) : Arrows.find({owner: 'sandbox'});
-//});
-//Arrows.allow(allowObj);
-//Arrows.deny(denyObj);
+Config = new Meteor.Collection("config");
+Meteor.publish('config', function() {
+    var owner =  this.userId || 'sandbox';
+    return Config.find({owner: owner});
+});
+Config.allow(allowObj);
+Config.deny(denyObj);
 
 
 function isAdmin(uid){

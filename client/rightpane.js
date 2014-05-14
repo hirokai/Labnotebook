@@ -1,8 +1,7 @@
 Template.sample.typeclasses = function(){
     var ids = SampleTypes.findOne(this._id).classes || [];
-    console.log(this._id,ids,SampleTypes.findOne(this._id));
+//    console.log(this._id,ids,SampleTypes.findOne(this._id));
     var r = TypeClasses.find({_id: {$in: ids}});
-    console.log(r.fetch());
     return r;
 }
 
@@ -71,8 +70,8 @@ Template.sample.sample_not_used = function(){
 };
 
 Template.sample.exps_used = function(){
-    var runs = ExpRuns.find({samplelist: this._id}).fetch();
-    var eids = _.uniq(_.map(runs,function(run){
+    var runs = ExpRuns.find({samplelist: this._id});
+    var eids = _.uniq(runs.map(function(run){
         return run.exp;
     }));
     return Experiments.find({_id: {$in: eids}});
@@ -171,8 +170,8 @@ Template.type.samples = function(){
 };
 
 Template.type.hierarchy = function(){
-    var cs = findDirectSubTypes(this._id).fetch();
-    var str = "<ul>"+_.map(cs,function(t){return "<li>"+ t.name +"</li>"}).join('')+"</ul>";
+    var cs = findDirectSubTypes(this._id);
+    var str = "<ul>"+cs.map(function(t){return "<li>"+ t.name +"</li>"}).join('')+"</ul>";
     return mkHierarchy(this._id,str,true);
 };
 
@@ -193,9 +192,8 @@ Template.type.editing_title = function(){
 };
 
 Template.type.exps_used = function(){
-    var runs = ExpRuns.find({samplelist: this._id}).fetch();
-    var exps = _.map(runs,function(run){return run.exp});
-    console.log(runs,exps);
+    var runs = ExpRuns.find({samplelist: this._id},{fields: {exp: 1}});
+    var exps = runs.map(function(run){return run.exp});
     return Experiments.find({_id: {$in: exps}}, {fields: {_id: 1, name: 1}});
 }
 

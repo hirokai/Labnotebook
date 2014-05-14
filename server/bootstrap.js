@@ -7,7 +7,7 @@ Meteor.startup(function () {
 
 // Support for playing D&D: Roll 3d6 for dexterity
 Accounts.onCreateUser(function (options, user) {
-    initializeDB(user._id);
+    initializeDB(user);
     return user;
 });
 
@@ -23,14 +23,15 @@ removeUser = function(uid){
      //   SampleGroups.remove({owner: uid});
         ExpRuns.remove({owner: uid});
         Logs.remove({owner: uid});
+        Config.remove({owner: uid});
         Meteor.users.remove(uid);
     }
 };
 
 //Create user DB for the user of user ID uid.
-initializeDB = function(uid) {
+initializeDB = function(user) {
 
-    var uid = uid || "sandbox";
+    var uid = user._id || "sandbox";
 
     function mkRun(i){
         var s_a = Samples.insert({owner: uid, name: "DOPC-"+i, sampletype_id: st,  timestamp: new Date().getTime(), data: [], tags: [], protocol: false});
@@ -114,6 +115,9 @@ initializeDB = function(uid) {
     Experiments.update(eid,{$set: {samples: ss}});
 
     Logs.remove({owner: uid});
+
+    Config.remove({owner: uid});
+    Config.insert({owner: uid, values: {logemail: user.email, logemail_auto: false}});
 
 };
 

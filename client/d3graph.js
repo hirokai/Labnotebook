@@ -40,10 +40,11 @@ Template.d3graph.rendered = function () {
         self.handle = Deps.autorun(function () {
             var eid = getCurrentExpId();
         //    var ops = eid ? Operations.find({exp_id: eid}).fetch() : [];
-            var graph = genGraphvizGraph();
-            if(graph){
                 try{
+                    var graph = genGraphvizGraph();
+                    if(graph){
                     tryDraw(graph);
+                    }
                 }catch(e){
                     console.log(e);
                 }
@@ -66,19 +67,19 @@ Template.d3graph.rendered = function () {
                 wrapper.width(300);
                 wrapper.height(700);
                 setSize(wrapper);
-            }
         });
     }
 };
 
 getEdges = function(eid){
     var e = getCurrentExp();
-    var ops = Operations.find({_id: {$in: e.protocol.operations}}).fetch();
+    var ops = Operations.find({_id: {$in: e.protocol.operations}});
     //console.log(ops);
-    var arrs = _.flatten(_.map(ops,function(op){
+    var arrs = _.flatten(ops.map(function(op){
         // stub this is direct product of inputs and outputs, which may be wrong....
         return _.map(op.input,function(from){
             return _.map(op.output, function(to){
+
                 return {name: op.name, from: from, to: to, id: op._id};
             });
         });

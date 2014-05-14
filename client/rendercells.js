@@ -6,8 +6,10 @@ renderCells = function(eid) {
 
     var row_opids = [];
     var row_paramnames = [];
+    //You cannot use map of meteor cursor, because it will use up the collection and you can use it only once.
     var runs = ExpRuns.find({exp: eid},{sort: {timestamp: 1}}).fetch();
     var runids = _.map(runs,function(run){return run._id;});
+   // console.log(runs,runids);
 
     function getTableData() {
 
@@ -19,6 +21,7 @@ renderCells = function(eid) {
             row_opids.push(opid);
             row_paramnames.push('');
             var pss = [_.map(runs,function(run,idx){
+                //console.log(run,idx,opid);
                 return formatDateTime(getOpTimestamp(run._id,opid));
             })
             ];
@@ -40,15 +43,15 @@ renderCells = function(eid) {
     }
 
     function colNames(){
-        return _.map(ExpRuns.find({exp: eid}).fetch(), function(run){
+        return ExpRuns.find({exp: eid}).map(function(run){
             return run.name;
         });
     }
 
     function getRowData(exp,opid,param){
-        var runs = ExpRuns.find({exp: eid}).fetch();
+        var runs = ExpRuns.find({exp: eid});
      //   console.log(param);
-        return _.map(runs,function(run,runidx){
+        return runs.map(function(run,runidx){
             return getOpParam(run._id,opid,param.name);
         });
     }
@@ -85,7 +88,7 @@ renderCells = function(eid) {
 
     }
 
-    var colors = _.map(SampleTypes.find().fetch(),function(s){return s.name});
+    var colors = SampleTypes.find({},{fields: {name: 1}}).map(function(s){return s.name});
     var colorData = [];
     var color;
     while (color = colors.shift()) {
@@ -96,6 +99,7 @@ renderCells = function(eid) {
     var dat = getTableData();
     var colnames = colNames();
     var rownames = rowNames();
+    console.log(dat);
 
     $("#spreadsheet").handsontable({
         data: dat,
@@ -123,7 +127,7 @@ renderCells = function(eid) {
             var oldval = change[0][2];
             var newval = change[0][3];
             var runid = runids[(change[0][1])];
-//            console.log(change,opid,paramname,newval);
+            console.log(change,runids,runid,opid,paramname,newval);
             updateDBAccordingToCell(runid,opid,paramname,newval,oldval);
         }
     });
