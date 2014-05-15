@@ -10,7 +10,10 @@ suite('Samples', function() {
     });
 
     server.once('samples', function(samples) {
-      assert.equal(samples.length, 1);
+      var ss = _.filter(samples,function(sample){
+          return _.trim(sample.name);
+      });
+      assert.equal(ss.length, samples.length);
       done();
     });
   });

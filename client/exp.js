@@ -477,9 +477,10 @@ Template.sample_info.events({
         var name = $('#sampleinfo_name').val();
         var note = $('#sample_note').val();
         var type = $('#sample_info_type').val();
+        var array = $('#samplearray').is(':checked');
         var sid = Session.get('sampleinfo_for');
         console.log(sid);
-        Samples.update(sid, {$set: {name: name, note: note, sampletype_id: type}});
+        Samples.update(sid, {$set: {name: name, note: note, sampletype_id: type, array: array}});
         $('#sample_info').modal('hide');
         Session.set('sampleinfo_for', null);
     },
