@@ -248,8 +248,6 @@ Not found.
 
 
 <template name='sample_info'>
-
-
     <div class="modal fade" id="sample_info" tabindex="-1" role="dialog" aria-labelledby="sampleInfoLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -281,6 +279,7 @@ Not found.
                                     <option value="{{_id}}" {{sampletype_selected ../_id}}>{{name}}</option>
                                     {{/each}}
                                 </select>
+                                <span style='margin-left: 20px'><input type="checkbox"/>Sample array</span>
                             </td>
                         </tr>
                         <tr>
