@@ -10,6 +10,7 @@
     "underscore-string-latest": {},
     "event-hooks": {},
     "jqTree": {},
-    "Handsontable": {}
+    "Handsontable": {},
+    "collectionFS": {}
   }
 }

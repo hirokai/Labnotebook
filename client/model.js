@@ -17,7 +17,6 @@ generalSampleTypeObj = function(){
     return SampleTypes.findOne({name: 'Any'});
 };
 
-
 insertOp = function(eid,name, input, output, params){
     var owner = Meteor.userId() || 'sandbox';
     params = params || [];
@@ -62,7 +61,7 @@ newSampleToProtocol = function(eid,type_id,name){
     var owner = Meteor.userId() || 'sandbox';
     var sid = Samples.insert({owner: owner, sampletype_id: type_id, name: name, timestamp: new Date().getTime(), protocol: true});
     Experiments.update(eid,{$push: {'protocol.samples': sid}});
-    addLog({type: ['sample','exp'], op: 'newsampletoprotocol', id: sid, params: {to_id: eid}});
+    addLog({type: 'protocol_sample', op: 'new', id: sid, params: {to_id: eid}});
    return sid;
 };
 
@@ -93,6 +92,32 @@ removeOpsAboutSample = function(eid,sid){
     });
 };
 
+addNewInputToOp = function(opid,sid){
+    Operations.update(opid,{$push: {input: sid}});
+    addLog({type: 'op', op: 'newinput', id: opid, params: {sample: sid}});
+};
+
+addNewOutputToOp = function(opid,sid){
+    Operations.update(opid,{$push: {output: sid}});
+    addLog({type: 'op', op: 'newoutput', id: opid, params: {sample: sid}});
+};
+
+deleteSampleFromProtocol = function(eid,sid){
+    Experiments.update(eid,{$pull: {'protocol.samples': sid}});
+    removeOpsAboutSample(eid,sid);
+    addLog({type: 'protocol_sample', op: 'delete', id: sid, params: {exp: eid}});
+};
+
+renameProtocolSample = function(sid,name){
+    if(_.trim(name)){
+        Samples.update(sid,{$set: {name: name}});
+        return true;
+    }else{
+        var name = Samples.findOne(sid).name;
+        Samples.update(sid,{$set: {name: name}});
+        return false;
+    }
+};
 
 
 guid = function() {
@@ -250,9 +275,9 @@ removeOp = function(opid){
 
 deleteExp = function(eid){
     var runs = ExpRuns.find({exp: eid});
-    _.each(runs,function(run){
+    runs.map(function(run){
         deleteRun(run._id);
-    })
+    });
     Experiments.remove(eid);
     addLog({type: 'exp', op: 'remove', id: eid,params: {}});
 };
@@ -397,3 +422,16 @@ findProtocolSample = function(rid,sid){
     console.log(_.compact(_.map(run.samples,function(v,k){return v == sid ? k : null})));
     return _.compact(_.map(run.samples,function(v,k){console.log(k,v,sid); return v == sid ? k : null}))[0];
 }
+
+copyProtocolForNewExp = function(eid){
+    var e = Experiments.findOne(eid);
+    var prot = e.protocol;
+    var newe = insertExp(e.name);
+    Experiments.update(newe, {$set: {protocol: prot}});
+    addLog({type: 'exp', op: 'cloneprotocol', id: newe, params: {from: eid}});
+};
+
+changeDateOfExp = function(eid,date){
+    Experiments.update(eid, {$set: {date: date}});
+    addLog({type: 'exp', op: 'updatedate', id: eid, params: {date: date}});
+};

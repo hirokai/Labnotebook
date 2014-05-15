@@ -6,6 +6,7 @@ Template.sample.typeclasses = function(){
 }
 
 Template.sample.sampletype = function(){
+    console.log(this);
     return SampleTypes.findOne(this.sampletype_id);
 };
 
@@ -24,16 +25,6 @@ Template.sample.events({
     'click #cancelsamplenote': function(evt,tmpl){
         var note = Samples.findOne(this._id).note || "";
         tmpl.find('#samplenote').value = note;
-    },
-    'change input': function(ev) {
-        console.log(ev)
-        var id = this._id
-      _.each(ev.currentTarget.files, function(file) {
-        Meteor.saveFile(file, file.name,null,null,function(err,res){
-            console.log(res,id);
-            Samples.update(id, {$push: {data: {path: res.path}}});
-        });
-      });
     },
     'click #deletesample': function(){
         if(sampleNotUsedAtAll(getCurrentSampleId())){
@@ -58,6 +49,18 @@ Template.sample.events({
         Session.set('editing_sample_title',true);
         Deps.flush(); // force DOM redraw, so we can focus the edit field
         activateInput(tmpl.find("#sampletitle_input"));
+    },
+    'change .fileUploader': function (e) {
+        var files = event.target.files;
+        for (var i = 0, ln = files.length; i < ln; i++) {
+            var fsFile = new FS.File(files[i]);
+            fsFile.owner = Meteor.userId() || 'sandbox';
+            fsFile.sample = Session.get('current_view_id').sample;
+            AttachmentsFS.insert(fsFile, function (err, fileObj) {
+                if(!err) console.log('Saved');
+                //Inserted new doc with ID fileObj._id, and kicked off the data upload using HTTP
+            });
+        }
     }
 });
 
@@ -74,11 +77,13 @@ Template.sample.exps_used = function(){
     var eids = _.uniq(runs.map(function(run){
         return run.exp;
     }));
+    console.log(this);
     return Experiments.find({_id: {$in: eids}});
 }
 
 Template.sample.rendered = function(){
     //ga('send', 'event', 'view', 'sample', Meteor.userId(),getCurrentSampleId());
+    console.log('hey');
 };
 
 Template.sample.editing_title = function(){

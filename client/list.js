@@ -51,6 +51,9 @@ Template.exp_list.events({'click #newexpbtn': function(){
         var obj = Session.get('list_sortby');
         obj.exp = $(evt.target).val();
         Session.set('list_sortby',obj);
+    },
+    'click #copyprotocol': function(evt){
+        copyProtocolForNewExp(getCurrentExpId());
     }
 });
 

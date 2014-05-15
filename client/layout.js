@@ -26,11 +26,13 @@ Template.layout.email = function(){
 };
 
 Template.layout.config = function(){
-    return Config.findOne().values;
+    var cfg = Config.findOne();
+    return cfg ? cfg.values : {};
 };
 
 Template.layout.is_logemail_auto = function(){
-    return Config.findOne().values.logemail_auto ? 'checked' : '';
+    var cfg = Config.findOne();
+    return (cfg && cfg.values.logemail_auto) ? 'checked' : '';
 }
 
 

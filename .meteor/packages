@@ -27,3 +27,6 @@ underscore-string-latest
 event-hooks
 jqTree
 Handsontable
+collectionFS
+cfs-gridfs
+numeral

@@ -139,16 +139,6 @@ Template.exp.events({
     'click #deselect': function(){
         Session.set('selected_nodes',[]);
     },
-    'click #insertnodebeforebtn': function(evt,tmpl){
-        var name = tmpl.find('#newnodename').value;
-        var to = tmpl.find('circle.selected').attributes['data-sample-id'].value;
-        if(name && name != "" && to){
-            var from = insertSampleType(name);
-            var op = insertOp(this._id,name);
-            insertArrow(op,from,to);
-            Arrows.update({owner: Meteor.userId(), to: to},{$set: {to: from}});
-        }
-    },
     'click #connectnodesbtn': function(evt,tmpl){
         var name = tmpl.find('#newnodename').value;
         var to = tmpl.find('circle.selected').attributes['data-sample-id'].value;
@@ -160,8 +150,8 @@ Template.exp.events({
         }
     },
     'change #exp_datepicker': function(evt){
-        var date = new Date(evt.target.value);
-        Experiments.update(getCurrentExpId(), {$set: {date: date.getTime()}});
+        var date = new Date(evt.target.value).getTime();
+        changeDateOfExp(getCurrentExpId(),date);
     },
     'click .step_sample_list': function(){
    //     Router.go('sample',{_id: this._id});

@@ -156,3 +156,21 @@ function mkSampleTypes(uid) {
 function addSampleType(uid,name,parent){
     return SampleTypes.insert({owner: uid, name: name, timestamp: new Date().getTime(), data: [], tags: [], parent: parent, classes: []});
 }
+
+replaceDB = function(json){
+    var obj = JSON.parse(json);
+    var ids = {};
+    var owner = Meteor.userId() || 'sandbox';
+
+    // SampleTypes
+    SampleTypes.remove({owner: owner});
+    _.each(obj.types,function(t){
+        var tid = SampleTypes.insert(t);
+        ids[t._id] = tid;
+    });
+    _.each(obj.types,function(t){
+        SampleTypes.update(ids[t._id],{parent: ids[t.parent], classes: []});
+        ids[t._id] = tid;
+    });
+};
+

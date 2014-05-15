@@ -33,7 +33,7 @@ Meteor.publish('experiments', function() {
 Experiments.allow(allowObj);
 Experiments.deny(denyObj);
 
-ExpRuns  = new Meteor.Collection("expruns");
+ExpRuns = new Meteor.Collection("expruns");
 ExpRuns.allow(allowObj);
 ExpRuns.deny(denyObj);
 Meteor.publish('expruns', function() {
@@ -165,7 +165,41 @@ Meteor.publish('config', function() {
 });
 Config.allow(allowObj);
 Config.deny(denyObj);
+//
+//attachmentStore = new FS.Store.GridFS("attachments", {
+//    //     mongoUrl: 'mongodb://127.0.0.1:27017/test/', // optional, defaults to Meteor's local MongoDB
+//    //  mongoOptions: {...},  // optional, see note below
+//    //  transformWrite: myTransformWriteFunction, //optional
+//    //  transformRead: myTransformReadFunction, //optional
+//    //  maxTries: 1, // optional, default 5
+//    //  chunkSize: 1024*1024  // optional, default GridFS chunk size in bytes (can be overridden per file).
+//// Default: 2MB. Reasonable range: 512KB - 4MB
+//});
+//
+//AttachmentsFS = new FS.Collection("attachments", {
+//    stores: [attachmentStore]
+//});
 
+
+//
+//var handler = {
+//    "fileHandler": function (options) {
+//        return {
+//            blob: options.blob,
+//            fileRecord: options.fileRecord
+//        };
+//    }
+//}
+//AttachmentsFS.fileHandlers(handler);
+//
+
+//Meteor.publish('attachments', function() {
+//    var owner = this.userId || 'sandbox';
+//    return AttachmentsFS.find({ owner: owner }, { sort: {timestamp: 1}});
+//});
+////
+//AttachmentsFS.allow(allowObj);
+//AttachmentsFS.deny(denyObj);
 
 function isAdmin(uid){
     try{

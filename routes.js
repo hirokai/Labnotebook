@@ -113,25 +113,30 @@ Router.map(function () {
             this.subscribe('sampletypes').wait();
         },
         action: function () {
+            Session.set('list_type', 'sample');
             var ids = Session.get('current_view_id');
             ids.sample = this.params._id;
-            Session.set('list_type', 'sample');
             Session.set('current_view_id', ids);
+            console.log(Session.get('current_view_id'));
 
-            this.render('sample_list', {to: 'left_pane'});
-            this.render('sample', {to: 'right_pane'});
-            if (!this.params._id) {
+            if(this.ready()){
+                this.render('sample_list', {to: 'left_pane'});
+                if (!this.params._id) {
+                    this.render('empty_right', {to: 'right_pane'});
+                } else {
+                    this.render('sample', {to: 'right_pane'});
+                }
+            }else{
                 this.render('empty_right', {to: 'right_pane'});
-            } else {
-                this.render('sample', {to: 'right_pane'});
+
             }
         //    GAnalytics.pageview("/sample/"+(this.params ? this.params._id : ""));
         },
-        waitOn: function(){
-            return Meteor.subscribe('samples');
-        },
         data: function () {
-            return Samples.findOne(this.params._id);
+//            return Samples.findOne(this.params._id);
+            var s = Samples.find({_id: this.params._id}).fetch()[0];
+            console.log(s);
+            return s;
         }});
 
     this.route('type', {path: '/type/:_id?', layoutTemplate: 'layout',
@@ -192,6 +197,63 @@ Router.map(function () {
 
         }
       });
+    this.route('file', {
+        path: '/file/:_id',
+        where: 'server',
 
+        action: function () {
+            var Fiber = Npm.require('fibers');
+
+
+            //          var fs = Npm.require('fs');
+//            var Future = Npm.require('fibers/future');
+
+            var file = AttachmentsFS.findOne(this.params._id);
+//
+//            this.response.writeHead(200, {'Content-Type':
+//                'text/plain; charset=utf-8'});
+//            console.log(file);
+//            var rs = file.createReadStream('attachments');
+//            rs.pipe(this.response);
+//            this.response.end('hoge');
+//            new DataMan(file).getBlob(function(d){
+//                console.log(d);
+//            });
+            var rs = file.createReadStream('attachments');
+            var self = this;
+            function read(a) {
+//                console.log(_.functions(rs),_.functions(a));
+//                console.log(a.toString());
+                self.response.end(a.toString());
+                while(buf = a.get()){
+                    console.log(buf);
+                }
+            }
+            Fiber(function(){
+                rs.on('data',read);
+            }).run();
+   //         console.log(file,rs);
+
+        }
+    });
+    this.route('filetest', {
+        path: '/filetest/:_id',
+        where: 'server',
+
+        action: function () {
+
+            var file = AttachmentsFS.findOne(this.params._id);
+
+            this.response.writeHead(200, {'Content-Type':
+                'text/plain; charset=utf-8'});
+            console.log(file);
+//            this.response.writeHead(200, {'Content-Type': 'text/plain'})
+            var fs = Npm.require('fs');
+            var Future = Npm.require('fibers/future');
+            var waiter = Future.wrap(fs.readFile);
+            var data = waiter('/Users/hiroyuki/Documents/labnote/README.md').wait();
+            this.response.end(data);
+        }
+    });
     this.route('notfound', {path: '*'});
 });

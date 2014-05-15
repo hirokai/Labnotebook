@@ -8,23 +8,38 @@ Template.log.formatTime = function(timestamp){
     return moment(new Date(timestamp)).format('H:mm\'ss"')
 };
 
+var opnametable = {
+    'exp':
+        {'new': function(log){return 'New experiment: <a href="/exp/'+log.id+'">'+log.params.name+'</a>';},
+            'insertop': 'Added operation to protocol',
+            'cloneprotocol': 'Cloned protocol',
+        'remove': 'Deleted experiment'},
+    'protocol_sample':
+        {'new': 'Added sample to exp protocol.',
+         'delete': 'Deleted sample from protocol'},
+    'run': {
+        'remove': 'Deleted exp run',
+        'updateparam': 'Changed a recorded parameter',
+        'insert': 'Insert run to exp'
+        },
+    'op': {
+        'remove': 'Removed operation from a protocol'
+        },
+    'database': {
+        'senddb': 'Send the database by email'
+    },
+    'sample': {
+        'insert': function(log){return 'Added sample: <a href="/sample/'+log.id+'">'+log.params.name+'</a>'}
+    },
+    'type': {
+        'insert': function(log){return 'Added sample type: <a href="/type/'+log.id+'">'+log.params.name+'</a>';}
+    }
+    };
+
 Template.log.operation = function(){
-  var str;
-  if(this.op == 'insert' && this.type == 'sample'){
-    str = 'Added sample: <a href="/sample/'+this.id+'">'+this.params.name+'</a>';
-  }else if(this.op == 'updateparam' && this.type == 'run'){
-      str = 'Changed a recorded parameter';
-  }else if(this.op == 'insert' && this.type == 'type'){
-      str = 'Added sample type: <a href="/type/'+this.id+'">'+this.params.name+'</a>';
-  }else if(this.op == 'newsampletoprotocol'){
-      str = 'Added sample to exp protocol';
-  }else if(this.type == 'exp' && this.op == 'new'){
-      str = 'New experiment: <a href="/exp/'+this.id+'">'+this.params.name+'</a>';
-  }else if(this.type == 'op' && this.op == 'remove'){
-      str = 'Removed operation from a protocol'
-  }else{
-    str = this.op + " " + this.type;
-  }
+  var obj = opnametable[this.type] ? opnametable[this.type][this.op] : null;
+  var str = typeof obj == 'function' ? obj(this) : obj;
+  str = str || (this.op + " " + this.type);
   return str;
 };
 

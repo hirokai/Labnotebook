@@ -194,16 +194,14 @@ Template.d3graph.events({
             $('#nodeedit_in_graph').on('keydown',function(evt){
                // console.log(evt);
                 if(evt.keyCode === 13){
-                    Samples.update(sel,{$set: {name: $(this).val()}});
+                    if(!renameProtocolSample(sel,$(this).val())){
+                        window.alert('Name is not valid');
+                    }
                     Session.set('editing_node_in_graph',null);
                     sel = Session.get('selected_nodes')[0];
-                    var name = Samples.findOne(sel).name;
-                    //console.log(name);
-                    el.html('');
+//                    el.html('');
                 }else if(evt.keyCode === 27){
                     sel = Session.get('selected_nodes')[0];
-                    var name = Samples.findOne(sel).name;
-                    el.html(name);
                     Session.set('editing_node_in_graph',null);
                 }
             });
@@ -236,16 +234,14 @@ Template.d3graph.events({
         var sid = Session.get('selected_nodes')[0];
         //Keep sample in DB.
         var eid = getCurrentExpId();
-        Experiments.update(eid,{$pull: {'protocol.samples': sid}});
-        removeOpsAboutSample(eid,sid);
+        deleteSampleFromProtocol(eid,sid);
     },
     'click #newinputbtn': function(){
         var edge = Session.get('selected_edges')[0];
         if(edge){
             var sid = newSampleToProtocol(getCurrentExpId(),generalSampleType(),'Sample');
             var opid = Operations.findOne(edge)._id;
-            //console.log(sid,opid);
-            Operations.update(opid,{$push: {input: sid}});
+            addNewInputToOp(opid,sid);
         }
     },
     'click #newoutputbtn': function(){
@@ -253,8 +249,7 @@ Template.d3graph.events({
         if(edge){
             var sid = newSampleToProtocol(getCurrentExpId(),generalSampleType(),'Sample');
             var opid = Operations.findOne(edge)._id;
-            //console.log(sid,opid);
-            Operations.update(opid,{$push: {output: sid}});
+            addNewOutputToOp(opid,sid);
         }
     },
     'click #deleteopbtn': function(){

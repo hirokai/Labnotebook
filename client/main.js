@@ -17,6 +17,20 @@ Samples = new Meteor.Collection('samples');
 
 Config = new Meteor.Collection("config");
 
+//    attachmentStore = new FS.Store.GridFS("attachments", {
+//        //     mongoUrl: 'mongodb://127.0.0.1:27017/test/', // optional, defaults to Meteor's local MongoDB
+//        //  mongoOptions: {...},  // optional, see note below
+//        //  transformWrite: myTransformWriteFunction, //optional
+//        //  transformRead: myTransformReadFunction, //optional
+//        //  maxTries: 1, // optional, default 5
+//        //  chunkSize: 1024*1024  // optional, default GridFS chunk size in bytes (can be overridden per file).
+//// Default: 2MB. Reasonable range: 512KB - 4MB
+//    });
+//
+//    AttachmentsFS = new FS.Collection("attachments", {
+//        stores: [attachmentStore]
+//    });
+
 
     Session.setDefault('list_type','exp');
 Session.setDefault('current_view_id',{exp: null, sample: null, sampletype:null,multiexp: null,date: null,log:null});
@@ -89,7 +103,7 @@ listsHandle = Meteor.subscribe('lists', function () {
 //samplesHandle = Meteor.subscribe('samples');
 configHandle = Meteor.subscribe('config');
 
-
+//attachmentsHandle = Meteor.subscribe('attachments');
 
 });
 
