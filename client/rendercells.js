@@ -1,5 +1,4 @@
-
-renderCells = function(eid) {
+renderCells = function (eid) {
 
 //    console.log('renderCells()');
     var exp = getCurrentExp();
@@ -7,74 +6,80 @@ renderCells = function(eid) {
     var row_opids = [];
     var row_paramnames = [];
     //You cannot use map of meteor cursor, because it will use up the collection and you can use it only once.
-    var runs = ExpRuns.find({exp: eid},{sort: {timestamp: 1}}).fetch();
-    var runids = _.map(runs,function(run){return run._id;});
-   // console.log(runs,runids);
+    var runs = ExpRuns.find({exp: eid}, {sort: {timestamp: 1}}).fetch();
+    var runids = _.map(runs, function (run) {
+        return run._id;
+    });
+    // console.log(runs,runids);
 
     function getTableData() {
 
 //        console.log(exp.protocol.operations);
         var exp = getCurrentExp();
-        var arr = _.map(exp.protocol.operations,function(opid){
+        var arr = _.map(exp.protocol.operations, function (opid) {
             var op = Operations.findOne(opid);
-            if(op){
-            row_opids.push(opid);
-            row_paramnames.push('');
-            var pss = [_.map(runs,function(run,idx){
-                //console.log(run,idx,opid);
-                return formatDateTime(getOpTimestamp(run._id,opid));
-            })
-            ];
-            pss = pss.concat(_.map(op.params,function(param){
-                var row = getRowData(exp,opid,param);
+            if (op) {
                 row_opids.push(opid);
-                row_paramnames.push(param.name);
+                row_paramnames.push('');
+                var pss = [_.map(runs, function (run, idx) {
+                    //console.log(run,idx,opid);
+                    return formatDateTime(getOpTimestamp(run._id, opid));
+                })
+                ];
+                pss = pss.concat(_.map(op.params, function (param) {
+                    var row = getRowData(exp, opid, param);
+                    row_opids.push(opid);
+                    row_paramnames.push(param.name);
 //                console.log(row);
-                return row;
-            }));
-            return pss;}
-            else{
+                    return row;
+                }));
+                return pss;
+            }
+            else {
                 return [];
             }
 
         });
-    //    console.log(arr);
-        return _.flatten(arr,true);
+        //    console.log(arr);
+        return _.flatten(arr, true);
     }
 
-    function colNames(){
-        return ExpRuns.find({exp: eid}).map(function(run){
+    function colNames() {
+        return ExpRuns.find({exp: eid}).map(function (run) {
             return run.name;
         });
     }
 
-    function getRowData(exp,opid,param){
+    function getRowData(exp, opid, param) {
         var runs = ExpRuns.find({exp: eid});
-     //   console.log(param);
-        return runs.map(function(run,runidx){
-            return getOpParam(run._id,opid,param.name);
+        //   console.log(param);
+        return runs.map(function (run, runidx) {
+            return getOpParam(run._id, opid, param.name);
         });
     }
 
 
-    function rowNames(){
+    function rowNames() {
         var e = getCurrentExp();
         var opids = e.protocol.operations;
         //A bit ad hoc...
-        var ops = sortById(Operations.find({_id: {$in: opids}}).fetch(),opids);
+        var ops = sortById(Operations.find({_id: {$in: opids}}).fetch(), opids);
 //        var exp = getCurrentExp();
-        var cs = _.flatten(_.map(ops,function(op){
-            return [op.name+": <br>Time"].concat(_.map(op.params,function(p){return op.name+": <br>"+p.name+ (p.unit ? " ["+p.unit+"]" : "")}));
+        var cs = _.flatten(_.map(ops, function (op) {
+            return [op.name + ": <br>Time"].concat(_.map(op.params, function (p) {
+                return op.name + ": <br>" + p.name + (p.unit ? " [" + p.unit + "]" : "")
+            }));
         }));
-        var res =  ["Run #"].concat(cs);
+        var res = ["Run #"].concat(cs);
 //        console.log(ops,cs,res);
         return cs;
     }
-    function cols(){
+
+    function cols() {
         var cs = [];
         cs.push({type: 'text'});
         var num_cols = colNames().length - 1;
-        _.each(_.range(0,num_cols),function(){
+        _.each(_.range(0, num_cols), function () {
             cs.push({
                 type: 'handsontable',
                 handsontable: {
@@ -88,7 +93,9 @@ renderCells = function(eid) {
 
     }
 
-    var colors = SampleTypes.find({},{fields: {name: 1}}).map(function(s){return s.name});
+    var colors = SampleTypes.find({}, {fields: {name: 1}}).map(function (s) {
+        return s.name
+    });
     var colorData = [];
     var color;
     while (color = colors.shift()) {
@@ -106,7 +113,9 @@ renderCells = function(eid) {
         manualColumnResize: true,
         startRows: 7,
         startCols: colnames.length,
-        colWidths: _.map(_.range(0,20),function(){return 80}),
+        colWidths: _.map(_.range(0, 20), function () {
+            return 80
+        }),
         rowHeaders: rownames,
         colHeaders: colnames,
         //   columns: cols(),
@@ -127,8 +136,8 @@ renderCells = function(eid) {
             var oldval = change[0][2];
             var newval = change[0][3];
             var runid = runids[(change[0][1])];
-            console.log(change,runids,runid,opid,paramname,newval);
-            updateDBAccordingToCell(runid,opid,paramname,newval,oldval);
+            console.log(change, runids, runid, opid, paramname, newval);
+            updateDBAccordingToCell(runid, opid, paramname, newval, oldval);
         }
     });
 
@@ -139,6 +148,7 @@ renderCells = function(eid) {
             //     console.log('data of ' + dump, $container.handsontable('getData'));
         });
     }
+
     bindDumpButton();
 
 }

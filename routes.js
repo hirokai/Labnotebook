@@ -8,9 +8,9 @@ Router.map(function () {
     this.route('exp',
         {path: '/exp/:_id?',
             layoutTemplate: 'layout',
-            onBeforeAction: function(){
+            onBeforeAction: function () {
                 this.subscribe('experiments').wait();
-                this.subscribe('expruns_id',this.params._id).wait();
+                this.subscribe('expruns_id', this.params._id).wait();
 //                this.subscribe('expruns').wait();
                 this.subscribe('operations').wait();
                 this.subscribe('samples').wait();
@@ -39,11 +39,11 @@ Router.map(function () {
                     } else {
                         this.render('exp', {to: 'right_pane'});
                     }
-               //     GAnalytics.pageview("/exp/"+(this.params ? this.params._id : ""));
+                    //     GAnalytics.pageview("/exp/"+(this.params ? this.params._id : ""));
                 } else {
                     //Seems I need this line for correct rendering...
                     this.render('loading', {to: 'right_pane'});
-           //         this.render('loading', {to: 'left_pane'});
+                    //         this.render('loading', {to: 'left_pane'});
                 }
             },
 //            waitOn: function () {
@@ -55,10 +55,10 @@ Router.map(function () {
         });
 
     this.route('log', {path: '/log/:date?', layoutTemplate: 'layout',
-        onBeforeAction: function(){
+        onBeforeAction: function () {
             this.subscribe('alllogs').wait();
-            if(this.params.date){
-                this.subscribe('logs',this.params.date).wait();
+            if (this.params.date) {
+                this.subscribe('logs', this.params.date).wait();
             }
         },
         action: function () {
@@ -66,22 +66,22 @@ Router.map(function () {
 
                 Session.set('list_type', 'log');
                 var ids = Session.get('current_view_id');
-            ids.log = this.params.date;
-            Session.set('current_view_id', ids);
+                ids.log = this.params.date;
+                Session.set('current_view_id', ids);
 
-            this.render('log_list', {to: 'left_pane'});
-            if (!this.params.date) {
-                this.render('empty_right', {to: 'right_pane'});
+                this.render('log_list', {to: 'left_pane'});
+                if (!this.params.date) {
+                    this.render('empty_right', {to: 'right_pane'});
+                } else {
+                    this.render('log', {to: 'right_pane'});
+                }
             } else {
-                this.render('log', {to: 'right_pane'});
-            }
-             }else{
                 this.render('loading', {to: 'right_pane'});
 
             }
         },
         data: function () {
-            return Logs.find({date: this.params.date},{sort: {timestamp: -1}});
+            return Logs.find({date: this.params.date}, {sort: {timestamp: -1}});
         }
     });
 
@@ -98,7 +98,7 @@ Router.map(function () {
             } else {
                 this.render('multiexp', {to: 'right_pane'});
             }
-        //    GAnalytics.pageview("/multiexp/"+(this.params ? this.params._id : ""));
+            //    GAnalytics.pageview("/multiexp/"+(this.params ? this.params._id : ""));
         },
         data: function () {
 //            return Operations.findOne(this.params._id);
@@ -106,7 +106,7 @@ Router.map(function () {
     });
 
     this.route('sample', {path: '/sample/:_id?', layoutTemplate: 'layout',
-        onBeforeAction: function(){
+        onBeforeAction: function () {
             this.subscribe('samples').wait();
             this.subscribe('expruns').wait();
             this.subscribe('experiments').wait();
@@ -119,18 +119,18 @@ Router.map(function () {
             Session.set('current_view_id', ids);
             console.log(Session.get('current_view_id'));
 
-            if(this.ready()){
+            if (this.ready()) {
                 this.render('sample_list', {to: 'left_pane'});
                 if (!this.params._id) {
                     this.render('empty_right', {to: 'right_pane'});
                 } else {
                     this.render('sample', {to: 'right_pane'});
                 }
-            }else{
+            } else {
                 this.render('empty_right', {to: 'right_pane'});
 
             }
-        //    GAnalytics.pageview("/sample/"+(this.params ? this.params._id : ""));
+            //    GAnalytics.pageview("/sample/"+(this.params ? this.params._id : ""));
         },
         data: function () {
 //            return Samples.findOne(this.params._id);
@@ -140,7 +140,7 @@ Router.map(function () {
         }});
 
     this.route('type', {path: '/type/:_id?', layoutTemplate: 'layout',
-        onBeforeAction: function(){
+        onBeforeAction: function () {
             this.subscribe('sampletypes').wait();
         },
         action: function () {
@@ -149,14 +149,14 @@ Router.map(function () {
             ids.sampletype = this.params._id;
             Session.set('current_view_id', ids);
 
-            if(this.ready()){
+            if (this.ready()) {
                 this.render('type_list', {to: 'left_pane'});
                 if (!this.params._id) {
                     this.render('empty_right', {to: 'right_pane'});
                 } else {
                     this.render('type', {to: 'right_pane'});
                 }
-            }else{
+            } else {
                 this.render('loading', {to: 'left_pane'});
                 this.render('loading', {to: 'right_pane'});
             }
@@ -185,18 +185,16 @@ Router.map(function () {
 //          var filename = this.params.filename;
 //          resp = {'lat' : this.request.body.lat,
 
-            this.response.writeHead(200, {'Content-Type':
-                                        'application/json; charset=utf-8'});
+            this.response.writeHead(200, {'Content-Type': 'application/json; charset=utf-8'});
 
             var obj = dump_allmydb(this.params.owner);
             var str = JSON.stringify(obj);
-           // console.log(obj);
-          this.response.end(str);
-
+            // console.log(obj);
+            this.response.end(str);
 
 
         }
-      });
+    });
     this.route('file', {
         path: '/file/:_id',
         where: 'server',
@@ -221,18 +219,20 @@ Router.map(function () {
 //            });
             var rs = file.createReadStream('attachments');
             var self = this;
+
             function read(a) {
 //                console.log(_.functions(rs),_.functions(a));
 //                console.log(a.toString());
                 self.response.end(a.toString());
-                while(buf = a.get()){
+                while (buf = a.get()) {
                     console.log(buf);
                 }
             }
-            Fiber(function(){
-                rs.on('data',read);
+
+            Fiber(function () {
+                rs.on('data', read);
             }).run();
-   //         console.log(file,rs);
+            //         console.log(file,rs);
 
         }
     });
@@ -244,8 +244,7 @@ Router.map(function () {
 
             var file = AttachmentsFS.findOne(this.params._id);
 
-            this.response.writeHead(200, {'Content-Type':
-                'text/plain; charset=utf-8'});
+            this.response.writeHead(200, {'Content-Type': 'text/plain; charset=utf-8'});
             console.log(file);
 //            this.response.writeHead(200, {'Content-Type': 'text/plain'})
             var fs = Npm.require('fs');

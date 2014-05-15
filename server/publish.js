@@ -27,7 +27,7 @@ var denyObj = {
 };
 
 Experiments = new Meteor.Collection("experiments");
-Meteor.publish('experiments', function() {
+Meteor.publish('experiments', function () {
     return Experiments.find({owner: this.userId || 'sandbox'});
 });
 Experiments.allow(allowObj);
@@ -36,17 +36,17 @@ Experiments.deny(denyObj);
 ExpRuns = new Meteor.Collection("expruns");
 ExpRuns.allow(allowObj);
 ExpRuns.deny(denyObj);
-Meteor.publish('expruns', function() {
-	return ExpRuns.find({owner: this.userId || 'sandbox'},{fields: {samplelist: 1, exp: 1}});
+Meteor.publish('expruns', function () {
+    return ExpRuns.find({owner: this.userId || 'sandbox'}, {fields: {samplelist: 1, exp: 1}});
 });
-Meteor.publish('expruns_id', function(eid) {
+Meteor.publish('expruns_id', function (eid) {
     return ExpRuns.find({owner: this.userId || 'sandbox', exp: eid});
 });
 
 // Presets -- {name: String}
 Presets = new Meteor.Collection("presets");
-Meteor.publish('presets', function() {
-	return Presets.find({owner: this.userId || 'sandbox'});
+Meteor.publish('presets', function () {
+    return Presets.find({owner: this.userId || 'sandbox'});
 });
 Presets.allow(allowObj);
 Presets.deny(denyObj);
@@ -58,9 +58,9 @@ Presets.deny(denyObj);
 //            exp_ids: [String, ...]
 //           tags: [String, ...]}
 Samples = new Meteor.Collection('samples');
-Meteor.publish('samples', function() {
+Meteor.publish('samples', function () {
     var owner = this.userId || 'sandbox';
-        return Samples.find({owner: owner});
+    return Samples.find({owner: owner});
 });
 //Meteor.publish('sample_id', function(id) {
 //    var owner = this.userId || 'sandbox';
@@ -71,11 +71,11 @@ Samples.deny(denyObj);
 
 
 SampleTypes = new Meteor.Collection("sampletypes");
-Meteor.publish('sampletypes', function() {
-    if(this.userId){
-  //      console.log(isAdmin(this.userId));
-    	return SampleTypes.find({owner: this.userId});
-    }else{
+Meteor.publish('sampletypes', function () {
+    if (this.userId) {
+        //      console.log(isAdmin(this.userId));
+        return SampleTypes.find({owner: this.userId});
+    } else {
         return SampleTypes.find({owner: 'sandbox'});
     }
 });
@@ -83,10 +83,10 @@ SampleTypes.allow(allowObj);
 SampleTypes.deny(denyObj);
 
 TypeClasses = new Meteor.Collection("typeclasses");
-Meteor.publish('typeclasses', function() {
-    if(this.userId){
+Meteor.publish('typeclasses', function () {
+    if (this.userId) {
         return TypeClasses.find({owner: this.userId});
-    }else{
+    } else {
         return TypeClasses.find({owner: 'sandbox'});
     }
 });
@@ -96,8 +96,8 @@ TypeClasses.deny(denyObj);
 // Dates -- {name: String,
 //			timestamp: Number}
 Dates = new Meteor.Collection("dates");
-Meteor.publish('dates', function() {
-	return this.userId ? Dates.find({owner: this.userId}) : Dates.find({owner: 'sandbox'});
+Meteor.publish('dates', function () {
+    return this.userId ? Dates.find({owner: this.userId}) : Dates.find({owner: 'sandbox'});
 });
 Dates.allow(allowObj);
 Dates.deny(denyObj);
@@ -106,30 +106,22 @@ Dates.deny(denyObj);
 //          exp_id: [String, ...],
 //			timestamp: Number}
 Operations = new Meteor.Collection("operations");
-Meteor.publish('operations', function() {
-    var owner =  this.userId || 'sandbox';
-	return Operations.find({owner: owner});
+Meteor.publish('operations', function () {
+    var owner = this.userId || 'sandbox';
+    return Operations.find({owner: owner});
 });
 Operations.allow(allowObj);
 Operations.deny(denyObj);
 
-
-//SampleGroups = new Meteor.Collection("samplegroups");
-//Meteor.publish('samplegroups', function() {
-//	return this.userId ? SampleGroups.find({owner: this.userId}) : SampleGroups.find({owner: 'sandbox'});
-//});
-//SampleGroups.allow(allowObj);
-//SampleGroups.deny(denyObj);
-
 Logs = new Meteor.Collection('logs');
-Meteor.publish('logs', function(date) {
+Meteor.publish('logs', function (date) {
     var uid = this.userId || 'sandbox';
     return Logs.find({owner: uid, date: date});
 });
 
-Meteor.publish('alllogs', function() {
+Meteor.publish('alllogs', function () {
     var uid = this.userId || 'sandbox';
-    return Logs.find({owner: uid},{fields: {date: 1, timestamp: 1}});
+    return Logs.find({owner: uid}, {fields: {date: 1, timestamp: 1}});
 });
 
 Logs.allow({
@@ -159,78 +151,43 @@ Logs.deny({
 });
 
 Config = new Meteor.Collection("config");
-Meteor.publish('config', function() {
-    var owner =  this.userId || 'sandbox';
+Meteor.publish('config', function () {
+    var owner = this.userId || 'sandbox';
     return Config.find({owner: owner});
 });
 Config.allow(allowObj);
 Config.deny(denyObj);
-//
-//attachmentStore = new FS.Store.GridFS("attachments", {
-//    //     mongoUrl: 'mongodb://127.0.0.1:27017/test/', // optional, defaults to Meteor's local MongoDB
-//    //  mongoOptions: {...},  // optional, see note below
-//    //  transformWrite: myTransformWriteFunction, //optional
-//    //  transformRead: myTransformReadFunction, //optional
-//    //  maxTries: 1, // optional, default 5
-//    //  chunkSize: 1024*1024  // optional, default GridFS chunk size in bytes (can be overridden per file).
-//// Default: 2MB. Reasonable range: 512KB - 4MB
-//});
-//
-//AttachmentsFS = new FS.Collection("attachments", {
-//    stores: [attachmentStore]
-//});
 
-
-//
-//var handler = {
-//    "fileHandler": function (options) {
-//        return {
-//            blob: options.blob,
-//            fileRecord: options.fileRecord
-//        };
-//    }
-//}
-//AttachmentsFS.fileHandlers(handler);
-//
-
-//Meteor.publish('attachments', function() {
-//    var owner = this.userId || 'sandbox';
-//    return AttachmentsFS.find({ owner: owner }, { sort: {timestamp: 1}});
-//});
-////
-//AttachmentsFS.allow(allowObj);
-//AttachmentsFS.deny(denyObj);
-
-function isAdmin(uid){
-    try{
+function isAdmin(uid) {
+    try {
         var u = Meteor.users.findOne(uid);
         return u ? u.services.google.email == 'hiroyuki.kai@gmail.com' : false;
-    }catch(e){
+    } catch (e) {
         return false;
     }
 }
 
-addLog = function(o){
-  var obj = {};
-  obj.owner = Meteor.userId() || 'sandbox';
-  obj.timestamp = new Date().getTime();
-  obj.date = moment(obj.timestamp).format('YYYYMMDD');
-  obj.server = true;
+addLog = function (o) {
+    var obj = {};
+    obj.owner = Meteor.userId() || 'sandbox';
+    obj.timestamp = new Date().getTime();
+    obj.date = moment(obj.timestamp).format('YYYYMMDD');
+    obj.server = true;
 
-  obj.type = o.type;
-  obj.op = o.op;
-  obj.id = o.id;
-  obj.params = o.params;
-  Logs.insert(obj);
+    obj.type = o.type;
+    obj.op = o.op;
+    obj.id = o.id;
+    obj.params = o.params;
+    Logs.insert(obj);
 };
 
-dump_allmydb = function(owner){
-var exp = Experiments.find({owner: owner}).fetch();
-var sample = Samples.find({owner: owner}).fetch();
-var op = Operations.find({owner: owner}).fetch();
-var run = ExpRuns.find({owner: owner}).fetch();
-var st = SampleTypes.find({owner: owner}).fetch();
-var cls = TypeClasses.find({owner: owner}).fetch();
+dump_allmydb = function (owner) {
+    var exp = Experiments.find({owner: owner}).fetch();
+    var sample = Samples.find({owner: owner}).fetch();
+    var op = Operations.find({owner: owner}).fetch();
+    var run = ExpRuns.find({owner: owner}).fetch();
+    var st = SampleTypes.find({owner: owner}).fetch();
+    var cls = TypeClasses.find({owner: owner}).fetch();
     var log = Logs.find({owner: owner}).fetch();
     return {experiments: exp, samples: sample, operations: op, runs: run, types: st, classes: cls, logs: log};
 }
