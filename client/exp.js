@@ -49,7 +49,8 @@ Template.exp.sample_link_in_run = function () {
 };
 
 Template.exp.runs = function () {
-    return ExpRuns.find({exp: getCurrentExpId()}, {sort: {timestamp: 1, date: 1}});
+    var runs = getExpRuns(getCurrentExpId());
+    return runs.map(function(run,i){run.index = i; return run;});
 };
 
 Template.exp.sample_run = function (sid, runid) {
@@ -131,23 +132,41 @@ Template.exp.step_output = function () {
         return [];
 };
 
+Template.exp.index_name = function() {
+    return this.index + 1;
+};
+
+Template.exp.samplerun_selected = function(sid,rid,ridx) {
+  var obj = Session.get('exp_sampletable_selection');
+ // console.log(obj,ridx,sid);
+  return (obj && obj.from && obj.from.sample == sid
+            && obj.to &&
+            ((obj.from.runidx <= ridx && obj.to.runidx >= ridx) || (obj.to.runidx <= ridx && obj.from.runidx >= ridx)))
+        ? 'selected' : '';
+};
+
+Template.exp.disable_runsamples_btn = function(){
+    return Session.get('exp_sampletable_selection').from ? '' : 'disabled';
+};
+
+Template.exp.disabled_new_runsamples = function() {
+  var cells = getSelectedRunSampleCells();
+  return _.compact(_.map(cells,function(c){return c.sample;})).length > 0 ? 'disabled_link' : '';
+};
+
+Template.exp.not_selected_runsamples = function(){
+    var obj = Session.get('exp_sampletable_selection');
+//    console.log(this._id,obj);
+    return !(obj && obj.from && obj.from.sample == this._id);
+}
+
 Template.exp.events({
+    'click .disabled_link': function(evt){
+        evt.preventDefault();
+    },
     'mousedown .stepdelete': function (e) {
 //        var eid = getCurrentExpId();
         removeOp(this._id);
-    },
-    'click #deselect': function () {
-        Session.set('selected_nodes', []);
-    },
-    'click #connectnodesbtn': function (evt, tmpl) {
-        var name = tmpl.find('#newnodename').value;
-        var to = tmpl.find('circle.selected').attributes['data-sample-id'].value;
-        if (name && name != "" && to) {
-            // console.log(toname);
-            var from = insertSampleType(name);
-            var op = insertOp(this._id, name);
-
-        }
     },
     'change #exp_datepicker': function (evt) {
         var date = new Date(evt.target.value).getTime();
@@ -156,18 +175,9 @@ Template.exp.events({
     'click .step_sample_list': function () {
         //     Router.go('sample',{_id: this._id});
     },
-    'click #addsteplink': function () {
-        var b = Session.get('visible_addstepdiv');
-        Session.set('visible_addstepdiv', !b);
-//        $('#addstepexpand').text('-');
-    },
     'click .sample_name': function (evt, tmpl) {
         Session.set('protocol_sampleinfo_for', this._id);
         $('#protocol_sample_info').modal();
-    },
-    'click .sampleedit': function (evt, tmpl) {
-        Session.set('editing_sampletype_id', this._id);
-        Deps.flush(); // force DOM redraw, so we can focus the edit field
     },
     'click .sampledelete': function (evt, tmpl) {
         removeOpsAboutSample(getCurrentExpId(), this._id);
@@ -241,10 +251,42 @@ Template.exp.events({
     'click #addrunbtn': function (evt) {
         addNewRunToExp(getCurrentExpId());
     },
-    'click .deleterunbtn': function (evt) {
-        var e = getButton(evt.target);
-        var id = e.attr('data-runid');
-        deleteRun(id);
+    'click .addmultiruns': function(evt){
+        var eid = getCurrentExpId();
+        var num = parseInt($(evt.target).attr('data-numruns'));
+        _.map(_.range(0,num),function(){
+            addNewRunToExp(eid);
+        });
+    },
+    'click #runsamples_selectnone': function(){
+      Session.set('exp_sampletable_selection',{from: null, to: null});
+    },
+    'click .new_runsamples': function(evt) {
+        newRunSamplesForSelection(true);
+
+    },
+    'click .new_runsamples_copyname': function(evt) {
+        newRunSamplesForSelection(false);
+    },
+    'click .delete_runsamples': function(){
+        var cells = getSelectedRunSampleCells();
+        _.map(cells,function(c){
+            var runid = c.run;
+            var protocol_sid = c.protocol_sample;
+            var sid = c.sample;
+            removeSampleInRun(runid, protocol_sid, sid);
+        });
+    },
+    'click .run_name': function (evt) {
+        if(evt.altKey){
+            var e = $(evt.target);
+//            var ee = e.prop('tagName') == 'TD' ? e : e.parent('td');
+            var id = e.attr('data-runid');
+          //  console.log(e,ee,id);
+            deleteRun(id);
+        }else{
+            //stub: show run info.
+        }
     },
     'click .assignsamplebtn': function (evt) {
         var ee = getButton(evt.target);
@@ -255,8 +297,8 @@ Template.exp.events({
         $('#sample_chooser_samples').html(html);
         $('#sample_chooser').modal();
     },
-    'click .makenewsamplebtn': function (evt) {
-        var ee = getButton(evt.target);
+    'dblclick td.sample_run_cell': function (evt) {
+        var ee = $(evt.target);
         var eid = getCurrentExpId();
         var runid = ee.attr('data-runid');
         var protocol_sid = ee.attr('data-protocolsample');
@@ -274,11 +316,29 @@ Template.exp.events({
         assignSampleInRun(runid, obj.sample, sid);
         $('#sample_chooser').modal('hide');
     },
+    'mousedown td.sample_run_cell': function (evt) {
+        var rid = $(evt.target).attr('data-runid');
+        var sid = $(evt.target).attr('data-protocolsample');
+        var ridx = $(evt.target).attr('data-runidx');
+        if(evt.shiftKey){
+            var obj = Session.get('exp_sampletable_selection');
+            if(obj && obj.from && obj.from.sample == sid){ // only same row is allowed.
+                obj.to = {run: rid, runidx: ridx, sample: sid};
+                Session.set('exp_sampletable_selection',obj);
+            }
+        }else{
+            var obj = {};
+            obj.from = {run: rid, runidx: ridx, sample: sid};
+            obj.to = {run: rid, runidx: ridx, sample: sid};
+            Session.set('exp_sampletable_selection',obj);
+        }
+     //   $(evt.target).toggleClass('selected');
+    },
     'click .sampleinrun': function (evt) {
         var e = $(evt.target);
         var ee = e.prop('tagName') == 'TD' ? e : e.parent('td');
         var runid = ee.attr('data-runid');
-        console.log(ee, runid, ee.attr('data-sample'));
+        //console.log(ee, runid, ee.attr('data-sample'));
         var currentid = ee.attr('data-sample');
         if (evt.altKey) {
             var sid = ee.attr('data-protocolsample');
@@ -287,18 +347,6 @@ Template.exp.events({
         } else {
             Session.set('sampleinfo_for', currentid);
             $('#sample_info').modal();
-        }
-    },
-    'click #saveexp': function (evt) {
-        var msg = 'Saving the experiment will dump the data as a file as well as send the log to the set email address.';
-        if (window.confirm(msg)) {
-            dumpExperiment();
-//            var user = Session.get('currentUser');
-//            Meteor.call('sendEmail',
-//                user.email,
-//                        user.email,
-//                'E-Lab notebook dump on '+ formatDate(new Date()),
-//                        json);
         }
     },
     'click .step_table_name': function () {
@@ -425,18 +473,6 @@ Template.sample_info.type = function () {
 Template.sample_info.time_made = function () {
     return formatDateTime(this.timestamp);
 };
-//
-//Template.exp.runs_time = function(){
-//    console.log(this);
-//    var opid = this._id;
-//    var eid = getCurrentExpId();
-//    var runs = Experiments.findOne(eid).runs;
-//  return _.map(runs,function(run,i){
-//   //   console.log(run,i);
-//      var op = run ? run.operations[opid] : null;
-//      return op ? {timestamp: op.timestamp, index: i} : {};
-//  });
-//};
 
 Template.sample_info.op_sampletype = function (sid) {
     var tids = findSubTypes(tid);
@@ -537,6 +573,10 @@ Template.sample_info.protocol_sample = function () {
 Template.sample_info.alltypes = function () {
     return SampleTypes.find();
 };
+
+Template.sample_info.is_array = function(){
+    return this.array ? 'checked' : '';
+}
 
 Template.sample_info.type_selected = function (tid) {
     return this._id == tid ? 'selected' : '';
@@ -783,4 +823,45 @@ Template.runop_info.rendered = function () {
 
 Template.exp.runop_shown = function () {
     return !!Session.get('runopinfo_for');
+}
+
+function getSelectedRunSampleCells(){
+    var sel = Session.get('exp_sampletable_selection');
+    var psample = sel.from.sample;
+    var ridxmin = Math.min(sel.from.runidx,sel.to.runidx);
+    var ridxmax = Math.max(sel.from.runidx,sel.to.runidx);
+    var rids = getExpRuns(getCurrentExpId()).map(function(run){return run._id});
+    return _.map(_.range(ridxmin,ridxmax+1),function(ridx){
+        var rid = rids[ridx];
+        var sample = ExpRuns.findOne(rid).samples[psample];
+        return {run: rid, protocol_sample: psample, sample: sample, runidx: ridx};
+    });
+}
+
+function newRunSamplesForSelection(useSerialNames) {
+    var cells = getSelectedRunSampleCells();
+    _.map(cells,function(c){
+        var runid = c.run;
+        var protocol_sid = c.protocol_sample;
+        var protocol_sample = Samples.findOne(protocol_sid);
+        console.log(runid, protocol_sid, protocol_sample);
+        var name = useSerialNames ? mkSampleName(runid) : protocol_sample.name;
+        var sid = newSample(name, protocol_sample.sampletype_id);
+        assignSampleInRun(runid, protocol_sid, sid);
+    });
+}
+
+function mkSampleName(runid){
+    var run = ExpRuns.findOne(runid);
+    var exp = Experiments.findOne(run.exp);
+    var date = moment(new Date(exp.date)).format('M/D/YY');
+    var exists = true;
+    var num = 0; // (getExpRunIndex(runid)+1);
+    var str;
+    do{
+        num += 1;
+        str = date + '-#' + num;
+        exists = Samples.findOne({name: str});
+    }while(exists)
+    return str;
 }

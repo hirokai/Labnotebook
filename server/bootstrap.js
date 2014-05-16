@@ -31,6 +31,8 @@ removeUser = function (uid) {
 //Create user DB for the user of user ID uid.
 initializeDB = function (user) {
 
+    console.log(user);
+
     var uid = user._id || "sandbox";
 
     function mkRun(i) {

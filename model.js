@@ -74,6 +74,16 @@ insertExp = function (name) {
     return eid;
 };
 
+getExpRuns = function(eid){
+    return ExpRuns.find({exp: eid}, {sort: {timestamp: 1, date: 1}});
+};
+
+getExpRunIndex = function(rid){
+//    var run = ExpRuns.find(rid);
+    var runids = ExpRuns.find({},{fields: {_id: 1}, sort: {timestamp: 1, date: 1}}).map(function(run){return run._id});
+    return _.indexOf(runids,rid);
+}
+
 removeOpsAboutSample = function (eid, sid) {
     var ops = Operations.find({$or: [
         {input: sid},
@@ -138,11 +148,13 @@ findSamplePosInList = function (sid) {
     return 0;
 };
 
-assignSampleInRun = function (runid, sample, newsample) {
+assignSampleInRun = function (runid, sample, newsample, overwrite) {
 //    console.log(runid,ExpRuns.findOne());
     var samples = ExpRuns.findOne(runid, {samples: 1}).samples;
-    samples[sample] = newsample;
-    ExpRuns.update(runid, {$set: {samples: samples}, $push: {samplelist: newsample}});
+    if(!samples[sample] || overwrite){
+        samples[sample] = newsample;
+        ExpRuns.update(runid, {$set: {samples: samples}, $push: {samplelist: newsample}});
+    }
 };
 
 removeSampleInRun = function (runid, sample, old_sid) {
@@ -151,7 +163,19 @@ removeSampleInRun = function (runid, sample, old_sid) {
     obj[key] = null;
 //    console.log(runid,obj,ExpRuns.findOne(runid));
     ExpRuns.update(runid, {$set: obj, $pull: {samplelist: old_sid}});
+    if(ExpRuns.find({samplelist: old_sid}).count() == 0){
+        var s = Samples.findOne(old_sid);
+        if(!sampleActualInfo(s)){
+            Samples.remove(old_sid);
+        }
+    }
 };
+
+//check if Sample has some info added (other than just added to exp run as a new sample).
+sampleActualInfo = function(sample){
+    // stub: maybe we need some change flag.
+    return sample.note || sample.tags.length > 0 || sample.data.length > 0;
+}
 
 sampleNotUsedAtAll = function (sid) {
     return ExpRuns.find({samplelist: sid}).count() == 0;
@@ -439,7 +463,7 @@ findProtocolSample = function (rid, sid) {
         return v == sid ? k : null
     })));
     return _.compact(_.map(run.samples, function (v, k) {
-        console.log(k, v, sid);
+//        console.log(k, v, sid);
         return v == sid ? k : null
     }))[0];
 }

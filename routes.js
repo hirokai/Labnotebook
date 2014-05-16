@@ -28,7 +28,8 @@ Router.map(function () {
                 Session.set('selected_nodes', []);
                 Session.set('selected_edges', []);
                 Session.set('selected_ops', []);
-//                if(Meteor.isClient){
+                Session.set('exp_sampletable_selection',{from: null, to: null});
+                //                if(Meteor.isClient){
 //                    d3.select("svg").html('');
 //                }
                 if (this.ready()) {

@@ -41,27 +41,54 @@
             </label>
         </div>
         <section id='sec-sample' class="{{#unless info_active 'sample'}}hidden{{/unless}}">
-            <h3>Samples</h3>
+            <div id='exp_samples_titlebar'>
+                <h3>Samples</h3>
+                <div>
+                    <span>For runs:</span>
+                    <button id='runsamples_selectnone' class="btn btn-xs btn-default" type="button">Select none</button>
+                    <!--<button id='newsamplesbtn' {{disable_runsamples_btn}} class="btn btn-xs btn-default" type="button">New samples</button>-->
+                    <!--<button id='assignsamplesbtn' {{disable_runsamples_btn}} class="btn btn-xs btn-default" type="button">Assign samples</button>-->
+                </div>
+            </div>
+
             <table class='table' id='sampleinfotable'>
                 <tr>
+                    <th></th>
                     <th class='name'>Name</th>
                     <th class='sampletype'>Type</th>
-                    <th class='sampleedit'>Delete</th>
+                    <th class='sampleedit'></th>
                     {{#each runs}}
                     <th align='center'>
-                        {{name}}
-                        <button class='deleterunbtn btn btn-xs btn-default' type="button" data-runid='{{_id}}'>
-                            <span class="glyphicon glyphicon-remove"></span>
-                        </button>                    </th>
+                        <span class='run_name link' data-runid='{{_id}}'>{{name}}</span>
+                        <!--<button class='deleterunbtn btn btn-xs btn-default' type="button" data-runid='{{_id}}'>-->
+                            <!--<span class="glyphicon glyphicon-remove"></span>-->
+                        <!--</button>-->
+                    </th>
                     {{/each}}
                     <th>
-                        <button id='addrunbtn' class="btn btn-xs btn-default" type="button">
-                            <span class="glyphicon glyphicon-plus"></span>
-                        </button>
+                        <!--<button id='addrunbtn' class="btn btn-xs btn-default" type="button">-->
+                            <!--<span class="glyphicon glyphicon-plus"></span>-->
+                        <!--</button>-->
+                        <div class="btn-group">
+                            <button type="button" id='addrunbtn' class="btn btn-xs btn-default"><span class="glyphicon glyphicon-plus"></span></button>
+                            <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown">
+                                <span class="caret"></span>
+                                <span class="sr-only">Toggle Dropdown</span>
+                            </button>
+                            <ul class="dropdown-menu" role="menu">
+                                <li><a href="#" class='addmultiruns' data-numruns='5'>Add 5 runs</a></li>
+                                <li><a href="#" class='addmultiruns' data-numruns='10'>Add 10 runs</a></li>
+                            </ul>
+                        </div>
                     </th>
                 </tr>
                 {{#each protocol_samples}}
                 <tr class='sample {{sample_selected}}'>
+                    <td>
+                        <a href='#' class='sampledelete'>
+                            <span class='glyphicon glyphicon-remove'></span>
+                        </a>
+                    </td>
                     <td class='name'>{{#if editing_sample_name}}
                         <input class='input-xs' id='samplename_edit_input' type="text" value='{{name}}'/>
                         {{else}}
@@ -84,24 +111,36 @@
                         <!--<a href='#' class='sampleedit' style='margin-right: 10px;'>-->
                             <!--<span class='glyphicon glyphicon-pencil'></span>-->
                         <!--</a>-->
-                        <a href='#' class='sampledelete'>
-                            <span class='glyphicon glyphicon-remove'></span>
-                    </a>
+
+                        <div class="btn-group {{#if not_selected_runsamples}}hidden{{/if}}">
+                            <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown">
+                                <span class='glyphicon glyphicon-chevron-right'></span>
+                                <!--<span class="caret"> </span>-->
+                            </button>
+                            <ul class="dropdown-menu" role="menu" style='text-align: left'>
+                                <li><a href="#" class='new_runsamples' {{disabled_new_runsamples}}>New</a></li>
+                                <li><a href="#" class='new_runsamples_copyname' {{disabled_new_runsamples}}>New (copy protocol name)</a></li>
+                                {{#if assignsample_possible _id}}
+                                <li><a href="#" class='assign_runsamples' {{disabled_new_runsamples}}>Import existing</a></li>
+                                {{/if}}
+                                <li><a href="#" class='delete_runsamples' {{disabled_delete_runsamples}}>Delete</a></li>
+                            </ul>
+                        </div>
                     </td>
                     {{#each runs}}
                         {{#with sample_run ../_id _id}}
-                        <td class='sample_run_cell' align='center' data-runidx='{{./index}}' data-runid='{{../_id}}' data-protocolsample='{{../../_id}}' data-sample={{_id}}>
+                        <td class='sample_run_cell {{samplerun_selected ../../_id ../_id ../index}}' align='center' data-runidx='{{../index}}' data-runid='{{../_id}}' data-protocolsample='{{../../_id}}' data-sample={{this._id}}>
                             {{#if stub}}
-                                <button class='makenewsamplebtn btn btn-sm btn-primary {{#if assignsample_possible ../../_id}}twobtns{{/if}}'
-                                        title='Define new sample' type="button" data-runid='{{../_id}}'  data-protocolsample='{{../../_id}}'>
-                                    <span class="glyphicon glyphicon-plus"></span>
-                                </button>
-                                {{#if assignsample_possible ../../_id}}
-                                    <button class='assignsamplebtn btn btn-xs btn-default twobtns' title='Assign previous sample to this point' type="button" data-runidx='{{./index}}'
-                                            data-runid='{{../_id}}' data-protocolsample='{{../../_id}}'>
-                                        <span class="glyphicon glyphicon-import"></span>
-                                    </button>
-                                {{/if}}
+                                <!--<button class='makenewsamplebtn btn btn-sm btn-primary {{#if assignsample_possible ../../_id}}twobtns{{/if}}'-->
+                                        <!--title='Define new sample' type="button" data-runid='{{../_id}}'  data-protocolsample='{{../../_id}}'>-->
+                                    <!--<span class="glyphicon glyphicon-plus"></span>-->
+                                <!--</button>-->
+                                <!--{{#if assignsample_possible ../../_id}}-->
+                                    <!--<button class='assignsamplebtn btn btn-xs btn-default twobtns' title='Assign previous sample to this point' type="button" data-runidx='{{./index}}'-->
+                                            <!--data-runid='{{../_id}}' data-protocolsample='{{../../_id}}'>-->
+                                        <!--<span class="glyphicon glyphicon-import"></span>-->
+                                    <!--</button>-->
+                                <!--{{/if}}-->
                             {{else}}
                                 <span class='link sampleinrun'>{{name}}</span>
 

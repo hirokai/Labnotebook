@@ -189,19 +189,33 @@ h3 {
   width: 700px ! important;
   font-size: 11px;
   tr.selected > td {
-    background: rgb(255, 146, 82) ! important;
-  }
-  td {
-    height: 25px ! important;
-    width: 100px;
-    padding: 0;
-  }
-  td.name {
-    width: 150px ! important;
+    background: rgb(255, 146, 82)//! important;
   }
   tr:nth-child(odd) > td {
     background: rgba(219, 255, 217, 0.16);
   }
+  td {
+    height: 25px ! important;
+    width: 70px;
+    padding: 0;
+    margin: 0;
+    &.selected {
+      background: pink ! important;
+    }
+  }
+  .dropdown-menu{
+    font-size: 11px;
+  }
+  td.name {
+    width: 150px ! important;
+  }
+
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
 .makenewsamplebtn, .assignsamplebtn {
@@ -517,7 +531,9 @@ table.table {
 }
 
 .sampledelete {
-  text-align: center;
+//  text-align: center;
+  margin-left: 10px;
+  margin-right: 10px;
 }
 
 #sampleandprotocol {
@@ -775,4 +791,17 @@ ul.jqtree-tree li.jqtree-selected > .jqtree-element, ul.jqtree-tree li.jqtree-se
 
 #sample_info_type_change {
   margin-left: 20px;
+}
+
+#exp_samples_titlebar {
+  height: 20px;
+  * {
+    float: left;
+    vertical-align: bottom;
+    display: inline;
+  }
+}
+
+.dropdown-menu > li > a[disabled_link] {
+  color: #c8c8c8;
 }
