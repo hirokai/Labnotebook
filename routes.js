@@ -109,7 +109,8 @@ Router.map(function () {
     this.route('sample', {path: '/sample/:_id?', layoutTemplate: 'layout',
         onBeforeAction: function () {
             this.subscribe('samples').wait();
-            this.subscribe('expruns').wait();
+            this.subscribe('operations').wait();
+            this.subscribe('expruns_samples').wait();
             this.subscribe('experiments').wait();
             this.subscribe('sampletypes').wait();
         },
@@ -118,7 +119,7 @@ Router.map(function () {
             var ids = Session.get('current_view_id');
             ids.sample = this.params._id;
             Session.set('current_view_id', ids);
-            console.log(Session.get('current_view_id'));
+//            console.log(Session.get('current_view_id'));
 
             if (this.ready()) {
                 this.render('sample_list', {to: 'left_pane'});
@@ -135,8 +136,8 @@ Router.map(function () {
         },
         data: function () {
 //            return Samples.findOne(this.params._id);
-            var s = Samples.find({_id: this.params._id}).fetch()[0];
-            console.log(s);
+            var s = Samples.findOne({_id: this.params._id}) //.fetch()[0];
+//            console.log(s);
             return s;
         }});
 

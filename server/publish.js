@@ -39,6 +39,9 @@ ExpRuns.deny(denyObj);
 Meteor.publish('expruns', function () {
     return ExpRuns.find({owner: this.userId || 'sandbox'}, {fields: {samplelist: 1, exp: 1}});
 });
+Meteor.publish('expruns_samples', function () {
+    return ExpRuns.find({owner: this.userId || 'sandbox'}, {fields: {samplelist: 1, exp: 1, samples: 1}});
+});
 Meteor.publish('expruns_id', function (eid) {
     return ExpRuns.find({owner: this.userId || 'sandbox', exp: eid});
 });
@@ -110,6 +113,7 @@ Meteor.publish('operations', function () {
     var owner = this.userId || 'sandbox';
     return Operations.find({owner: owner});
 });
+
 Operations.allow(allowObj);
 Operations.deny(denyObj);
 

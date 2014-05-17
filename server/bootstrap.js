@@ -52,7 +52,8 @@ initializeDB = function (user) {
         ExpRuns.insert({owner: uid, exp: eid, name: 'Run ' + i, date: new Date().getTime(),
             samples: samples,
             samplelist: [s_a, s1_a],
-            ops: ops});
+            ops: ops,
+        timestamp: new Date().getTime()});
         return [s_a, s1_a];
     }
 

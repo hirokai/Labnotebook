@@ -14,7 +14,7 @@ Template.exp.exp_name = function () {
 
 Template.exp.samples = function () {
     var eid = getCurrentExpId();
-    var edges = getEdges(eid);
+    var edges = getProtocolEdges(eid);
     //console.log(edges);
     var es = _.map(edges, function (edge) {
         return [edge.from._id, edge.to._id];
@@ -28,7 +28,8 @@ Template.exp.samples = function () {
 
 Template.exp.protocol_samples = function () {
     var eid = getCurrentExpId();
-    var edges = getEdges(eid);
+    var exp = Experiments.findOne(eid);
+    var edges = getProtocolEdges(eid);
     //   console.log(edges);
     var es = _.map(edges, function (edge) {
         return [edge.from._id, edge.to._id];
@@ -38,8 +39,14 @@ Template.exp.protocol_samples = function () {
     var e = Experiments.findOne(eid);
     var sids = e.protocol.samples;
     var samples = Samples.find({_id: {$in: sids}}).fetch();
+    var ins = findInputsOfExp(exp);
+    var outs = findOutputsOfExp(exp);
     var res = _.map(sorted, function (id, i) {
-        return _.findWhere(samples, {_id: id});
+        var s = _.findWhere(samples, {_id: id});
+        console.log(ins,outs, s._id);
+        s.input = _.contains(ins, s._id);
+        s.output = _.contains(outs, s._id);
+        return s;
     });
     return res;
 };
@@ -72,6 +79,11 @@ Template.exp.eid = function () {
 Template.exp.sample_selected = function () {
     return _.contains(Session.get('selected_nodes'), this._id) ? "selected" : '';
 };
+
+Template.exp.sample_inputoutput = function () {
+    return this.input ? 'protocol_sample_input' : (this.output ? 'protocol_sample_output' : '');
+};
+
 
 Template.exp.op_selected = function () {
     return _.contains(Session.get('selected_ops'), this._id) ? "selected" : '';
@@ -303,9 +315,17 @@ Template.exp.events({
         var runid = ee.attr('data-runid');
         var protocol_sid = ee.attr('data-protocolsample');
         var protocol_sample = Samples.findOne(protocol_sid);
-        console.log(runid, protocol_sid, protocol_sample);
-        var sid = newSample(protocol_sample.name, protocol_sample.sampletype_id);
-        assignSampleInRun(runid, protocol_sid, sid);
+//        console.log(runid, protocol_sid, protocol_sample);
+        var sid;
+        if(evt.shiftKey){
+            sid = newSample(protocol_sample.name, protocol_sample.sampletype_id);
+            assignSampleInRun(runid, protocol_sid, sid);
+        }else{
+            Session.set('choosing_sample_for', {run: runid, sample: protocol_sid});
+            var html = mkHtmlForSampleChooser(protocol_sid, runid);
+            $('#sample_chooser_samples').html(html);
+            $('#sample_chooser').modal();
+        }
 
     },
     'click .choose_sample': function (evt) {
@@ -317,6 +337,8 @@ Template.exp.events({
         $('#sample_chooser').modal('hide');
     },
     'mousedown td.sample_run_cell': function (evt) {
+   //     console.log(evt,evt.button);
+        if(evt.button != 0) return;
         var rid = $(evt.target).attr('data-runid');
         var sid = $(evt.target).attr('data-protocolsample');
         var ridx = $(evt.target).attr('data-runidx');
@@ -430,7 +452,9 @@ Template.exp.rendered = function () {
     if (!self.handle) {
         self.handle = Deps.autorun(function () {
             var eid = getCurrentExpId();
-            renderCells(eid);
+            if(eid){
+                renderCells(eid);
+            }
             //`ga('send', 'event', 'view', 'exp', Meteor.userId(),eid);
         });
     }
@@ -827,15 +851,19 @@ Template.exp.runop_shown = function () {
 
 function getSelectedRunSampleCells(){
     var sel = Session.get('exp_sampletable_selection');
-    var psample = sel.from.sample;
-    var ridxmin = Math.min(sel.from.runidx,sel.to.runidx);
-    var ridxmax = Math.max(sel.from.runidx,sel.to.runidx);
-    var rids = getExpRuns(getCurrentExpId()).map(function(run){return run._id});
-    return _.map(_.range(ridxmin,ridxmax+1),function(ridx){
-        var rid = rids[ridx];
-        var sample = ExpRuns.findOne(rid).samples[psample];
-        return {run: rid, protocol_sample: psample, sample: sample, runidx: ridx};
-    });
+    if(sel && sel.from){
+        var psample = sel.from.sample;
+        var ridxmin = Math.min(sel.from.runidx,sel.to.runidx);
+        var ridxmax = Math.max(sel.from.runidx,sel.to.runidx);
+        var rids = getExpRuns(getCurrentExpId()).map(function(run){return run._id});
+        return _.map(_.range(ridxmin,ridxmax+1),function(ridx){
+            var rid = rids[ridx];
+            var sample = ExpRuns.findOne(rid).samples[psample];
+            return {run: rid, protocol_sample: psample, sample: sample, runidx: ridx};
+        });
+    }else{
+        return [];
+    }
 }
 
 function newRunSamplesForSelection(useSerialNames) {

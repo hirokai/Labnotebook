@@ -11,6 +11,7 @@
     "event-hooks": {},
     "jqTree": {},
     "Handsontable": {},
-    "collectionFS": {}
+    "collectionFS": {},
+    "collection2": {}
   }
 }

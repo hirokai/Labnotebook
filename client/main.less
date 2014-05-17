@@ -240,15 +240,18 @@ h3 {
 
 td.sample_run_cell {
   cursor: pointer;
+  &:hover {
+    background: #ffe4d6 ! important;
+  }
 }
-
-td.sample_run_cell:hover > .makenewsamplebtn {
-  opacity: 1;
-}
-
-td.sample_run_cell:hover > .assignsamplebtn {
-  opacity: 1;
-}
+//
+//td.sample_run_cell:hover > .makenewsamplebtn {
+//  opacity: 1;
+//}
+//
+//td.sample_run_cell:hover > .assignsamplebtn {
+//  opacity: 1;
+//}
 
 td.sample_run_cell:hover {
   // background: pink ! important;
@@ -804,4 +807,12 @@ ul.jqtree-tree li.jqtree-selected > .jqtree-element, ul.jqtree-tree li.jqtree-se
 
 .dropdown-menu > li > a[disabled_link] {
   color: #c8c8c8;
+}
+
+
+//Sample
+
+svg#sample_graph {
+  width: 400px;
+  height: 300px;
 }

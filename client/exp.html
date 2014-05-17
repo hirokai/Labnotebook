@@ -83,7 +83,7 @@
                     </th>
                 </tr>
                 {{#each protocol_samples}}
-                <tr class='sample {{sample_selected}}'>
+                <tr class='sample {{sample_selected}} {{sample_inputoutput}}'>
                     <td>
                         <a href='#' class='sampledelete'>
                             <span class='glyphicon glyphicon-remove'></span>
@@ -644,7 +644,7 @@ Not found.
 
         </div>
     <div id="svgWrapper">
-        <svg>
+        <svg id='exp_graph'>
         </svg>
     </div>
     </div>

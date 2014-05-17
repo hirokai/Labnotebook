@@ -126,7 +126,7 @@ getCurrentExpId = function(){
 };
 
 getCurrentSample = function(){
-    var id = getCurrentExpId();
+    var id = getCurrentSampleId();
     return id ? Samples.findOne(id) : null;
 };
 

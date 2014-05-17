@@ -161,6 +161,7 @@ removeSampleInRun = function (runid, sample, old_sid) {
     var obj = {};
     var key = 'samples.' + sample;
     obj[key] = null;
+    //FIXME: also update ops.
 //    console.log(runid,obj,ExpRuns.findOne(runid));
     ExpRuns.update(runid, {$set: obj, $pull: {samplelist: old_sid}});
     if(ExpRuns.find({samplelist: old_sid}).count() == 0){
@@ -479,4 +480,80 @@ copyProtocolForNewExp = function (eid) {
 changeDateOfExp = function (eid, date) {
     Experiments.update(eid, {$set: {date: date}});
     addLog({type: 'exp', op: 'updatedate', id: eid, params: {date: date}});
+};
+
+//Find protocol samples that have no outgoing edge (operation).
+findOutputsOfRun = function(run,exp){
+    var out_pss =  findOutputsOfExp(exp);
+    var res = _.compact(_.map(out_pss,function(ps){return run.samples ? run.samples[ps] : null;}));
+//    console.log(run,exp,ins,out_pss,res);
+    return res;
+};
+
+//Find protocol samples that have no incoming edge (operation).
+findInputsOfRun = function(run,exp){
+    var in_pss =  findInputsOfExp(exp);
+    var res = _.compact(_.map(in_pss,function(ps){return run.samples ? run.samples[ps] : null;}));
+//    console.log(run,exp,ins,out_pss,res);
+    return res;
+};
+
+findOutputsOfExp = function(exp){
+    var ops = exp.protocol.operations;
+    var samples = exp.protocol.samples;
+    var ins = _.compact(_.flatten(_.map(ops,function(opid){
+        var op = Operations.findOne(opid);
+        return op ? op.input : null;
+    })));
+    return _.difference(samples,ins);
+};
+
+findInputsOfExp = function(exp){
+    var ops = exp.protocol.operations;
+    var samples = exp.protocol.samples;
+    var ins = _.compact(_.flatten(_.map(ops,function(opid){
+        var op = Operations.findOne(opid);
+        return op ? op.output : null;
+    })));
+    return _.difference(samples,ins);
+};
+
+findRunWithSampleAsOutput = function (sid) {
+    var runs = ExpRuns.find({samplelist: sid});
+    var found;
+    var BreakException = {};
+    try {
+        runs.forEach(function (run) {
+            var exp = Experiments.findOne(run.exp);
+            var outs = findOutputsOfRun(run, exp);
+            console.log(outs,sid);
+            if (_.contains(outs, sid)) {
+                found = run;
+                throw BreakException;
+            }
+        });
+    } catch (e) {
+        if (e !== BreakException) throw e;
+    }
+    return found;
+};
+
+findRunWithSampleAsInput = function (sid) {
+    var runs = ExpRuns.find({samplelist: sid});
+    var found;
+    var BreakException = {};
+    try {
+        runs.forEach(function (run) {
+            var exp = Experiments.findOne(run.exp);
+            var ins = findInputsOfRun(run, exp);
+     //       console.log(ins,sid);
+            if (_.contains(ins, sid)) {
+                found = run;
+                throw BreakException;
+            }
+        });
+    } catch (e) {
+        if (e !== BreakException) throw e;
+    }
+    return found;
 };

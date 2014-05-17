@@ -50,5 +50,3 @@ reactive-list
 cfs-graphicsmagick
 cfs-ejson-file
 cfs-filesystem
-reactive-property
-micro-queue

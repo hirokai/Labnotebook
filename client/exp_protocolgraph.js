@@ -71,7 +71,7 @@ Template.d3graph.rendered = function () {
     }
 };
 
-getEdges = function (eid) {
+getProtocolEdges = function (eid) {
     var e = getCurrentExp();
     var ops = Operations.find({_id: {$in: e.protocol.operations}});
     //console.log(ops);
@@ -110,7 +110,7 @@ Template.d3graph.oneedge_edit_disabled = function () {
 function genGraphvizGraph() {
     var eid = getCurrentExpId();
     var samples = findProtocolSamplesInExp(eid);
-    var edges = getEdges(eid);
+    var edges = getProtocolEdges(eid);
     var graph = new dagreD3.Digraph();
 //    console.log(samples,edges);
     _.each(samples, function (s) {
@@ -138,7 +138,7 @@ Template.d3graph.events({
     'click #connectnodes': function () {
         var eid = getCurrentExpId();
         var sids = Session.get('selected_nodes');
-        var edges = getEdges(eid);
+        var edges = getProtocolEdges(eid);
         var es = new Array(edges.length + 1);
         es[0] = [sids[0], sids[1]];
         //console.log(edges,es);
@@ -180,7 +180,6 @@ Template.d3graph.events({
         }
     },
     'dblclick g.node': function () {
-//            Session.set('editing_node_graph',$('div.id_in_graph',event.target).attr('data-id'));
         var sel = Session.get('selected_nodes')[0];
         if (!sel) return;
 
@@ -205,18 +204,6 @@ Template.d3graph.events({
                 Session.set('editing_node_in_graph', null);
             }
         });
-
-//
-//            Template.d3graph.events(okCancelEvents(
-//                '#nodeedit_in_graph',
-//                {
-//                    ok: function (value) {
-//                    },
-//                    cancel: function () {
-//                        el.html('hoge');
-//                    }
-//                }));
-
         $('input', el).val(txt).focus().select();
 
 
@@ -268,7 +255,7 @@ tryDraw = function (graph) {
         //console.log(graph);
 
         // Cleanup old graph
-        var svg = d3.select("svg");
+        var svg = d3.select("#exp_graph");
         // svg.html('');
 
         var renderer = new dagreD3.Renderer();
@@ -284,62 +271,22 @@ tryDraw = function (graph) {
         renderer.transition(transition);
 
         var g;
-        if (d3.selectAll('svg g.dagre')[0].length == 0) {
+        if (d3.selectAll('#exp_graph g.dagre')[0].length == 0) {
             g = svg.append('g').attr('class', 'dagre');
             //    svg.attr('transform',defaultTransform());
         } else {
-            g = d3.select("svg g.dagre");
+            g = svg.select("g.dagre");
             //  svg.attr('transform',defaultTransform());
         }
         var layout = renderer.run(graph, g);
         //    console.log(layout);
-        d3.selectAll('g.node div.id_in_graph').on('mousedown', mouseDown);
-        var n = Session.get('editing_node_graph');
-        //console.log('Hey',n);
-        d3.selectAll('g.edgeLabel div.id_in_edge').on('mousedown', mouseDownEdge);
+        svg.selectAll('g.node div.id_in_graph').on('mousedown', mouseDown);
+        svg.selectAll('g.edgeLabel div.id_in_edge').on('mousedown', mouseDownEdge);
 
-//        //This assumes label is unique.
-//        var eid = Session.get('current_view_id');
-//        if(eid){
-//            var samples = findSamplesInExp(eid);
-//            _.each($('g.node'),function(el){
-//                var label = $(el).text();
-//                var id = _.findWhere(samples,{name: label});
-////                $(el).attr('data-label',label);
-////                $(el).attr('data-id',id ? id._id : null);
-//            });
-//        }
-        //   myDraw(layout);
-
-//      d3.select("svg")
-//        .call(d3.behavior.zoom().scaleExtent([0.2,2])).on("mousedown.zoom", null);
-
-//        d3.select("svg")
-//            .call(d3.behavior.zoom()).on("zoom", function() {
-//             // if(d3.event.button == 0 ){
-//               var ev = d3.event;
-//                console.log('hey');
-//              svg.select("g.dagre")
-//                .attr("transform", "translate(" + ev.translate + ") scale(" + ev.scale + ")");
-//            });
-
-        var svg = d3.select('svg');
+        var svg = d3.select('#exp_graph');
         var g = d3.select('g.dagre');
-//        zm =
-//        if(zm){
-//            svg.call(zm = d3.behavior.zoom().scaleExtent([0.2, 1.5]).scale(zm.scale()).on("zoom", redraw));
-//        }else{
-//            svg.call(zm = d3.behavior.zoom().scaleExtent([0.2, 1.5]).scale(defaultScale()).on("zoom", redraw));
-//        }
-
-        //  svg.attr('transform',defaultTransform());
-
         zm = d3.behavior.zoom().scaleExtent([0.2, 1.5]).scale(defaultScale()).on("zoom", redraw);
-        //  zm.on('dblclick.zoom',null);
         svg.call(zm);
-
-        //  svg.on("mousemove", null);
-
     }
 };
 
@@ -364,21 +311,23 @@ function redraw() {
 var downx, downscalex = Math.NaN;
 
 function mouseDown() {
+    console.log(d3.event);
     if (d3.event.button != 0) return;
 
-    if (event.altKey) {
+    if (d3.event.altKey) {
         return;
     }
 //    console.log(event.target);
     var nodes = Session.get('selected_nodes') || [];
 
-    var id = $(event.target).attr('data-id');
+    var id = $(d3.event.target).attr('data-id');
+    console.log(id,d3.event.target);
     if (Session.get('editing_node_in_graph')) {
         //console.log('clicked editing tag');
         return;
     }
 
-    if (!event.shiftKey) {
+    if (!d3.event.shiftKey) {
         nodes = [];
         Session.set('selected_edges', []);
         Session.set('selected_ops', []);
@@ -390,7 +339,7 @@ function mouseDown() {
     }
     //console.log(nodes);
     // console.log($(event.target).parent('div').length);
-    event.preventDefault();
+    d3.event.preventDefault();
 
     Session.set('selected_nodes', nodes);
     _.each(nodes, function (id) {
@@ -401,18 +350,18 @@ function mouseDown() {
 function mouseDownEdge() {
     if (d3.event.button != 0) return;
 
-    if (event.altKey) {
+    if (d3.event.altKey) {
         return;
     }
 //    console.log(event.target);
 
     var edges = Session.get('selected_edges') || [];
 
-    var id = $(event.target).attr('data-id');
+    var id = $(d3.event.target).attr('data-id');
 //    console.log($(event.target).find('div.id_in_edge'));
 //    console.log($(event.target).attr('data-id'));
 
-    if (!event.shiftKey) {
+    if (!d3.event.shiftKey) {
         edges = [];
         Session.set('selected_nodes', []);
         Session.set('selected_ops', []);
@@ -427,8 +376,8 @@ function mouseDownEdge() {
 
     //Operations.findOne(Arrows.findOne(edges[0]).op)._id;
     Session.set('selected_ops', opids);
-    event.preventDefault();
 
     Session.set('selected_edges', edges);
+    d3.event.preventDefault();
     //   console.log(edges,opids,id);
 }

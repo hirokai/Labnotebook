@@ -1,7 +1,7 @@
 renderCells = function (eid) {
 
 //    console.log('renderCells()');
-    var exp = getCurrentExp();
+    if(!getCurrentExpId()) return;
 
     var row_opids = [];
     var row_paramnames = [];
@@ -45,13 +45,13 @@ renderCells = function (eid) {
     }
 
     function colNames() {
-        return ExpRuns.find({exp: eid}).map(function (run) {
+        return getExpRuns(eid).map(function (run) {
             return run.name;
         });
     }
 
     function getRowData(exp, opid, param) {
-        var runs = ExpRuns.find({exp: eid});
+        var runs =  getExpRuns(eid);
         //   console.log(param);
         return runs.map(function (run, runidx) {
             return getOpParam(run._id, opid, param.name);
@@ -106,7 +106,7 @@ renderCells = function (eid) {
     var dat = getTableData();
     var colnames = colNames();
     var rownames = rowNames();
-    console.log(dat);
+//    console.log(dat);
 
     $("#spreadsheet").handsontable({
         data: dat,
