@@ -24,7 +24,7 @@ Template.type.events({
     },
     'click #addtypeclass': function (evt, tmpl) {
         var name = tmpl.find('#nametypeclass').value;
-        var id = insertTypeClass(name);
+        var id = newTypeClass(name);
         SampleTypes.update(this._id, {$push: {classes: id}});
     },
     'dblclick #typetitle': function (evt, tmpl) {
@@ -45,7 +45,7 @@ Template.type.events(okCancelEvents(
     '#typetitle_input',
     {
         ok: function (value) {
-            if (allowedSampleTypeName(value)) {
+            if (verifySampleTypeName(value)) {
                 var sid = Session.get('current_view_id').sampletype;
                 SampleTypes.update(sid, {$set: {name: value}});
             } else {
@@ -100,6 +100,14 @@ Template.type.exps_used = function () {
         return run.exp
     });
     return Experiments.find({_id: {$in: exps}}, {fields: {_id: 1, name: 1}});
+}
+
+Template.type.formatExp = function(exp){
+    if(exp){
+        return '<a href="/exp/'+exp._id+'">' + exp.name + '</a> <span class="exp_date">' + moment(exp.date).format('M/D/YY') + '</span>'
+    }else{
+        return '<span class="danger">N/A</span>';
+    }
 }
 
 Template.type.sample_used = function () {

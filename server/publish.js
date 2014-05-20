@@ -15,9 +15,9 @@ var allowObj = {
 };
 
 var denyObj = {
-    update: function (userId, docs, fields, modifier) {
+    update: function (userId, doc, fields, modifier) {
         // can't change owners
-        return _.contains(fields, 'owner');
+        return _.contains(fields, 'owner') || doc.locked;
     },
     remove: function (userId, doc) {
         // can't remove locked documents
@@ -26,9 +26,32 @@ var denyObj = {
     fetch: ['locked'] // no need to fetch 'owner'
 };
 
+var sampleDenyObj = {
+    update: function (userId, doc, fields, modifier) {
+        // can't change owners
+        if(_.contains(fields, 'owner') || doc.locked){
+            return true;
+        }else {
+            return expRunUsingThisSampleLocked(doc._id);
+        }
+    },
+    remove: function (userId, doc) {
+        if(doc.locked){
+            return true;
+        }else {
+            return expRunUsingThisSampleLocked(doc._id);
+        }
+    },
+    fetch: ['locked'] // no need to fetch 'owner'
+};
+
+
 Experiments = new Meteor.Collection("experiments");
 Meteor.publish('experiments', function () {
     return Experiments.find({owner: this.userId || 'sandbox'});
+});
+Meteor.publish('experiments_datename', function () {
+    return Experiments.find({owner: this.userId || 'sandbox'}, {fields: {date: 1, name: 1}});
 });
 Experiments.allow(allowObj);
 Experiments.deny(denyObj);
@@ -65,6 +88,12 @@ Meteor.publish('samples', function () {
     var owner = this.userId || 'sandbox';
     return Samples.find({owner: owner});
 });
+
+Meteor.publish('samples_tid', function (tid) {
+    var owner = this.userId || 'sandbox';
+    return Samples.find({owner: owner, sampletype_id: tid});
+});
+
 //Meteor.publish('sample_id', function(id) {
 //    var owner = this.userId || 'sandbox';
 //    return Samples.find({owner: owner, _id: id});

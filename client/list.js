@@ -1,3 +1,72 @@
+
+Template.lists.loading = function () {
+    return !listsHandle.ready();
+};
+
+
+Template.lists.events({
+    'click .listmenu': function (evt) {
+        var p = {};
+        var t = $(evt.target).attr('data-value');
+        var ids = Session.get('current_view_id');
+        if (t == 'exp') {
+            p = ids.exp ? {_id: ids.exp} : null;
+        } else if (t == 'sample') {
+            p = ids.sample ? {_id: ids.sample} : null;
+        } else if (t == 'type') {
+            p = ids.sampletype ? {_id: ids.sampletype} : null;
+        } else if (t == 'log') {
+            p = ids.log ? {date: ids.log} : null;
+        } else if (t == 'date') {
+            p = ids.date ? {_id: ids.date} : null;
+        } else if (t == 'multiexp') {
+            p = ids.multiexp ? {_id: ids.multiexp} : null;
+        }
+        //  console.log(t,p);
+        Router.go(t, p);
+    }
+});
+
+// Attach events to keydown, keyup, and blur on "New list" input box.
+Template.lists.events(okCancelEvents(
+    '#new-list',
+    {
+        ok: function (text, evt) {
+            var id = Lists.insert({name: text});
+            Router.setList(id);
+            evt.target.value = "";
+        }
+    }));
+
+Template.lists.events(okCancelEvents(
+    '#list-name-input',
+    {
+        ok: function (value) {
+            Lists.update(this._id, {$set: {name: value}});
+            Session.set('editing_listname', null);
+        },
+        cancel: function () {
+            Session.set('editing_listname', null);
+        }
+    }));
+
+Template.lists.selected = function () {
+    return Session.equals('list_id', this._id) ? 'selected' : '';
+};
+
+Template.lists.type = function () {
+    return Session.get("list_type");
+};
+
+Template.lists.name_class = function () {
+    return this.name ? '' : 'empty';
+};
+
+Template.lists.editing = function () {
+    return Session.equals('editing_listname', this._id);
+};
+
+
 Template.lists.group_selected = function (type) {
     return Session.equals("list_type", type) ? "selected" : "";
 };
@@ -36,14 +105,14 @@ Template.exp_list.events(okCancelEvents(
     '#new-exp',
     {
         ok: function (text, evt) {
-            var id = insertExp(text);
+            var id = newExp(text);
             Router.go('exp', {_id: id});
             evt.target.value = "";
         }
     }));
 
 Template.exp_list.events({'click #newexpbtn': function () {
-    var id = insertExp('Experiment ' + formatDate(new Date()));
+    var id = newExp('Experiment ' + formatDate(new Date()));
     Router.go('exp', {_id: id});
 },
     'change #sortby': function (evt) {
@@ -135,7 +204,7 @@ Template.type_list.events(okCancelEvents(
 //            var node = $('#tree1').tree('getSelectedNode');
 //            var parent = node ? node.id : get;
                 var parent = Session.get('current_view_id').sampletype;
-                var id = insertSampleType(text, parent);
+                var id = newSampleType(text, parent);
                 Router.go('type', {_id: id});
                 evt.target.value = "";
             }

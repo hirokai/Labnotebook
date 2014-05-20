@@ -29,11 +29,11 @@ removeUser = function (uid) {
 };
 
 //Create user DB for the user of user ID uid.
-initializeDB = function (user) {
+initializeDB = function (uid) {
 
-    console.log(user);
+    console.log(uid);
 
-    var uid = user._id || "sandbox";
+    uid = uid || "sandbox";
 
     function mkRun(i) {
         var s_a = Samples.insert({owner: uid, name: "DOPC-" + i, sampletype_id: st, timestamp: new Date().getTime(), data: [], tags: [], protocol: false});
@@ -46,9 +46,9 @@ initializeDB = function (user) {
             {name: 'TR volume', value: 100},
             {name: 'DOPC volume', value: 100}
         ]};
-        ops[op2] = {timestamp: new Date().getTime(), input: [], output: [], params: []};
-        ops[op3] = {timestamp: new Date().getTime(), input: [], output: [], params: []};
-        ops[op4] = {timestamp: new Date().getTime(), input: [], output: [], params: []};
+        ops[op2] = {timestamp: new Date().getTime(), time_end: null, params: []};
+        ops[op3] = {timestamp: new Date().getTime(), time_end: null, params: []};
+        ops[op4] = {timestamp: new Date().getTime(), time_end: null, params: []};
         ExpRuns.insert({owner: uid, exp: eid, name: 'Run ' + i, date: new Date().getTime(),
             samples: samples,
             samplelist: [s_a, s1_a],
@@ -122,7 +122,9 @@ initializeDB = function (user) {
     Logs.remove({owner: uid});
 
     Config.remove({owner: uid});
-    Config.insert({owner: uid, values: {logemail: user.email, logemail_auto: false}});
+    var u = Meteor.users.findOne(Meteor.userId());
+    var email = u ? u.services.google.email : null;
+    Config.insert({owner: uid, values: {logemail: email, logemail_auto: false}});
 
 };
 

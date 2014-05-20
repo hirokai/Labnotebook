@@ -57,10 +57,10 @@
                     <ul class='flatlist'>
                     {{#if sample_used}}
                         {{#each exps_used}}
-                    <li><a href='/exp/{{_id}}'>{{name}}</a></li>
+                    <li>{{{formatExp this}}}</li>
                     {{/each}}
                         {{else}}
-                        (not associated)
+                        <span class='danger'>N/A</span>
                     {{/if}}
                     </ul></td>
             </tr>

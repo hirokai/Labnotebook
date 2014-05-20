@@ -51,7 +51,7 @@ Meteor.startup(function () {
     Session.setDefault('choosing_sample_for', {run: null, sample: null})
 
 
-    Session.setDefault('info_shown', {sample: true, step: true, sheet: true});
+    Session.setDefault('info_shown', {protocol: true, sample: true, step: true, sheet: true});
 
     Session.setDefault('editing_sample_title', false);
 
@@ -104,76 +104,6 @@ function renderDate(ts) {
     var t = new Date(ts);
     return "" + (t.getMonth() + 1) + "/" + t.getDate();
 }
-
-////////// Lists //////////
-
-Template.lists.loading = function () {
-    return !listsHandle.ready();
-};
-
-
-Template.lists.events({
-    'click .listmenu': function (evt) {
-        var p = {};
-        var t = $(evt.target).attr('data-value');
-        var ids = Session.get('current_view_id');
-        if (t == 'exp') {
-            p = ids.exp ? {_id: ids.exp} : null;
-        } else if (t == 'sample') {
-            p = ids.sample ? {_id: ids.sample} : null;
-        } else if (t == 'type') {
-            p = ids.sampletype ? {_id: ids.sampletype} : null;
-        } else if (t == 'log') {
-            p = ids.log ? {date: ids.log} : null;
-        } else if (t == 'date') {
-            p = ids.date ? {_id: ids.date} : null;
-        } else if (t == 'multiexp') {
-            p = ids.multiexp ? {_id: ids.multiexp} : null;
-        }
-        //  console.log(t,p);
-        Router.go(t, p);
-    }
-});
-
-// Attach events to keydown, keyup, and blur on "New list" input box.
-Template.lists.events(okCancelEvents(
-    '#new-list',
-    {
-        ok: function (text, evt) {
-            var id = Lists.insert({name: text});
-            Router.setList(id);
-            evt.target.value = "";
-        }
-    }));
-
-Template.lists.events(okCancelEvents(
-    '#list-name-input',
-    {
-        ok: function (value) {
-            Lists.update(this._id, {$set: {name: value}});
-            Session.set('editing_listname', null);
-        },
-        cancel: function () {
-            Session.set('editing_listname', null);
-        }
-    }));
-
-Template.lists.selected = function () {
-    return Session.equals('list_id', this._id) ? 'selected' : '';
-};
-
-Template.lists.type = function () {
-    return Session.get("list_type");
-};
-
-Template.lists.name_class = function () {
-    return this.name ? '' : 'empty';
-};
-
-Template.lists.editing = function () {
-    return Session.equals('editing_listname', this._id);
-};
-
 
 ////////// Tracking selected list in URL //////////
 

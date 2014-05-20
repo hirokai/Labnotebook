@@ -50,6 +50,16 @@ Template.layout.events({
             Meteor.call('resetMyDB');
         }
     },
+    'click #verifydb': function() {
+        Meteor.call('verifyMyDB',function(err,res){
+            console.log(res);
+            if(res.success){
+                window.alert('Verification done. No error in DB found.');
+            }else{
+                window.alert('Verification done. DB Error: '+res.message);
+            }
+        });
+    },
     'click #removeuser': function () {
         if (window.confirm("Are you sure you want to remove your account. This will remove all your data from the server.")) {
             Meteor.call('removeMyAccount');

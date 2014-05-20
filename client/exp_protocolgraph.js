@@ -20,7 +20,8 @@ var defaultScale = function () {
 var defaultTranslate = function () {
     var bbox = document.querySelector('g.dagre').getBBox();
     var sc = defaultScale();
-    return [200 - sc * bbox.width / 2 - 10, 300 - sc * bbox.height / 2 - 10];
+//    return [200 - sc * bbox.width / 2 - 10, 600 - sc * bbox.height / 2 - 10];
+    return [0,0];
 };
 
 var currentScale = 1;
@@ -48,27 +49,57 @@ Template.d3graph.rendered = function () {
             } catch (e) {
                 console.log(e);
             }
-            var wrapper = $('#graphWrapper');
-            var setSize = function (el) {
-                var div = $('#sampleandprotocol');
-                div.css('left', el.width() + 80);
-                var h = $('#graph_buttons').height() + 73;
-                $('#svgWrapper').height(el.height() - h);
-            };
+            var wrapper = $('#exp_graph_wrapper');
             wrapper.resizable({
                 maxHeight: 1000,
                 maxWidth: 800,
                 minHeight: 100,
                 minWidth: 100,
                 resize: function (evt) {
-                    setSize($(evt.target));
+                    graphWrapperSizeChanged($(evt.target));
                 }
             });
-            wrapper.width(300);
-            wrapper.height(700);
-            setSize(wrapper);
+            var dim;
+            var view = getCurrentExp().view;
+            try{
+                dim = view.graph;
+            }catch(e){
+                dim = {width: 300, height: 700};
+            }
+            var dim = self.data.view ? (self.data.view.graph) : null;
+            console.log(dim,self);
+//            dim = dim || {width: 300, height: 700};
+            wrapper.width(dim.width);
+            wrapper.height(dim.height);
+//                div.style('left',w + 80);
+//            graphWrapperSizeChanged(wrapper);
+
+            graphWrapperSizeChanged(wrapper,!view.panes.protocol);
         });
     }
+};
+
+toggleProtocol = function(isVisible){
+    var wrapper = $('exp_graph_wrapper');
+    if(isVisible){
+        wrapper.show();
+    }else{
+        wrapper.hide();
+    }
+}
+
+graphWrapperSizeChanged = function (el,invisible) {
+    var div = $('#sampleandprotocol');
+    var w;
+    if(invisible){
+        w = 0;
+    }else{
+        w = el.width();
+    }
+    console.log(w);
+    div.css('left', w + 80);
+    var h = $('#graph_buttons').height() + 73;
+    $('#svgWrapper').height(el.height() - h);
 };
 
 getProtocolEdges = function (eid) {
@@ -103,9 +134,14 @@ Template.d3graph.onenode_edit_disabled = function () {
     return (Session.get('selected_nodes').length == 1) ? '' : 'disabled';
 };
 
+Template.d3graph.oneormorenode_edit_disabled = function () {
+    return (Session.get('selected_nodes').length > 0) ? '' : 'disabled';
+};
+
 Template.d3graph.oneedge_edit_disabled = function () {
     return (Session.get('selected_edges').length == 1) ? '' : 'disabled';
 };
+
 
 function genGraphvizGraph() {
     var eid = getCurrentExpId();
@@ -132,8 +168,8 @@ Template.d3graph.events({
         var eid = getCurrentExpId();
         var sids = Session.get('selected_nodes');
         var s = newSampleToProtocol(eid, generalSampleType(), 'Sample');
-        var op = insertOp(eid, 'Step', [sids[0]], [s]);
-        var op2 = insertOp(eid, 'Step', [s], [sids[1]]);
+        var op = newOpToProtocol(eid, 'Step', [sids[0]], [s]);
+        var op2 = newOpToProtocol(eid, 'Step', [s], [sids[1]]);
     },
     'click #connectnodes': function () {
         var eid = getCurrentExpId();
@@ -148,11 +184,11 @@ Template.d3graph.events({
         //console.log(edges,es);
         try {
             toposort(es);  //Not using the data, just to check acyclicness.
-            var op = insertOp(eid, 'Step', [sids[0]], [sids[1]]);
+            var op = newOpToProtocol(eid, 'Step', [sids[0]], [sids[1]]);
         } catch (e) {
             //  console.log(e.message);
             if (window.confirm('The resulting flowchart will have a cyclic flow. Are you sure you want to connect them?')) {
-                var op = insertOp(eid, 'Step', [sids[0]], [sids[1]]);
+                var op = newOpToProtocol(eid, 'Step', [sids[0]], [sids[1]]);
             }
         }
     },
@@ -162,7 +198,7 @@ Template.d3graph.events({
         var eid = getCurrentExpId();
         if (from && eid) {
             var to = newSampleToProtocol(eid, generalSampleType(), 'Sample');
-            var op = insertOp(eid, 'Step', [from], [to]);
+            var op = newOpToProtocol(eid, 'Step', [from], [to]);
             Session.set('selected_nodes', [to]);
             return op;
         } else {
@@ -174,7 +210,9 @@ Template.d3graph.events({
         var eid = getCurrentExpId();
         if (to && eid) {
             var from = newSampleToProtocol(eid, generalSampleType(), 'Sample');
-            return insertOp(eid, 'Step', [from], [to]);
+            var op = newOpToProtocol(eid, 'Step', [from], [to]);
+            Session.set('selected_nodes', [from]);
+            return op;
         } else {
             return null;
         }
@@ -195,6 +233,8 @@ Template.d3graph.events({
             if (evt.keyCode === 13) {
                 if (!renameProtocolSample(sel, $(this).val())) {
                     window.alert('Name is not valid');
+                    Session.set('editing_node_in_graph', null);
+                    Deps.flush();
                 }
                 Session.set('editing_node_in_graph', null);
                 sel = Session.get('selected_nodes')[0];
@@ -214,13 +254,16 @@ Template.d3graph.events({
     },
     'click #newsamplebtn': function (evt, tmpl) {
         var eid = getCurrentExpId();
-        newSampleToProtocol(eid, generalSampleType(), 'Sample');
+        var sid = newSampleToProtocol(eid, generalSampleType(), 'Sample');
+        Session.set('selected_nodes', [sid]);
     },
     'click #deletesamplebtn': function () {
-        var sid = Session.get('selected_nodes')[0];
+        var sids = Session.get('selected_nodes');
         //Keep sample in DB.
         var eid = getCurrentExpId();
-        deleteSampleFromProtocol(eid, sid);
+        _.map(sids,function(sid){
+            deleteSampleFromProtocol(eid, sid);
+        });
     },
     'click #newinputbtn': function () {
         var edge = Session.get('selected_edges')[0];
@@ -271,9 +314,15 @@ tryDraw = function (graph) {
         renderer.transition(transition);
 
         var g;
+        var first = false;
         if (d3.selectAll('#exp_graph g.dagre')[0].length == 0) {
             g = svg.append('g').attr('class', 'dagre');
             //    svg.attr('transform',defaultTransform());
+            // var exp = getCurrentExp();
+            var gr = {translate: null, scale: null}; // exp.view ? exp.view.graph;
+            translate = gr.translate || defaultTranslate();
+            scale = gr.scale || defaultScale();
+            first = true;
         } else {
             g = svg.select("g.dagre");
             //  svg.attr('transform',defaultTransform());
@@ -283,29 +332,58 @@ tryDraw = function (graph) {
         svg.selectAll('g.node div.id_in_graph').on('mousedown', mouseDown);
         svg.selectAll('g.edgeLabel div.id_in_edge').on('mousedown', mouseDownEdge);
 
-        var svg = d3.select('#exp_graph');
-        var g = d3.select('g.dagre');
-        zm = d3.behavior.zoom().scaleExtent([0.2, 1.5]).scale(defaultScale()).on("zoom", redraw);
+        var zm = d3.behavior.zoom().scaleExtent([0.2, 1.5]).scale(scale || 1).translate(translate || [0,0]).on("zoom", redrawExpGraph);
+           // .on('zoomend',zoomEnd(this));
+
+        d3.event = {translate: translate,scale: scale};
+        redrawExpGraph();
         svg.call(zm);
+//        if(first){
+//            resetZoom();
+//        }
+//        var zm2 = d3.behavior.zoom().scaleExtent([0.2, 1.5]).scale(scale || 1).translate(translate || [0,0]).on('zoom.2',zoomEnd);
+  //      svg.call(zm2);
     }
 };
 
 var zm;
 
 function resetZoom() {
-    d3.select('svg').transition().duration(300).attr('transform', defaultTransform());
-    zm.scale(defaultScale()).translate(defaultTranslate());
-    svg.call(zm);
-    //   redraw();
+    translate = defaultTranslate();
+    scale = defaultScale();
+    d3.event = {translate: translate, scale: scale};
+    var zm = d3.behavior.zoom().scaleExtent([0.2, 1.5]).scale(scale || 1).translate(translate || [0,0]).on("zoom", redrawExpGraph);
+    d3.select('#exp_graph').call(zm);
+    redrawExpGraph();
 }
 
-function redraw() {
+function zoomEnd(){
+    console.log('hry');
+//    var eid = getCurrentExpId();
+//    Experiments.update(eid,{$set: {view: {graph: {translate:translate,scale: scale}}}});
+}
+
+getExpGraphView = function(){
+    return {translate: translate, scale: scale};
+}
+
+function redrawExpGraph() {
 //    console.log("here", d3.event.translate, d3.event.scale);
-    var svg = d3.select('svg');
-    var g = d3.select('g.dagre');
-    var tl = defaultTranslate();
+    var svg = d3.select('#exp_graph');
+    var g = svg.select('g.dagre');
+    // var tl = defaultTranslate();
+    translate = d3.event.translate;
+    scale = d3.event.scale;
     return g.attr("transform", "translate(" + d3.event.translate + ")" + " scale(" + d3.event.scale + ")");
 //    return g.attr("transform", "scale(" + d3.event.scale + ") translate("+tl[0]+","+tl[1]+")");
+}
+
+var translate;
+var scale;
+
+resetExpGraphZoom = function(){
+    translate = null;
+    scale = null;
 }
 
 var downx, downscalex = Math.NaN;

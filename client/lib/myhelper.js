@@ -10,14 +10,15 @@ okCancelEvents = function(selector, callbacks) {
     var cancel = callbacks.cancel || function () {};
 
     var events = {};
-    events['keyup '+selector+', keydown '+selector+', focusout '+selector] =
+    events['keydown '+selector] =
+//    events['keyup '+selector+', keydown '+selector+', focusout '+selector] =
         function (evt) {
-         //   console.log(evt,evt.which);
+           console.log(evt,evt.which);
             if (evt.type === "keydown" && evt.which === 27) {
                 // escape = cancel
                 cancel.call(this, evt);
 
-            } else if (evt.type === "keyup" && evt.which === 13
+            } else if (evt.type === "keydown" && evt.which === 13
                 //|| evt.type === "focusout"
                 ) {
                 // blur/return/enter = ok/submit if non-empty
@@ -27,7 +28,9 @@ okCancelEvents = function(selector, callbacks) {
 //                else
 //                    cancel.call(this, evt);
             }else if(evt.type === "focusout"){
-                cancel.call(this,evt);
+              //  cancel.call(this,evt);
+            }else{
+             //   evt.preventDefault();
             }
         };
 

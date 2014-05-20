@@ -46,7 +46,7 @@ Template.sample.events({
     },
     'click #addtypeclass': function (evt, tmpl) {
         var name = tmpl.find('#nametypeclass').value;
-        var id = insertTypeClass(name);
+        var id = newTypeClass(name);
         Samples.update(this._id, {$push: {classes: id}});
     },
     'dblclick #sampletitle': function (evt, tmpl) {
@@ -91,6 +91,21 @@ Template.sample.rendered = function () {
     if (!self.handle) {
         self.handle = Deps.autorun(function () {
             drawSampleGraph();
+            var wrapper = $('#sample_graph_wrapper');
+            var setSize = function (el) {
+            };
+            wrapper.resizable({
+                maxHeight: 1000,
+                maxWidth: 800,
+                minHeight: 100,
+                minWidth: 100,
+                resize: function (evt) {
+                    setSize($(evt.target));
+                }
+            });
+//            wrapper.width(500);
+//            wrapper.height(300);
+            setSize(wrapper);
         });
     }
 };
@@ -115,7 +130,13 @@ Template.sample.events(okCancelEvents(
 
 function drawSampleGraph(){
     var svg = d3.select("#sample_graph");
-    svg.html('');
+    var first;
+//    if(svg.selectAll('g').length == 0){
+//        first = true;
+//    }else{
+//        svg.html('');
+////        console.log(translate);
+//    }
 
     var graph = genGraphvizSampleGraph();
     if(!graph) {
@@ -123,16 +144,37 @@ function drawSampleGraph(){
         return;
     }
 
-    var g = svg.append('g').attr('class', 'dagre');
+    var g;
     var renderer = new dagreD3.Renderer();
+
+    if (svg.selectAll('g.dagre')[0].length == 0) {
+        g = svg.append('g').attr('class', 'dagre');
+        //    svg.attr('transform',defaultTransform());
+        // var exp = getCurrentExp();
+        var gr = {translate: null, scale: null}; // exp.view ? exp.view.graph;
+        translate = gr.translate || defaultTranslate();
+        scale = gr.scale || defaultScale();
+        first = true;
+    } else {
+        g = svg.select("g.dagre");
+        //  svg.attr('transform',defaultTransform());
+    }
+
     var layout = renderer.run(graph, g);
 
-    svg.selectAll('g.node div.id_in_graph').on('mousedown', mouseDownSampleGraph);
-    svg.selectAll('g.node div.id_in_graph').on('dblclick', dblclickSampleGraph);
-    svg.selectAll('g.edgeLabel div.id_in_edge').on('mousedown', mouseDownEdgeSampleGraph);
 
-    var zm = d3.behavior.zoom().scaleExtent([0.2, 1.5]).on("zoom", redrawSampleGraph);
+        svg.selectAll('g.node div.id_in_graph').on('mousedown', mouseDownSampleGraph);
+        svg.selectAll('g.node div.id_in_graph').on('dblclick', dblclickSampleGraph);
+        svg.selectAll('g.edgeLabel div.id_in_edge').on('mousedown', mouseDownEdgeSampleGraph);
+
+  //  g.attr("transform", "translate(" + d3.event.translate + ")" + " scale(" + d3.event.scale + ")");
+  //  console.log(translate,scale);
+        var zm = d3.behavior.zoom().scaleExtent([0.2, 1.5]).scale(scale || 1).translate(translate || [0,0]).on("zoom", redrawSampleGraph);
+    d3.event = {translate: translate,scale: scale};
+    redrawSampleGraph();
+//    var g = svg.select('g.dagre');
     svg.call(zm);
+// .on('zoom.dblclick',null);
 
 }
 
@@ -142,8 +184,18 @@ function redrawSampleGraph() {
     var svg = d3.select('#sample_graph');
     var g = svg.select('g.dagre');
    // var tl = defaultTranslate();
+    translate = d3.event.translate;
+    scale = d3.event.scale;
     return g.attr("transform", "translate(" + d3.event.translate + ")" + " scale(" + d3.event.scale + ")");
 //    return g.attr("transform", "scale(" + d3.event.scale + ") translate("+tl[0]+","+tl[1]+")");
+}
+
+var translate;
+var scale;
+
+resetSampleGraphZoom = function(){
+    translate = null;
+    scale = null;
 }
 
 function genGraphvizSampleGraph() {
@@ -187,7 +239,11 @@ function addNodesByTree(graph, for_input, tree,root){
         var s = Samples.findOne(tree.node);
         if(!root)
             var l = "<div style='padding: 10px;' class='id_in_graph' data-id='" + s._id + "'>" + s.name + "</div>";
+        try{
             graph.addNode(tree.node,{label: l});
+        }catch(e){
+            console.log(e);
+        }
         if(tree.subtree){
             _.map(tree.subtree,function(p){addNodesByTree(graph,for_input,p,false)});
         }
@@ -215,9 +271,10 @@ function addEdgesByTree(graph, for_input, tree){
 }
 
 function dblclickSampleGraph(){
-    var sid = Session.get('selected_nodes')[0];
+    var sid = $(d3.event.target).attr('data-id');
     console.log(sid,Session.get('selected_nodes'));
-//    Router.go('/sample/',{_id: sid});
+    Router.go('sample',{_id: sid});
+    d3.event.preventDefault();
 }
 
 function mouseDownSampleGraph() {
@@ -291,3 +348,11 @@ function mouseDownEdgeSampleGraph() {
     d3.event.preventDefault();
     //   console.log(edges,opids,id);
 }
+
+var defaultScale = function () {
+    return 1;
+}
+var defaultTranslate = function () {
+
+    return [0,0];
+};

@@ -8,7 +8,6 @@ underscore
 backbone
 spiderable
 jquery
-d3
 less
 accounts-google
 accounts-ui
@@ -50,3 +49,4 @@ reactive-list
 cfs-graphicsmagick
 cfs-ejson-file
 cfs-filesystem
+d3

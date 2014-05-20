@@ -1,10 +1,10 @@
-/bootstrap-3
-/iron-router
-/blaze-layout
 /jquery-ui
 /jquery-ui-bootstrap
-/moment
+/bootstrap-3
+/blaze-layout
+/iron-router
 /bootstrap3-datetimepicker
+/moment
 /bootstrap-3-timepicker
 /underscore-string-latest
 /event-hooks
@@ -37,5 +37,5 @@
 /cfs-filesystem
 /reactive-property
 /micro-queue
-/collection2
 /simple-schema
+/dagred3

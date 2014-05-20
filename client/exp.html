@@ -1,9 +1,36 @@
 <template name="exp">
+{{#if error_occured}}
+<span class='danger'>Error occured.</span>
+{{/if}}
 {{#if this}}
     <div id='expinfo_header'>
         <div id='deleteexpdiv'>
-            <button type="button" id='deleteexp' class="btn btn-danger">Delete Exp</button>
-
+            <div class="btn-toolbar" role="toolbar">
+                <div class="btn-group" id='info_shown' data-toggle="buttons">
+                    <!--<label class="btn btn-sm btn-default  {{#if info_active 'protocol'}}active{{/if}}"  id='protocol_shown'>-->
+                        <!--<input type="checkbox"> Protocol-->
+                    <!--</label>-->
+                    <label class="btn btn-sm btn-default  {{#if info_active 'sample'}}active{{/if}}"  id='sample_shown'>
+                        <input type="checkbox"> Samples
+                    </label>
+                    <label class="btn btn-sm btn-default {{#if info_active 'step'}}active{{/if}}" id='step_shown'>
+                        <input type="checkbox"> Steps
+                    </label>
+                    <label class="btn btn-sm btn-default {{#if info_active 'sheet'}}active{{/if}}" id='sheet_shown'>
+                        <input type="checkbox"> Sheet
+                    </label>
+                </div>
+                <div class="btn-group" data-toggle="buttons">
+                    <!--<button type="button" id='savelayout' class="btn btn-sm btn-default">Save layout</button>-->
+                    {{#if locked}}
+                    <button type="button" id='unfinishexp' class="btn btn-sm btn-primary" disabled>Exp finished</button>
+                    <button type="button" id='deleteexp' class="btn btn-sm btn-danger" disabled>Delete Exp</button>
+                    {{else}}
+                    <button type="button" id='finishexp' class="btn btn-sm btn-primary">Finish Exp</button>
+                    <button type="button" id='deleteexp' class="btn btn-sm btn-danger">Delete Exp</button>
+                    {{/if}}
+                </div>
+            </div>
         </div>
         <div>
     {{#if editing_title}}
@@ -17,8 +44,9 @@
 
           {{/if}}
         </div>
+
         <div id='date_exp'>
-            Date: <input type="text" id="exp_datepicker" value='{{formatDate date}}'/>
+            Date: <input type="text" id="exp_datepicker" value='{{formatDate date}}' {{disabled_if_locked}}/>
         </div>
 
 
@@ -26,32 +54,23 @@
     </div>
 
     <div class='row'>
-
-    {{> d3graph}}
+    <section  class="{{#unless info_active 'protocol'}}hidden{{/unless}}">
+        {{> d3graph}}
+    </section>
     <div id='sampleandprotocol'>
-        <div class="btn-group" id='info_shown' data-toggle="buttons">
-            <label class="btn btn-sm btn-default  {{#if info_active 'sample'}}active{{/if}}"  id='sample_shown'>
-                <input type="checkbox"> Samples
-            </label>
-            <label class="btn btn-sm btn-default {{#if info_active 'step'}}active{{/if}}" id='step_shown'>
-                <input type="checkbox"> Steps
-            </label>
-            <label class="btn btn-sm btn-default {{#if info_active 'sheet'}}active{{/if}}" id='sheet_shown'>
-                <input type="checkbox"> Sheet
-            </label>
-        </div>
+
         <section id='sec-sample' class="{{#unless info_active 'sample'}}hidden{{/unless}}">
             <div id='exp_samples_titlebar'>
                 <h3>Samples</h3>
-                <div>
-                    <span>For runs:</span>
-                    <button id='runsamples_selectnone' class="btn btn-xs btn-default" type="button">Select none</button>
-                    <!--<button id='newsamplesbtn' {{disable_runsamples_btn}} class="btn btn-xs btn-default" type="button">New samples</button>-->
-                    <!--<button id='assignsamplesbtn' {{disable_runsamples_btn}} class="btn btn-xs btn-default" type="button">Assign samples</button>-->
-                </div>
+                <!--<div>-->
+                    <!--<span>For runs:</span>-->
+                    <!--<button id='runsamples_selectnone' class="btn btn-xs btn-default" type="button">Select none</button>-->
+                    <!--&lt;!&ndash;<button id='newsamplesbtn' {{disable_runsamples_btn}} class="btn btn-xs btn-default" type="button">New samples</button>&ndash;&gt;-->
+                    <!--&lt;!&ndash;<button id='assignsamplesbtn' {{disable_runsamples_btn}} class="btn btn-xs btn-default" type="button">Assign samples</button>&ndash;&gt;-->
+                <!--</div>-->
             </div>
 
-            <table class='table' id='sampleinfotable'>
+            <table id='sampleinfotable'>
                 <tr>
                     <th></th>
                     <th class='name'>Name</th>
@@ -154,7 +173,7 @@
             </table>
         </section>
         <section id='sec-protocol' class="{{#unless info_active 'step'}}hidden{{/unless}}">
-        <h3>Protocol</h3>
+        <h3>Steps</h3>
             <div class='explain'><ul>
                 <li>Click operation name to change settings</li>
                 <li>Click button to enter time point. Alt-click to remove it.</li>
@@ -259,7 +278,7 @@
                     <tr>
                         <th>Name</th>
                         <th>Type</th>
-                        <th>Date made</th>
+                        <th>Experiment made</th>
                     </tr>
                     </thead>
                     <tbody id='sample_chooser_samples'>
@@ -611,13 +630,13 @@ Not found.
 </template>
 
 <template name='d3graph'>
-    <div id='graphWrapper'>
+    <div id='exp_graph_wrapper'>
         <h3>Protocol</h3>
         <div id='graph_buttons'>
             <div>
                 <span class='btnlabel'>For sample:</span>
                 <button id='newsamplebtn'  class="btn btn-xs btn-default" type="button">New sample</button>
-                <button id='deletesamplebtn'  class="btn btn-xs btn-default" {{onenode_edit_disabled}}  type="button">Delete</button>
+                <button id='deletesamplebtn'  class="btn btn-xs btn-default" {{oneormorenode_edit_disabled}}  type="button">Delete</button>
             </div>
             <div>
 

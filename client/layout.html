@@ -26,6 +26,7 @@
       <li><a id='senddb' class='' href='#'>Send the log to {{config.logemail}}</a></li>
       {{/if}}
     <li class="divider"></li>
+      <li><a id='verifydb' class='' href='#'>Verify database</a></li>
     <li><a id='resetdb' class='danger' href='#'>Reset Database</a></li>
       {{#if loggedin}}
       <li><a id='removeuser' class='danger' href='#'>Remove user account</a></li>
@@ -142,13 +143,13 @@
 <template name="lists">
     <div id='listmenu-wrapper'>
 
-    <a href="#" class='listmenu {{group_selected "sample"}}' id='listmenu-sample'><div data-value='sample'>Sample</div></a>
-    <a href="#" class='listmenu {{group_selected "exp"}}' id='listmenu-exp'><div data-value='exp'>Exp</div></a>
-    <a href="#" class='listmenu {{group_selected "multiexp"}}' id='listmenu-multiexp'><div data-value='multiexp'>Multi Exp</div></a>
+    <a href="#" class='listmenu {{group_selected "sample"}}' id='listmenu-sample' data-value='sample'>Sample</a>
+    <a href="#" class='listmenu {{group_selected "exp"}}' id='listmenu-exp' data-value='exp'>Exp</a>
+    <a href="#" class='listmenu {{group_selected "multiexp"}}' id='listmenu-multiexp' data-value='multiexp'>Multi</a>
 
-    <a href="#" class='listmenu {{group_selected "preset"}}' id='listmenu-preset'><div data-value='preset'>Preset</div></a>
-    <a href="#" class='listmenu {{group_selected "type"}}' id='listmenu-type'><div data-value='type'>Type</div></a>
-        <a href="#" class='listmenu {{group_selected "log"}}' id='listmenu-log'><div data-value='log'>Log</div></a>
+    <a href="#" class='listmenu {{group_selected "preset"}}' id='listmenu-preset' data-value='preset'>Preset</a>
+    <a href="#" class='listmenu {{group_selected "type"}}' id='listmenu-type' data-value='type'>Type</a>
+        <a href="#" class='listmenu {{group_selected "log"}}' id='listmenu-log' data-value='log'>Log</a>
         <div style='clear: both;'></div>
     </div>
 

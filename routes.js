@@ -11,7 +11,7 @@ Router.map(function () {
             onBeforeAction: function () {
                 this.subscribe('experiments').wait();
                 this.subscribe('expruns_id', this.params._id).wait();
-//                this.subscribe('expruns').wait();
+                this.subscribe('expruns').wait();
                 this.subscribe('operations').wait();
                 this.subscribe('samples').wait();
                 this.subscribe('sampletypes').wait();
@@ -21,6 +21,7 @@ Router.map(function () {
                 var ids = Session.get('current_view_id');
                 ids.exp = this.params._id;
                 Session.set('current_view_id', ids);
+                Session.set('error_occured',false);
 
                 Session.set('list_type', 'exp');
                 Session.set('input_samples', []);
@@ -28,16 +29,29 @@ Router.map(function () {
                 Session.set('selected_nodes', []);
                 Session.set('selected_edges', []);
                 Session.set('selected_ops', []);
+
+//                Session.set('info_shown', obj);
+
                 Session.set('exp_sampletable_selection',{from: null, to: null});
                 //                if(Meteor.isClient){
 //                    d3.select("svg").html('');
 //                }
                 if (this.ready()) {
-//                    Router.onBeforeAction('loading');
+                    if(Meteor.isClient){
+                        resetExpGraphZoom();
+                    }//                    Router.onBeforeAction('loading');
                     this.render('exp_list', {to: 'left_pane'});
                     if (!this.params._id) {
                         this.render('empty_right', {to: 'right_pane'});
                     } else {
+                        var exp = getCurrentExp();
+                        if(exp){
+                            var p = exp ? (exp.view ? exp.view.panes : null) : null;
+                            console.log(p);
+                            if(p){
+                                Session.set('info_shown',p);
+                            }
+                        }
                         this.render('exp', {to: 'right_pane'});
                     }
                     //     GAnalytics.pageview("/exp/"+(this.params ? this.params._id : ""));
@@ -81,6 +95,9 @@ Router.map(function () {
 
             }
         },
+        onAfterAction: function(){
+            Experiments.update(getCurrentExpId(),{$set: {view: {graph: getExpGraphView()}}});
+        },
         data: function () {
             return Logs.find({date: this.params.date}, {sort: {timestamp: -1}});
         }
@@ -123,6 +140,9 @@ Router.map(function () {
 
             if (this.ready()) {
                 this.render('sample_list', {to: 'left_pane'});
+                if(Meteor.isClient){
+                    resetSampleGraphZoom();
+                }
                 if (!this.params._id) {
                     this.render('empty_right', {to: 'right_pane'});
                 } else {
@@ -144,6 +164,9 @@ Router.map(function () {
     this.route('type', {path: '/type/:_id?', layoutTemplate: 'layout',
         onBeforeAction: function () {
             this.subscribe('sampletypes').wait();
+            this.subscribe('experiments_datename').wait();
+            this.subscribe('expruns_samples').wait();
+            this.subscribe('samples_tid',this.params._id).wait();
         },
         action: function () {
             Session.set('list_type', 'type');

@@ -57,6 +57,15 @@ Meteor.methods({
     removeMyAccount: function () {
         removeUser(Meteor.userId());
     },
+    verifyMyDB: function(){
+        return verifyDB(Meteor.userId());
+    },
+    freezeExp: function(eid){
+        doFreezeExp(eid);
+    },
+    unfreezeExp: function(eid){
+        doUnfreezeExp(eid);
+    },
     // In your server code: define a method that the client can call
     sendLogByEmail: function () {
         try {
@@ -95,3 +104,28 @@ Meteor.methods({
         }
     }
 });
+
+
+doUnfreezeExp = function(eid){
+    var uid = Meteor.userId() || 'sandbox';
+    ExpRuns.find({owner: uid, exp: eid}).forEach(function(run){
+        ExpRuns.update(run._id, {$set: {locked: false}});
+    });
+    var opids = Experiments.findOne(eid).protocol.operations;
+    _.map(opids,function(opid){
+        Operations.update(opid,{locked: false});
+    });
+    Experiments.update({owner: uid, _id: eid},{$set: {locked: false}});
+};
+
+doFreezeExp = function(eid){
+    var uid = Meteor.userId() || 'sandbox';
+    ExpRuns.find({owner: uid, exp: eid}).forEach(function(run){
+        ExpRuns.update(run._id, {$set: {locked: true}});
+    });
+    var opids = Experiments.findOne(eid).protocol.operations;
+    _.map(opids,function(opid){
+        Operations.update(opid,{locked: true});
+    });
+    Experiments.update({owner: uid, _id: eid},{$set: {locked: true}});
+};

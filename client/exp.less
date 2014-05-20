@@ -9,3 +9,78 @@
 .id_in_graph, .id_in_edge {
   white-space: nowrap;
 }
+
+#ui-datepicker-div {
+  z-index: 1000 ! important;
+}
+
+.exp_date {
+  color: gray;
+}
+
+
+#sampleinfotable {
+ // width: 700px ! important;
+  table-layout: fixed;
+  font-size: 11px;
+  tr.selected > td {
+    background: rgb(255, 146, 82)//! important;
+  }
+  tr:nth-child(odd) > td {
+    background: rgba(219, 255, 217, 0.16);
+  }
+  td {
+    height: 25px ! important;
+    width: 70px ! important;
+    padding: 0;
+    margin: 0;
+    &.selected {
+      background: pink ! important;
+    }
+   // overflow: hidden;
+  }
+  .dropdown-menu{
+    font-size: 11px;
+  }
+  td.name {
+    width: 150px ! important;
+  }
+
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.makenewsamplebtn, .assignsamplebtn {
+  transition: opacity 0.1s;
+  opacity: 0;
+  cursor: pointer;
+  width: 100% ! important;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.twobtns.makenewsamplebtn, .twobtns.assignsamplebtn {
+  opacity: 0;
+  transition: opacity 0.1s;
+  cursor: pointer;
+  width: 45% ! important;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+td.sample_run_cell {
+  cursor: pointer;
+  &:hover {
+    background: #ffe4d6 ! important;
+  }
+}
+
+#sec-sample {
+
+}

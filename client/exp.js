@@ -26,29 +26,48 @@ Template.exp.samples = function () {
     return Samples.find({_id: {$in: sids}});
 };
 
-Template.exp.protocol_samples = function () {
-    var eid = getCurrentExpId();
-    var exp = Experiments.findOne(eid);
-    var edges = getProtocolEdges(eid);
-    //   console.log(edges);
-    var es = _.map(edges, function (edge) {
-        return [edge.from._id, edge.to._id];
-    });
-    var sorted = toposort(es);
+Template.exp.disabled_if_locked = function () {
+    return this.locked ? 'disabled' : '';
+};
 
-    var e = Experiments.findOne(eid);
-    var sids = e.protocol.samples;
-    var samples = Samples.find({_id: {$in: sids}}).fetch();
-    var ins = findInputsOfExp(exp);
-    var outs = findOutputsOfExp(exp);
-    var res = _.map(sorted, function (id, i) {
-        var s = _.findWhere(samples, {_id: id});
-        console.log(ins,outs, s._id);
-        s.input = _.contains(ins, s._id);
-        s.output = _.contains(outs, s._id);
-        return s;
-    });
-    return res;
+Template.exp.protocol_samples = function () {
+    try{
+        var eid = getCurrentExpId();
+        var exp = Experiments.findOne(eid);
+        var sids = exp.protocol.samples;
+        var samples = Samples.find({_id: {$in: sids}}).fetch();
+        if(samples.length > 1){
+            var edges = getProtocolEdges(eid);
+            var es = _.map(edges, function (edge) {
+                return [edge.from._id, edge.to._id];
+            });
+            var sorted = toposort(es);
+
+            var ins = findInputsOfExp(exp);
+            var outs = findOutputsOfExp(exp);
+            return _.map(sorted, function (id, i) {
+                var s = _.findWhere(samples, {_id: id});
+                s.input = _.contains(ins, s._id);
+                s.output = _.contains(outs, s._id);
+                return s;
+            });
+        }else if(samples.length == 1){
+            var s = samples[0];
+            s.input = true;
+            s.output = true;
+            return [s];
+        }else{
+            return [];
+        }
+    }catch(e){
+         console.log(e);
+         Session.set('error_occured',true);
+         return [];
+    }
+};
+
+Template.exp.error_occured = function(){
+    return   Session.get('error_occured');
 };
 
 Template.exp.sample_link_in_run = function () {
@@ -195,6 +214,12 @@ Template.exp.events({
         removeOpsAboutSample(getCurrentExpId(), this._id);
         Samples.remove(this._id);
     },
+    'click #finishexp': function() {
+        var msg = 'Once you finish the experiment, you cannot change it, and the copy of data is saved in your Google Drive. Are you sure?'
+        if(window.confirm(msg)){
+            freezeExp(this._id);
+        }
+    },
     'click #deleteexp': function () {
         var eid = getCurrentExpId();
         if (window.confirm('Are you sure you want to delete this exp?')) {
@@ -232,6 +257,8 @@ Template.exp.events({
         $('#runop_info').modal();
     },
     'mousedown .timepoint': function (evt) {
+        if(evt.button != 0) return;
+        console.log(evt);
         if (evt.altKey) {
             var ee = $(evt.target);
             var opid = ee.attr('data-operation');
@@ -244,6 +271,14 @@ Template.exp.events({
             Session.set('runopinfo_for', {op: opid, run: runid});
             $('#runop_info').modal();
         }
+    },
+    'change #protocol_shown': function (evt) {
+        var wrapper = $('#exp_graph_wrapper');
+        toggleProtocol(evt.target.checked);
+        graphWrapperSizeChanged(wrapper,!evt.target.checked);
+        var obj = Session.get('info_shown');
+        obj.protocol = evt.target.checked;
+        Session.set('info_shown', obj);
     },
     'change #sample_shown': function (evt) {
         var obj = Session.get('info_shown');
@@ -300,15 +335,24 @@ Template.exp.events({
             //stub: show run info.
         }
     },
-    'click .assignsamplebtn': function (evt) {
-        var ee = getButton(evt.target);
-        var sid = ee.attr('data-protocolsample');
-        var runid = ee.attr('data-runid');
-        Session.set('choosing_sample_for', {run: runid, sample: sid});
-        var html = mkHtmlForSampleChooser(sid, runid);
-        $('#sample_chooser_samples').html(html);
-        $('#sample_chooser').modal();
+    'click #savelayout': function(evt){
+        var wrapper = $('#exp_graph_wrapper');
+        var w = wrapper.width();
+        var h = wrapper.height();
+        var eid = getCurrentExpId();
+        var pane = Session.get('info_shown');
+        Experiments.update(eid,{$set: {'view.graph': {width: w, height: h}, 'view.panes': pane}});
+        console.log(getCurrentExp());
     },
+//    'click .assignsamplebtn': function (evt) {
+//        var ee = getButton(evt.target);
+//        var sid = ee.attr('data-protocolsample');
+//        var runid = ee.attr('data-runid');
+//        Session.set('choosing_sample_for', {run: runid, sample: sid});
+//        var html = mkHtmlForSampleChooser(sid, runid);
+//        $('#sample_chooser_samples').html(html);
+//        $('#sample_chooser').modal();
+//    },
     'dblclick td.sample_run_cell': function (evt) {
         var ee = $(evt.target);
         var eid = getCurrentExpId();
@@ -364,7 +408,7 @@ Template.exp.events({
         var currentid = ee.attr('data-sample');
         if (evt.altKey) {
             var sid = ee.attr('data-protocolsample');
-            console.log(sid);
+            //console.log(sid);
             removeSampleInRun(runid, sid, currentid);
         } else {
             Session.set('sampleinfo_for', currentid);
@@ -451,6 +495,10 @@ Template.exp.rendered = function () {
     self.node = self.find("svg");
     if (!self.handle) {
         self.handle = Deps.autorun(function () {
+            var obj = Session.get('info_shown');
+            if(obj.protocol){
+                var div = $('#sampleandprotocol');
+            }
             var eid = getCurrentExpId();
             if(eid){
                 renderCells(eid);
@@ -467,11 +515,17 @@ function mkHtmlForSampleChooser(sid, runid) {
     var samples = findCompatibleSamples(stid);
     return _.map(samples,function (s) {
         var type = SampleTypes.findOne(s.sampletype_id).name;
+        var exp = findExpMakingSample(s._id);
+      //  console.log(exp);
         return "<tr class='chooser_tr'>" + "<td class='name'>" + s.name + "</td>"
             + "<td class='type'>" + type + "</td>"
-            + "<td class='expmade'>" + formatDate(new Date(s.timestamp)) + "</td>"
+            + "<td class='expmade'>" + formatExp(exp) + "</td>"
             + "<td class='choose_sample' data-sid='" + s._id + "' data-runid='" + runid + "'" + ">Choose</td></tr>";
     }).join('\n');
+}
+
+function formatExp(exp){
+    return exp ? exp.name + ' <span class="exp_date">' + moment(exp.date).format('M/D/YY') + '</span>' : '<span class="danger">N/A</span>';
 }
 
 
@@ -749,7 +803,7 @@ Template.op_info.types = function () {
 
 Template.runop_info.runop = function () {
     var ids = Session.get('runopinfo_for') || {run: null, op: null};
-    return getRunOp(ids.op, ids.run);
+    return getRunOp(ids.op, ids.run) || {};
 //    console.log(ids);
 }
 
@@ -791,10 +845,21 @@ Template.runop_info.events({
     'click #save_runop_info': function () {
         var s = $('#runop_datepicker').val() + ' ' + $('#runop_timepicker').val();
         var ids = Session.get('runopinfo_for') || {run: null, op: null};
-        setOpTimestamp(ids.run, ids.op, new Date(s).getTime());
-        var note = $('#runop_note').val();
-        setRunOpNote(ids.run, ids.op, note);
-        $('#runop_info').modal('hide');
+        var time = moment(s).valueOf();
+        if(time){
+            setOpTimestamp(ids.run, ids.op, time);
+            var note = $('#runop_note').val();
+            setRunOpNote(ids.run, ids.op, note);
+            $('#runop_info').modal('hide');
+        }else{
+            window.alert('Time format is invalid.');
+        }
+    },
+    'keydown #runop_timepicker': function(evt){
+        console.log(evt);
+        if(evt.keyCode == 13){
+            $('#save_runop_info').click();
+        }
     },
     'hidden.bs.modal #runop_info': function () {
         Session.set('runopinfo_for', null);
@@ -807,7 +872,7 @@ Template.runop_info.formatTime = function (v) {
 //    console.log(v);
     if (v) {
         var s = moment(new Date(v)).format("h:m:s A");
-        console.log(s);
+//        console.log(s);
         return s;
     } else {
         return moment().format("h:m:s A");
@@ -818,28 +883,28 @@ Template.runop_info.formatDate = function (v) {
     //Use exp's date for new entry.
     return v ? moment(new Date(v)).format("M/D/YYYY") : moment(new Date(getCurrentExp().date)).format("M/D/YYYY");
 };
+//
+//var enforceModalFocusFn = $.fn.modal.Constructor.prototype.enforceFocus;
+//$.fn.modal.Constructor.prototype.enforceFocus = function() {};
+//$.fn.modal.Constructor.prototype.enforceFocus = function() {};
+//$('#runop_info').on('hidden', function() {
+//    $.fn.modal.Constructor.prototype.enforceFocus = enforceModalFocusFn;
+//});
 
 Template.runop_info.rendered = function () {
     var self = this;
-    $("#runop_datepicker").datepicker({ autoSize: true });
-    $('#runop_timepicker').timepicker();
+//    $("#runop_datepicker").datepicker({ autoSize: true });
+   // $('#runop_timepicker').timepicker();
 
     self.node = self.find("#runop_timepicker");
     if (!self.handle) {
         self.handle = Deps.autorun(function () {
+            $("#runop_datepicker").datepicker({ autoSize: true });
 //            console.log('rendered');
             var ids = Session.get('runopinfo_for') || {run: null, op: null};
             var runop = getRunOp(ids.op, ids.run);
             var t = runop ? runop.timestamp : null;
-            var ts = t ? moment(new Date(t)).format("h:m:s A") : null;
-            //        console.log(t,ts);
-            if (ts) {
-                $('#runop_timepicker').timepicker('setTime', ts);
-            } else {
-                $('#runop_timepicker').timepicker();
-//                $('#timepicker').timepicker('setTime',null);
-                //      $('#runop_timepicker').val('');
-            }
+//            var ts = t ? moment(new Date(t)).format("h:m:s A") : null;
         });
     }
 

@@ -8,33 +8,13 @@ findProtocolSamplesInExp = function (eid) {
     return Samples.find({_id: {$in: sids}}).fetch();
 };
 
+//
+// Functions for samples and sampletypes, standalone (not directly related to exp and exp protocol)
+//
 
-generalSampleType = function () {
-    return SampleTypes.findOne({name: 'Any'})._id;
-};
-
-generalSampleTypeObj = function () {
-    return SampleTypes.findOne({name: 'Any'});
-};
-
-insertOp = function (eid, name, input, output, params) {
+newSampleType = function (name, parent, cls) {
     var owner = Meteor.userId() || 'sandbox';
-    params = params || [];
-    var op = Operations.insert({owner: owner, name: name, input: input, output: output, params: params,
-        timestamp: new Date().getTime() + 1});
-    Experiments.update(eid, {$push: {'protocol.operations': op}});
-    ExpRuns.find({exp: eid}).map(function (run) {
-        var ops = run.ops;
-        ops[op] = {timestamp: null, input: [], output: [], params: []};
-        ExpRuns.update(run._id, {$set: {ops: ops}});
-    });
-    addLog({type: 'exp', op: 'insertop', id: eid, params: {op: op, name: name}});
-    return op;
-};
-
-insertSampleType = function (name, parent, cls) {
-    var owner = Meteor.userId() || 'sandbox';
-    var parent = parent || generalSampleType();
+    parent = parent || generalSampleType();
     cls = cls || [];
     var st = SampleTypes.insert({owner: owner, name: name, timestamp: new Date().getTime(), classes: cls, tags: [], data: [], parent: parent});
     addLog({type: 'type', op: 'insert', id: st, params: {name: name, parent: parent}});
@@ -50,12 +30,42 @@ newSample = function (name, type) {
     return sid;
 };
 
-insertTypeClass = function (name) {
+newTypeClass = function (name) {
     var owner = Meteor.userId() || 'sandbox';
     var cid = TypeClasses.insert({owner: owner, name: name});
     addLog({type: 'class', op: 'insert', id: cid, params: {name: name}});
     return cid;
 };
+
+generalSampleType = function () {
+    return generalSampleTypeObj()._id;
+};
+
+generalSampleTypeObj = function () {
+    return SampleTypes.findOne({name: 'Any'});
+};
+
+verifySampleTypeName = function (name) {
+    return _.trim(name) && !SampleTypes.findOne({name: name});
+};
+
+//check if Sample has some info added (other than just added to exp run as a new sample).
+sampleActualInfo = function(sample){
+    // stub: maybe we need some change flag.
+    return sample.note || sample.tags.length > 0 || sample.data.length > 0;
+}
+
+sampleNotUsedAtAll = function (sid) {
+    return ExpRuns.find({samplelist: sid}).count() == 0;
+};
+
+sampleTypeNotUsedAtAll = function (tid) {
+    return Samples.find({sampletype_id: tid}).count() == 0;
+};
+
+//
+// Editing and obtaining exp protocol.
+//
 
 newSampleToProtocol = function (eid, type_id, name) {
     var owner = Meteor.userId() || 'sandbox';
@@ -65,36 +75,42 @@ newSampleToProtocol = function (eid, type_id, name) {
     return sid;
 };
 
-insertExp = function (name) {
+//Add new operation to exp protocol. If there are runs for this exp already, we need to add stub op object.
+newOpToProtocol = function (eid, name, input, output, params) {
     var owner = Meteor.userId() || 'sandbox';
-    var prot = {operations: [], samples: []};
-    var eid = Experiments.insert({owner: owner, name: name, protocol: prot, samples: [], date: (new Date()).getTime(),
-        runs: []});
-    addLog({type: 'exp', op: 'new', id: eid, params: {name: name}});
-    return eid;
-};
+    params = params || [];
 
-getExpRuns = function(eid){
-    return ExpRuns.find({exp: eid}, {sort: {timestamp: 1, date: 1}});
-};
+    if(!Array.isArray(input) || !Array.isArray(output)) throw "Operations needs input and output arrays.";
 
-getExpRunIndex = function(rid){
-//    var run = ExpRuns.find(rid);
-    var runids = ExpRuns.find({},{fields: {_id: 1}, sort: {timestamp: 1, date: 1}}).map(function(run){return run._id});
-    return _.indexOf(runids,rid);
-}
+    var op = Operations.insert({owner: owner, name: name, input: input, output: output, params: params,
+        timestamp: new Date().getTime() + 1});
+    Experiments.update(eid, {$push: {'protocol.operations': op}});
+
+    //Add stub op object for all ExpRun's.
+    ExpRuns.find({exp: eid}).map(function (run) {
+        var ops = run.ops;
+        ops[op] = {timestamp: null, input: [], output: [], params: []};
+        ExpRuns.update(run._id, {$set: {ops: ops}});
+    });
+    addLog({type: 'exp', op: 'insertop', id: eid, params: {op: op, name: name}});
+    return op;
+};
 
 removeOpsAboutSample = function (eid, sid) {
+    if(!Samples.findOne(sid).protocol){
+        console.log('removeOpsAboutSample() only works with protocol sample')
+        return;
+    }
     var ops = Operations.find({$or: [
         {input: sid},
         {output: sid}
-    ]}).fetch();
+    ]});
     //console.log(ops);
-    _.each(ops, function (op) {
+    ops.forEach(function (op) {
         if (
             (op.input.length == 1 && op.input[0] == sid)
                 || (op.output.length == 1 && op.output[0] == sid)) {
-            var op = Operations.findOne(op._id);
+            //var op = Operations.findOne(op._id);
             addLog({type: 'op', op: 'remove', id: op._id, params: {exp: eid, name: op.name}});
             Operations.remove(op._id);
             Experiments.update(eid, {$pull: {'protocol.operations': op._id}});
@@ -121,31 +137,120 @@ deleteSampleFromProtocol = function (eid, sid) {
     addLog({type: 'protocol_sample', op: 'delete', id: sid, params: {exp: eid}});
 };
 
+removeOp = function (opid) {
+    Operations.remove(opid);
+    addLog({type: 'op', id: opid, op: 'remove'});
+};
+
 renameProtocolSample = function (sid, name) {
     if (_.trim(name)) {
         Samples.update(sid, {$set: {name: name}});
+        addLog({type: 'op',op: 'rename', id: sid, params: {name: name}});
         return true;
     } else {
         var name = Samples.findOne(sid).name;
+        //To flush DOM.
+        Samples.update(sid, {$set: {name: ''}});
         Samples.update(sid, {$set: {name: name}});
         return false;
     }
 };
 
+//
+// Editing and obtaining exp and expruns.
+//
 
-guid = function () {
-    function s4() {
-        return Math.floor((1 + Math.random()) * 0x10000)
-            .toString(16)
-            .substring(1);
-    }
-
-    return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
-        s4() + '-' + s4() + s4() + s4();
+newExp = function (name) {
+    var owner = Meteor.userId() || 'sandbox';
+    var prot = {operations: [], samples: []};
+    var eid = Experiments.insert({owner: owner, name: name, protocol: prot, samples: [], date: (new Date()).getTime(),
+        runs: []});
+    addLog({type: 'exp', op: 'new', id: eid, params: {name: name}});
+    return eid;
 };
 
-findSamplePosInList = function (sid) {
-    return 0;
+copyProtocolForNewExp = function (eid) {
+    var e = Experiments.findOne(eid);
+    var prot = e.protocol;
+    var newe = newExp(e.name);
+    Experiments.update(newe, {$set: {protocol: prot}});
+    addLog({type: 'exp', op: 'cloneprotocol', id: newe, params: {from: eid}});
+};
+
+deleteExp = function (eid) {
+    var runs = ExpRuns.find({exp: eid});
+    runs.map(function (run) {
+        deleteRun(run._id);
+    });
+    Experiments.remove(eid);
+    addLog({type: 'exp', op: 'remove', id: eid, params: {}});
+};
+
+freezeExp = function (eid) {
+    if(Meteor.isClient){
+        Meteor.call('freezeExp',eid);
+    }else{
+        doFreezeExp(eid);
+    }
+};
+
+unfreezeExp = function (eid) {
+    if(Meteor.isClient){
+        Meteor.call('unFreezeExp',eid);
+    }else{
+        doUnfreezeExp(eid);
+    }
+};
+
+expRunUsingThisSampleLocked = function(sid) {
+    try{
+        ExpRuns.find({samplelist: sid}).map(function(run){
+            if(run.locked){
+                throw 'ExpRun using this sample is not changeable.'
+            }
+        });
+    }catch(e){
+        return true;
+    }
+    return false;
+};
+
+getExpRuns = function(eid){
+    return ExpRuns.find({exp: eid}, {sort: {timestamp: 1, date: 1}});
+};
+
+getExpRunIndex = function(rid){
+//    var run = ExpRuns.find(rid);
+    var runids = ExpRuns.find({},{fields: {_id: 1}, sort: {timestamp: 1, date: 1}}).map(function(run){return run._id});
+    return _.indexOf(runids,rid);
+}
+
+addNewRunToExp = function (eid) {
+    var e = Experiments.findOne(eid);
+    var ops = {};
+    _.each(e.protocol.operations, function (opid) {
+        var op = Operations.findOne(opid);
+        if (op) {
+            var ps = _.map(op.params, function (p) {
+                return {name: p.name, value: null}
+            });
+            var ins = repeat(op.input.length);
+            var outs = repeat(op.output.length);
+            ops[opid] = {params: ps, input: ins, output: outs, timestamp: null};
+        }
+    });
+    var name = 'Run ' + (ExpRuns.find({exp: eid}).count() + 1);
+    var rid = ExpRuns.insert({owner: Meteor.userId() || 'sandbox',
+        exp: eid, name: name, date: new Date().getTime(),
+        samples: {},
+        ops: ops, timestamp: new Date().getTime()});
+    addLog({type: 'run', op: 'insert', id: rid, params: {to: eid, name: name}});
+    return rid;
+};
+
+deleteRun = function (runid) {
+    addLog({type: 'run', op: 'remove', id: runid, params: {}});
+    ExpRuns.remove(runid);
 };
 
 assignSampleInRun = function (runid, sample, newsample, overwrite) {
@@ -155,6 +260,12 @@ assignSampleInRun = function (runid, sample, newsample, overwrite) {
         samples[sample] = newsample;
         ExpRuns.update(runid, {$set: {samples: samples}, $push: {samplelist: newsample}});
     }
+};
+
+findCompatibleSamples = function (tid) {
+    var tids = findSubTypes(tid);
+    tids.push(tid);
+    return Samples.find({sampletype_id: {$in: tids}, protocol: false}).fetch();
 };
 
 removeSampleInRun = function (runid, sample, old_sid) {
@@ -170,20 +281,6 @@ removeSampleInRun = function (runid, sample, old_sid) {
             Samples.remove(old_sid);
         }
     }
-};
-
-//check if Sample has some info added (other than just added to exp run as a new sample).
-sampleActualInfo = function(sample){
-    // stub: maybe we need some change flag.
-    return sample.note || sample.tags.length > 0 || sample.data.length > 0;
-}
-
-sampleNotUsedAtAll = function (sid) {
-    return ExpRuns.find({samplelist: sid}).count() == 0;
-};
-
-sampleTypeNotUsedAtAll = function (tid) {
-    return Samples.find({sampletype_id: tid}).count() == 0;
 };
 
 getRunSamplesOf = function (exp, sid) {
@@ -205,7 +302,6 @@ getRunOpsOf = function (exp, opid) {
         return s;
     }));
 };
-
 
 getOpParam = function (runid, opid, name) {
 //    console.log(runid,opid,name);
@@ -297,85 +393,6 @@ updateDBAccordingToCell = function (runid, opid, paramname, newval, oldval) {
         params: {name: paramname, oldval: oldval, newval: newval}});
 };
 
-removeOp = function (opid) {
-    Operations.remove(opid);
-    addLog({type: 'op', id: opid, op: 'remove'});
-}
-
-deleteExp = function (eid) {
-    var runs = ExpRuns.find({exp: eid});
-    runs.map(function (run) {
-        deleteRun(run._id);
-    });
-    Experiments.remove(eid);
-    addLog({type: 'exp', op: 'remove', id: eid, params: {}});
-};
-
-addNewRunToExp = function (eid) {
-    var e = Experiments.findOne(eid);
-    var ops = {};
-    _.each(e.protocol.operations, function (opid) {
-        var op = Operations.findOne(opid);
-        if (op) {
-            var ps = _.map(op.params, function (p) {
-                return {name: p.name, value: null}
-            });
-            var ins = repeat(op.input.length);
-            var outs = repeat(op.output.length);
-            ops[opid] = {params: ps, input: ins, output: outs, timestamp: null};
-        }
-    });
-    var name = 'Run ' + (ExpRuns.find({exp: eid}).count() + 1);
-    var rid = ExpRuns.insert({owner: Meteor.userId() || 'sandbox',
-        exp: eid, name: name, date: new Date().getTime(),
-        samples: {},
-        ops: ops, timestamp: new Date().getTime()});
-    addLog({type: 'run', op: 'insert', id: rid, params: {to: eid, name: name}});
-    return rid;
-};
-
-deleteRun = function (runid) {
-    addLog({type: 'run', op: 'remove', id: runid, params: {}});
-    ExpRuns.remove(runid);
-};
-
-addLog = function (o) {
-    var obj = {};
-    obj.owner = Meteor.userId() || 'sandbox';
-    obj.timestamp = new Date().getTime();
-    obj.date = moment(obj.timestamp).format('YYYYMMDD');
-
-    obj.type = o.type;
-    obj.op = o.op;
-    obj.id = o.id;
-    obj.params = o.params;
-    Logs.insert(obj);
-};
-
-
-// O(n^2) ?? Looks inefficient.
-mkTypeTree = function () {
-    var treeFrom = function (allts, thisroot, depth) {
-        var children = _.sortBy(_.filter(allts, function (t) {
-            return t.parent == thisroot._id;
-        }), function (c) {
-            return c.name;
-        });
-        if (depth == 0) children = [];
-//        console.log(children,allts);
-        return {label: thisroot.name, id: thisroot._id, children: _.map(children, function (c) {
-            return treeFrom(allts, c, depth - 1);
-        })};
-    };
-    var ts = SampleTypes.find({}, {fields: {_id: 1, parent: 1, name: 1}}).fetch();
-//    var roots = _.filter(ts,function(t){return !t.parent;});
-//    return _.map(roots,function(root){
-//        return treeFrom(ts,root);
-//    });
-    var root = generalSampleTypeObj();
-    return [treeFrom(ts, root, 20)];
-}
-
 changeTypeParent = function (tid, newparent, oldparent) {
     SampleTypes.update(tid, {$set: {parent: newparent}});
     var s_from = SampleTypes.findOne(oldparent);
@@ -400,58 +417,6 @@ resetTypeParent = function () {
     });
 };
 
-findDirectSubTypes = function (tid) {
-    return SampleTypes.find({parent: tid});
-};
-
-
-// O(n^2) ?? Looks inefficient.
-findSubTypes = function (rootid) {
-    var treeFrom = function (allts, thisroot, depth) {
-        var children = _.sortBy(_.filter(allts, function (t) {
-            return t.parent == thisroot._id;
-        }), function (c) {
-            return c.name;
-        });
-        if (depth == 0) children = [];
-        console.log(children, allts);
-        return [thisroot._id].concat(_.map(children, function (c) {
-            return treeFrom(allts, c, depth - 1);
-        }));
-    };
-    var ts = SampleTypes.find({}, {fields: {_id: 1, parent: 1, name: 1}}).fetch();
-
-    var root = SampleTypes.findOne(rootid);
-    if (root) {
-        return _.flatten(treeFrom(ts, root, 20));
-    } else {
-        return [];
-    }
-}
-
-
-allowedSampleTypeName = function (name) {
-    return _.trim(name) && !SampleTypes.findOne({name: name});
-};
-
-findSuperTypes = function (tid) {
-    var f = function (from, accum) {
-        var t = SampleTypes.findOne(from);
-        if (t.system && t.name == 'Any') {
-            return accum;
-        } else {
-            return f(t.parent, accum.concat([t.parent]));
-        }
-    }
-    return f(tid, []);
-};
-
-findCompatibleSamples = function (tid) {
-    var tids = findSubTypes(tid);
-    tids.push(tid);
-    return Samples.find({sampletype_id: {$in: tids}, protocol: false}).fetch();
-};
-
 findProtocolSample = function (rid, sid) {
     if (!sid || !rid) return null;
 
@@ -469,18 +434,14 @@ findProtocolSample = function (rid, sid) {
     }))[0];
 }
 
-copyProtocolForNewExp = function (eid) {
-    var e = Experiments.findOne(eid);
-    var prot = e.protocol;
-    var newe = insertExp(e.name);
-    Experiments.update(newe, {$set: {protocol: prot}});
-    addLog({type: 'exp', op: 'cloneprotocol', id: newe, params: {from: eid}});
-};
-
 changeDateOfExp = function (eid, date) {
     Experiments.update(eid, {$set: {date: date}});
     addLog({type: 'exp', op: 'updatedate', id: eid, params: {date: date}});
 };
+
+//
+// Sample input and output for inter-exp analysis.
+//
 
 //Find protocol samples that have no outgoing edge (operation).
 findOutputsOfRun = function(run,exp){
@@ -520,13 +481,14 @@ findInputsOfExp = function(exp){
 
 findRunWithSampleAsOutput = function (sid) {
     var runs = ExpRuns.find({samplelist: sid});
+//    console.log(runs.count());
     var found;
     var BreakException = {};
     try {
         runs.forEach(function (run) {
             var exp = Experiments.findOne(run.exp);
             var outs = findOutputsOfRun(run, exp);
-            console.log(outs,sid);
+//            console.log(run,exp,outs,sid);
             if (_.contains(outs, sid)) {
                 found = run;
                 throw BreakException;
@@ -556,4 +518,136 @@ findRunWithSampleAsInput = function (sid) {
         if (e !== BreakException) throw e;
     }
     return found;
+};
+
+findExpMakingSample = function(sid){
+//    //FIXME: This can be wrong if there are more than one exp in one day...
+//    var eids = _.compact(ExpRuns.find({samplelist: sid}).map(function(run){return run.exp}));
+//    console.log(sid, eids);
+//    return Experiments.findOne({_id: {$in: eids}},{sort: {timestamp: 1}});
+
+    var run = findRunWithSampleAsOutput(sid);
+    console.log(sid,run);
+    return run ? Experiments.findOne(run.exp) : null;
+
+}
+
+//
+// Sample types
+//
+
+findSuperTypes = function (tid) {
+    var f = function (from, accum) {
+        var t = SampleTypes.findOne(from);
+        if (t.system && t.name == 'Any') {
+            return accum;
+        } else {
+            return f(t.parent, accum.concat([t.parent]));
+        }
+    }
+    return f(tid, []);
+};
+
+findDirectSubTypes = function (tid) {
+    return SampleTypes.find({parent: tid});
+};
+
+// O(n^2) ?? Looks inefficient.
+findSubTypes = function (rootid) {
+    var treeFrom = function (allts, thisroot, depth) {
+        var children = _.sortBy(_.filter(allts, function (t) {
+            return t.parent == thisroot._id;
+        }), function (c) {
+            return c.name;
+        });
+        if (depth == 0) children = [];
+        console.log(children, allts);
+        return [thisroot._id].concat(_.map(children, function (c) {
+            return treeFrom(allts, c, depth - 1);
+        }));
+    };
+    var ts = SampleTypes.find({}, {fields: {_id: 1, parent: 1, name: 1}}).fetch();
+
+    var root = SampleTypes.findOne(rootid);
+    if (root) {
+        return _.flatten(treeFrom(ts, root, 20));
+    } else {
+        return [];
+    }
+}
+
+// O(n^2) ?? Looks inefficient.
+mkTypeTree = function () {
+    var treeFrom = function (allts, thisroot, depth) {
+        var children = _.sortBy(_.filter(allts, function (t) {
+            return t.parent == thisroot._id;
+        }), function (c) {
+            return c.name;
+        });
+        if (depth == 0) children = [];
+//        console.log(children,allts);
+        return {label: thisroot.name, id: thisroot._id, children: _.map(children, function (c) {
+            return treeFrom(allts, c, depth - 1);
+        })};
+    };
+    var ts = SampleTypes.find({}, {fields: {_id: 1, parent: 1, name: 1}}).fetch();
+//    var roots = _.filter(ts,function(t){return !t.parent;});
+//    return _.map(roots,function(root){
+//        return treeFrom(ts,root);
+//    });
+    var root = generalSampleTypeObj();
+    return [treeFrom(ts, root, 20)];
+};
+
+changeTypeParent = function (tid, newparent, oldparent) {
+    SampleTypes.update(tid, {$set: {parent: newparent}});
+    var s_from = SampleTypes.findOne(oldparent);
+    var s_to = SampleTypes.findOne(newparent);
+    var target = SampleTypes.findOne(tid);
+    //  console.log(s_from,s_to,target);
+    addLog({type: 'type', op: 'update', id: tid, params: {parent: newparent, old_parent: oldparent}});
+};
+
+//Usually not used.
+resetTypeParent = function () {
+    var st0;
+    if (!generalSampleTypeObj()) {
+        st0 = SampleTypes.insert({owner: Meteor.userId(), name: "Any", timestamp: new Date().getTime(), data: [], tags: [], classes: [], system: true});
+    }
+    var alltypes = SampleTypes.find().fetch();
+    _.each(alltypes, function (t) {
+        if (t._id != st0) {
+            SampleTypes.update(t._id, {$set: {parent: st0}});
+        } else {
+            SampleTypes.update(t._id, {$set: {parent: null}});
+        }
+    });
+};
+
+//
+// Misc helpers
+//
+
+addLog = function (o) {
+    var obj = {};
+    obj.owner = Meteor.userId() || 'sandbox';
+    obj.timestamp = new Date().getTime();
+    obj.date = moment(obj.timestamp).format('YYYYMMDD');
+
+    obj.type = o.type;
+    obj.op = o.op;
+    obj.id = o.id;
+    obj.params = o.params;
+    Logs.insert(obj);
+};
+
+guid = function () {
+    function s4() {
+        return Math.floor((1 + Math.random()) * 0x10000)
+            .toString(16)
+            .substring(1);
+    }
+
+    return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+        s4() + '-' + s4() + s4() + s4();
 };

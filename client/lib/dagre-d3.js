@@ -506,9 +506,10 @@ function wordwrap (str, width, cut, brk) {
 
      if (!str) { return str; }
 
-     var regex = '.{1,' +width+ '}(\\s|$)' + (cut ? '|.{' +width+ '}|.+$' : '|\\S+?(\\s|$)');
-
-     return str.match( RegExp(regex, 'g') ).join( brk );
+//    Hiro Kai modified:
+     //var regex = '.{1,' +width+ '}(\\s|$)' + (cut ? '|.{' +width+ '}|.+$' : '|\\S+?(\\s|$)');
+    return str;
+  //   return str.match( RegExp(regex, 'g') ).join( brk );
 }
 
 function findMidPoint(points) {
