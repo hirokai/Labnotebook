@@ -1,4 +1,15 @@
 Meteor.startup(function () {
+    Accounts.ui.config({requestPermissions: {google:
+        [
+            //'https://www.googleapis.com/auth/calendar',
+            'https://www.googleapis.com/auth/userinfo.profile',
+            'https://www.googleapis.com/auth/drive.file'
+           // 'https://www.googleapis.com/auth/tasks'
+           ]}}, {requestOfflineToken: {google: true}});
+
+//    Meteor
+//    gapi.client.setApiKey('AIzaSyBWQOGSOkQfRiqoaFz41MG7N1TtY1EJUHI');
+
 
 // Define Minimongo collections to match server/publish.js.
     Presets = new Meteor.Collection("presets");
@@ -169,3 +180,146 @@ GA = function (code) {
         s.parentNode.insertBefore(ga, s);
     })();
 };
+
+
+mkGoogleSheetOld = function(eid){
+    var url = "https://www.googleapis.com/upload/drive/v2/files";
+
+    gapi.client.setApiKey('AIzaSyBWQOGSOkQfRiqoaFz41MG7N1TtY1EJUHI');
+
+    Meteor.call('getGoogle',function(err,res){
+        if(!err){
+            var Auth = 'Bearer ' + res.accessToken;
+            var contentType = 'application/vnd.google-apps.spreadsheet';
+
+            const boundary = '-------314159265358979323846';
+            const delimiter = "\r\n--" + boundary + "\r\n";
+            const close_delim = "\r\n--" + boundary + "--";
+
+            var exp = Experiments.findOne(eid);
+            if(!exp) return;
+
+            var title = 'Experiment on '+moment(exp.date).format('YYYY-MM-DD')+': '+exp.name;
+            var metadata = {
+                'title': title,
+                'mimeType': contentType
+            };
+
+            var base64Data = '';
+            var multipartRequestBody =
+                delimiter +
+                    'Content-Type: application/json\r\n\r\n' +
+                    JSON.stringify(metadata) +
+                    delimiter +
+                    'Content-Type: ' + contentType + '\r\n' +
+                    'Content-Transfer-Encoding: base64\r\n' +
+                    '\r\n' +
+                    base64Data +
+                    close_delim;
+
+            console.log(multipartRequestBody);
+
+            Meteor.http.post(url,{
+                params: {key: 'AIzaSyBWQOGSOkQfRiqoaFz41MG7N1TtY1EJUHI',
+                    uploadType: 'multipart'
+                },
+                headers: {
+                    'Content-Type': 'multipart/mixed; boundary="' + boundary + '"'
+                    ,'Authorization': Auth
+                },
+                content: multipartRequestBody
+            },    function(err, result){
+                console.log(result)
+                return(result.id)
+            });
+        }
+    });
+   // var Auth = 'Bearer ' + Meteor.user().services.google.accessToken
+
+
+};
+
+mkGoogleSheet = function(eid,callback){
+    callback = callback || function(){};
+
+
+    Meteor.call('getGoogle',function(err,res){
+        if(!err){
+            var url = "https://www.googleapis.com/upload/drive/v2/files";
+            var Auth = 'Bearer ' + res.accessToken;
+
+            gapi.client.setApiKey('AIzaSyBWQOGSOkQfRiqoaFz41MG7N1TtY1EJUHI');
+            gapi.client.load('spreadsheet','v3',function(){
+
+            });
+
+            gapi.auth.authorize({client_id: '599783734738-9ttlsfq55256kd1u0hmdtj9ohfn80170.apps.googleusercontent.com',
+                scope: 'https://www.googleapis.com/auth/drive.file https://spreadsheets.google.com/feeds',
+                immediate: true
+            },function(auth){
+                console.log(auth);
+                var id = '1IwHJnhvoFc9YVGMXbdUvjQONZ0SwWA2FB4U1DeHQhrc';
+
+                var contentType = 'text/csv';
+               // var contentType = 'application/vnd.google-apps.spreadsheet';
+
+                const boundary = '-------314159265358979323846';
+                const delimiter = "\r\n--" + boundary + "\r\n";
+                const close_delim = "\r\n--" + boundary + "--";
+
+                var exp = Experiments.findOne(eid);
+                if(!exp) return;
+
+                var title = 'Experiment on '+moment(exp.date).format('YYYY-MM-DD')+': '+exp.name;
+                var metadata = {
+                    'title': title,
+                    'mimeType': contentType
+                };
+
+                var csvData = mkCsv(eid);
+                if(!csvData) return;
+
+                var multipartRequestBody =
+                    delimiter +
+                        'Content-Type: application/json\r\n\r\n' +
+                        JSON.stringify(metadata) +
+                        delimiter +
+                        'Content-Type: ' + contentType + '\r\n' +
+                  //      'Content-Transfer-Encoding: base64\r\n' +
+                        '\r\n' +
+                        csvData +
+                        close_delim;
+
+                console.log(multipartRequestBody);
+
+                var request = gapi.client.request({
+                    'path': '/upload/drive/v2/files',
+                    'method': 'POST',
+                    'params': {'uploadType': 'multipart', convert: true},
+                    'headers': {
+                        'Content-Type': 'multipart/mixed; boundary="' + boundary + '"',
+                        Authorization: Auth
+                    },
+                    'body': multipartRequestBody});
+                request.execute(function(res){
+                    console.log(res);
+                    console.log(res.id);
+                    var url = 'https://drive.google.com/spreadsheets/d/' + res.id;
+                    callback({url: url,success:true});
+                });
+            });
+
+        }
+    });
+};
+
+myFunc = function(res){
+    console.log('myFunc!!', res);
+}
+
+mkCsv = function(eid){
+    var exp = Experiments.findOne(eid);
+    if(!exp) return null;
+
+    return 'Experiment: ,'+exp.name+','+moment(exp.date).format('M/D/YYYY');
+}

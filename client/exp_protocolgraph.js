@@ -66,15 +66,15 @@ Template.d3graph.rendered = function () {
             }catch(e){
                 dim = {width: 300, height: 700};
             }
-            var dim = self.data.view ? (self.data.view.graph) : null;
+     //       var dim = self.data.view ? (self.data.view.graph) : null;
             console.log(dim,self);
 //            dim = dim || {width: 300, height: 700};
             wrapper.width(dim.width);
             wrapper.height(dim.height);
 //                div.style('left',w + 80);
-//            graphWrapperSizeChanged(wrapper);
+            graphWrapperSizeChanged(wrapper);
 
-            graphWrapperSizeChanged(wrapper,!view.panes.protocol);
+          //  graphWrapperSizeChanged(wrapper,!view.panes.protocol);
         });
     }
 };
@@ -100,6 +100,10 @@ graphWrapperSizeChanged = function (el,invisible) {
     div.css('left', w + 80);
     var h = $('#graph_buttons').height() + 73;
     $('#svgWrapper').height(el.height() - h);
+};
+
+Template.d3graph.disabled_if_locked = function () {
+    return this.locked ? 'disabled' : '';
 };
 
 getProtocolEdges = function (eid) {
@@ -199,6 +203,7 @@ Template.d3graph.events({
         if (from && eid) {
             var to = newSampleToProtocol(eid, generalSampleType(), 'Sample');
             var op = newOpToProtocol(eid, 'Step', [from], [to]);
+            console.log(from,to,op);
             Session.set('selected_nodes', [to]);
             return op;
         } else {

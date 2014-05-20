@@ -12,6 +12,8 @@
     "jqTree": {},
     "Handsontable": {},
     "collectionFS": {},
-    "collection2": {}
+    "collection2": {},
+    "external-file-loader": {},
+    "oauthjs": {}
   }
 }

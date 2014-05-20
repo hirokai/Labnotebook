@@ -102,18 +102,36 @@ Meteor.methods({
             fs.writeFile(pathtosave, dat, 'utf-8');
 //            Router.go('/'+name);
         }
+    },
+    calendarTest: function(a,b,c,d){
+        gCal.insertEvent(a,b,c,d);
+    },
+    dumpExpToGoogleSheets: function(eid){
+        mkGoogleSheet(eid);
+    },
+    getGoogle: function(){
+//        var Auth = 'Bearer ' + Meteor.user().services.google.accessToken;
+//       Meteor.http.get('https://script.google.com/macros/s/AKfycbwIs2M-gxTkPWUVKcbtTEdntafTx72dwi8np6Ri1dLuMAqdZpk/exec',
+//
+//           {params: {key: 'AIzaSyBWQOGSOkQfRiqoaFz41MG7N1TtY1EJUHI'},
+//               headers: {Authorization: Auth}},
+//        function(err,res){
+//           console.log(err,res);
+//       })
+       return Meteor.user().services.google;
     }
 });
 
 
 doUnfreezeExp = function(eid){
+    console.log('Unfreezing: ' + eid);
     var uid = Meteor.userId() || 'sandbox';
     ExpRuns.find({owner: uid, exp: eid}).forEach(function(run){
         ExpRuns.update(run._id, {$set: {locked: false}});
     });
     var opids = Experiments.findOne(eid).protocol.operations;
     _.map(opids,function(opid){
-        Operations.update(opid,{locked: false});
+        Operations.update(opid,{$set: {locked: false}});
     });
     Experiments.update({owner: uid, _id: eid},{$set: {locked: false}});
 };
@@ -125,7 +143,7 @@ doFreezeExp = function(eid){
     });
     var opids = Experiments.findOne(eid).protocol.operations;
     _.map(opids,function(opid){
-        Operations.update(opid,{locked: true});
+        Operations.update(opid,{$set: {locked: true}});
     });
     Experiments.update({owner: uid, _id: eid},{$set: {locked: true}});
 };

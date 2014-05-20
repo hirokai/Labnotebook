@@ -26,8 +26,8 @@ Router.map(function () {
                 Session.set('list_type', 'exp');
                 Session.set('input_samples', []);
                 Session.set('output_samples', []);
-                Session.set('selected_nodes', []);
-                Session.set('selected_edges', []);
+//                Session.set('selected_nodes', []);
+//                Session.set('selected_edges', []);
                 Session.set('selected_ops', []);
 
 //                Session.set('info_shown', obj);

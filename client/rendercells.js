@@ -3,6 +3,8 @@ renderCells = function (eid) {
 //    console.log('renderCells()');
     if(!getCurrentExpId()) return;
 
+    var experimentLocked;
+
     var row_opids = [];
     var row_paramnames = [];
     //You cannot use map of meteor cursor, because it will use up the collection and you can use it only once.
@@ -16,6 +18,7 @@ renderCells = function (eid) {
 
 //        console.log(exp.protocol.operations);
         var exp = getCurrentExp();
+        experimentLocked = exp.locked;
         var arr = _.map(exp.protocol.operations, function (opid) {
             var op = Operations.findOne(opid);
             if (op) {
@@ -121,8 +124,8 @@ renderCells = function (eid) {
         //   columns: cols(),
         cells: function (row, col, prop) {
             var cellProperties = {};
-            if (row_paramnames[row] == '') {
-                cellProperties.readOnly = true; //make cell read-only if it is first row or the text reads 'readOnly'
+            if (row_paramnames[row] == '' || experimentLocked) {
+                cellProperties.readOnly = true;
             }
             return cellProperties;
         },

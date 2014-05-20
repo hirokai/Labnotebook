@@ -32,15 +32,11 @@ var sampleDenyObj = {
         if(_.contains(fields, 'owner') || doc.locked){
             return true;
         }else {
-            return expRunUsingThisSampleLocked(doc._id);
+            return false;
         }
     },
     remove: function (userId, doc) {
-        if(doc.locked){
-            return true;
-        }else {
-            return expRunUsingThisSampleLocked(doc._id);
-        }
+        return expRunUsingThisSampleLocked(doc._id);
     },
     fetch: ['locked'] // no need to fetch 'owner'
 };

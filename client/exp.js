@@ -220,6 +220,20 @@ Template.exp.events({
             freezeExp(this._id);
         }
     },
+    'click #unfinishexp': function() {
+        var msg = 'Are you sure you want to unfreeze the experiment?'
+        if(window.confirm(msg)){
+            unfreezeExp(this._id);
+        }
+    },
+    'click #dumpexp': function(){
+        mkGoogleSheet(getCurrentExpId(),function(res){
+            if(res.url){
+                window.open(res.url);
+            }
+        });
+//       Meteor.call('dumpExpToGoogleSheets',getCurrentExpId())
+    },
     'click #deleteexp': function () {
         var eid = getCurrentExpId();
         if (window.confirm('Are you sure you want to delete this exp?')) {
@@ -231,23 +245,27 @@ Template.exp.events({
         Router.go('type', {_id: this.sampletype_id});
     },
     'dblclick #exptitle': function (evt, tmpl) {
+        if(getCurrentExp().locked)return;
         Session.set('editing_exp_title', true);
         Deps.flush(); // force DOM redraw, so we can focus the edit field
         activateInput(tmpl.find("#exptitle_input"));
     },
-    'change #sampletype_select': function (evt, tmpl) {
-        var st = evt.target.value;
-//        console.log(st);
-        Samples.update(this._id, {$set: {sampletype_id: st}});
-        Session.set('editing_sampletype_id', null);
-    },
+//    'change #sampletype_select': function (evt, tmpl) {
+//        if(getCurrentExp().locked)return;
+//        var st = evt.target.value;
+////        console.log(st);
+//        Samples.update(this._id, {$set: {sampletype_id: st}});
+//        Session.set('editing_sampletype_id', null);
+//    },
     'click .entertime': function (evt, tmpl) {
+        if(getCurrentExp().locked)return;
         var ee = getButton(evt.target);
         var opid = ee.attr('data-operation');
         var runid = ee.attr('data-runid');
         setOpTimestamp(runid, opid, new Date().getTime());
     },
     'click .edittime': function (evt, tmpl) {
+        if(getCurrentExp().locked)return;
         var ee = getButton(evt.target);
         var opid = ee.attr('data-operation');
         var runid = ee.attr('data-runid');
@@ -258,6 +276,7 @@ Template.exp.events({
     },
     'mousedown .timepoint': function (evt) {
         if(evt.button != 0) return;
+        if(getCurrentExp().locked)return;
         console.log(evt);
         if (evt.altKey) {
             var ee = $(evt.target);
@@ -354,6 +373,7 @@ Template.exp.events({
 //        $('#sample_chooser').modal();
 //    },
     'dblclick td.sample_run_cell': function (evt) {
+        if(getCurrentExp().locked)return;
         var ee = $(evt.target);
         var eid = getCurrentExpId();
         var runid = ee.attr('data-runid');
@@ -570,6 +590,11 @@ Template.sample_info.sampletype_selected = function (sid) {
     return this._id == tid ? 'selected' : '';
 };
 
+
+Template.sample_info.disabled_if_locked = function () {
+    return this.locked ? 'disabled' : '';
+};
+
 Template.sample_info.events({
 //    'click #sample_info_type': function(evt){
 //       $('#sample_info').modal("hide");
@@ -768,6 +793,11 @@ Template.op_info.params = function () {
     });
 };
 
+Template.op_info.disabled_if_locked = function () {
+    return this.locked ? 'disabled' : '';
+};
+
+
 //stub: complete this.
 var paramTypeDict =
 {text: ['text', null], number: ['number', null], uL: ['volume', 'uL'], mL: ['volume', 'mL'], L: ['volume', 'L'], g: ['number', 'g'], mg: ['mass', 'mg'], ug: ['mass', 'ug'], min: ['time', 'min'], hour: ['time', 'hour']
@@ -838,6 +868,11 @@ Template.runop_info.title = function () {
     return runname + ': ' + opname;
 };
 
+Template.runop_info.disabled_if_locked = function () {
+    return this.locked ? 'disabled' : '';
+};
+
+
 Template.runop_info.events({
     'click #close_runop_info': function () {
         $('#runop_info').modal('hide');
@@ -878,6 +913,11 @@ Template.runop_info.formatTime = function (v) {
         return moment().format("h:m:s A");
     }
 };
+
+Template.runop_info.disabled_if_locked = function () {
+    return getCurrentExp().locked ? 'disabled' : '';
+};
+
 
 Template.runop_info.formatDate = function (v) {
     //Use exp's date for new entry.

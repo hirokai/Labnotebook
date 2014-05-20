@@ -39,3 +39,5 @@
 /micro-queue
 /simple-schema
 /dagred3
+/external-file-loader
+/oauthjs

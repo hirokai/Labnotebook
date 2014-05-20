@@ -23,9 +23,10 @@
                 <div class="btn-group" data-toggle="buttons">
                     <!--<button type="button" id='savelayout' class="btn btn-sm btn-default">Save layout</button>-->
                     {{#if locked}}
-                    <button type="button" id='unfinishexp' class="btn btn-sm btn-primary" disabled>Exp finished</button>
+                    <button type="button" id='unfinishexp' class="btn btn-sm btn-primary">Unfreeze Exp</button>
                     <button type="button" id='deleteexp' class="btn btn-sm btn-danger" disabled>Delete Exp</button>
                     {{else}}
+                    <button type="button" id='dumpexp' class="btn btn-sm btn-primary">Dump Exp</button>
                     <button type="button" id='finishexp' class="btn btn-sm btn-primary">Finish Exp</button>
                     <button type="button" id='deleteexp' class="btn btn-sm btn-danger">Delete Exp</button>
                     {{/if}}
@@ -88,15 +89,15 @@
                         <!--<button id='addrunbtn' class="btn btn-xs btn-default" type="button">-->
                             <!--<span class="glyphicon glyphicon-plus"></span>-->
                         <!--</button>-->
-                        <div class="btn-group">
-                            <button type="button" id='addrunbtn' class="btn btn-xs btn-default"><span class="glyphicon glyphicon-plus"></span></button>
-                            <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown">
+                        <div class="btn-group {{#if locked}}hidden{{/if}}">
+                            <button type="button" id='addrunbtn' class="btn btn-xs btn-default"  {{disabled_if_locked}}><span class="glyphicon glyphicon-plus"></span></button>
+                            <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown"   {{disabled_if_locked}}>
                                 <span class="caret"></span>
                                 <span class="sr-only">Toggle Dropdown</span>
                             </button>
                             <ul class="dropdown-menu" role="menu">
-                                <li><a href="#" class='addmultiruns' data-numruns='5'>Add 5 runs</a></li>
-                                <li><a href="#" class='addmultiruns' data-numruns='10'>Add 10 runs</a></li>
+                                <li><a href="#" class='addmultiruns' data-numruns='5'  {{disabled_if_locked}}>Add 5 runs</a></li>
+                                <li><a href="#" class='addmultiruns' data-numruns='10'  {{disabled_if_locked}}>Add 10 runs</a></li>
                             </ul>
                         </div>
                     </th>
@@ -104,9 +105,11 @@
                 {{#each protocol_samples}}
                 <tr class='sample {{sample_selected}} {{sample_inputoutput}}'>
                     <td>
+                        {{#unless ../locked}}
                         <a href='#' class='sampledelete'>
                             <span class='glyphicon glyphicon-remove'></span>
                         </a>
+                        {{/unless}}
                     </td>
                     <td class='name'>{{#if editing_sample_name}}
                         <input class='input-xs' id='samplename_edit_input' type="text" value='{{name}}'/>
@@ -131,7 +134,7 @@
                             <!--<span class='glyphicon glyphicon-pencil'></span>-->
                         <!--</a>-->
 
-                        <div class="btn-group {{#if not_selected_runsamples}}hidden{{/if}}">
+                        <div class="btn-group {{#if not_selected_runsamples}}hidden{{/if}} {{#if ../locked}}hidden{{/if}}">
                             <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown">
                                 <span class='glyphicon glyphicon-chevron-right'></span>
                                 <!--<span class="caret"> </span>-->
@@ -223,7 +226,9 @@
                     </ul>
                 </td>
                 <td class='step_table step_table_edit'>
+                    {{#unless ../locked}}
                         <span class='glyphicon glyphicon-remove link stepdelete'></span>
+                    {{/unless}}
                 </td>
                 {{#each runs}}
                 {{#with operation_run ../_id _id}}
@@ -359,7 +364,7 @@ Not found.
                 </div>
                 <div class="modal-footer">
                     <button type="button" id='close_sample_info' class="btn btn-default" data-dismiss="modal" tabindex='4'>Close</button>
-                    <button type="button" id='save_sample_info' class="btn btn-primary"  tabindex='3'>Save changes</button>
+                    <button type="button" id='save_sample_info' class="btn btn-primary"  tabindex='3' {{disabled_if_locked}}>Save changes</button>
                 </div>
             </div>
         </div>
@@ -411,7 +416,7 @@ Not found.
                                 </div>
                                 <div class="modal-footer">
                                   <button type="button" id='close_psample_info' class="btn btn-default" data-dismiss="modal" tabindex='4'>Close</button>
-                                  <button type="button" id='save_psample_info' class="btn btn-primary"  tabindex='3'>Save changes</button>
+                                  <button type="button" id='save_psample_info' class="btn btn-primary"  tabindex='3' {{disabled_if_locked}}>Save changes</button>
                                 </div>
                               </div>
                             </div>
@@ -520,7 +525,7 @@ Not found.
                 </div>
                 <div class="modal-footer">
                     <button type="button" id='close_op_info' class="btn btn-default" data-dismiss="modal" tabindex='4'>Close</button>
-                    <button type="button" id='save_op_info' class="btn btn-primary"  tabindex='3'>Save changes</button>
+                    <button type="button" id='save_op_info' class="btn btn-primary"  tabindex='3' {{disabled_if_locked}}>Save changes</button>
                 </div>
             </div>
         </div>
@@ -621,7 +626,7 @@ Not found.
                 </div>
                 <div class="modal-footer">
                     <button type="button" id='close_runop_info' class="btn btn-default" data-dismiss="modal" tabindex='4'>Close</button>
-                    <button type="button" id='save_runop_info' class="btn btn-primary"  tabindex='3'>Save changes</button>
+                    <button type="button" id='save_runop_info' class="btn btn-primary"  tabindex='3' {{disabled_if_locked}}>Save changes</button>
                 </div>
             </div>
         </div>
@@ -635,25 +640,25 @@ Not found.
         <div id='graph_buttons'>
             <div>
                 <span class='btnlabel'>For sample:</span>
-                <button id='newsamplebtn'  class="btn btn-xs btn-default" type="button">New sample</button>
-                <button id='deletesamplebtn'  class="btn btn-xs btn-default" {{oneormorenode_edit_disabled}}  type="button">Delete</button>
+                <button id='newsamplebtn'  class="btn btn-xs btn-default" type="button" {{disabled_if_locked}}>New sample</button>
+                <button id='deletesamplebtn'  class="btn btn-xs btn-default" {{oneormorenode_edit_disabled}} {{disabled_if_locked}} type="button">Delete</button>
             </div>
             <div>
 
                 <span class='btnlabel'>For sample:</span>
-                <button id='addprevstepbtn'  class="btn btn-xs btn-default" {{onenode_edit_disabled}} type="button">Add prev step</button>
-                <button id='addnextstepbtn'  class="btn btn-xs btn-default" {{onenode_edit_disabled}} type="button">Add next step</button>
+                <button id='addprevstepbtn'  class="btn btn-xs btn-default" {{onenode_edit_disabled}} {{disabled_if_locked}} type="button">Add prev step</button>
+                <button id='addnextstepbtn'  class="btn btn-xs btn-default" {{onenode_edit_disabled}} {{disabled_if_locked}} type="button">Add next step</button>
             </div>
             <div>
                 <span class='btnlabel'>For two samples:</span>
-                <button id='connectnodes' class="btn btn-xs btn-default" {{twonodes_edit_disabled}} type="button">Connect nodes</button>
-                <button id='insertnode'  class="btn btn-xs btn-default" {{twonodes_edit_disabled}} type="button">Insert</button>
+                <button id='connectnodes' class="btn btn-xs btn-default" {{twonodes_edit_disabled}} {{disabled_if_locked}} type="button">Connect nodes</button>
+                <button id='insertnode'  class="btn btn-xs btn-default" {{twonodes_edit_disabled}} {{disabled_if_locked}} type="button">Insert</button>
             </div>
             <div>
                 <span class='btnlabel'>For operation:</span>
-                <button id='newinputbtn'  class="btn btn-xs btn-default"  {{oneedge_edit_disabled}} type="button">New input</button>
-                <button id='newoutputbtn'  class="btn btn-xs btn-default"  {{oneedge_edit_disabled}} type="button">New output</button>
-                <button id='deleteopbtn'  class="btn btn-xs btn-default"  {{oneedge_edit_disabled}} type="button">Delete</button>
+                <button id='newinputbtn'  class="btn btn-xs btn-default"  {{oneedge_edit_disabled}} {{disabled_if_locked}} type="button">New input</button>
+                <button id='newoutputbtn'  class="btn btn-xs btn-default"  {{oneedge_edit_disabled}} {{disabled_if_locked}} type="button">New output</button>
+                <button id='deleteopbtn'  class="btn btn-xs btn-default"  {{oneedge_edit_disabled}} {{disabled_if_locked}} type="button">Delete</button>
           </div>
             <div style='margin: 8px 0px;'>
                 <button id='deselect' class="btn btn-xs btn-default" type="button">Select none</button>

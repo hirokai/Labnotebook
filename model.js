@@ -196,7 +196,7 @@ freezeExp = function (eid) {
 
 unfreezeExp = function (eid) {
     if(Meteor.isClient){
-        Meteor.call('unFreezeExp',eid);
+        Meteor.call('unfreezeExp',eid);
     }else{
         doUnfreezeExp(eid);
     }

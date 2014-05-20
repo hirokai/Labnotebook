@@ -50,3 +50,6 @@ cfs-graphicsmagick
 cfs-ejson-file
 cfs-filesystem
 d3
+coffeescript
+external-file-loader
+oauthjs
