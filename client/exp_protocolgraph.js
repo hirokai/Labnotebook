@@ -17,18 +17,23 @@ var defaultScale = function () {
         }
     }
 }
-var defaultTranslate = function () {
+
+defaultTranslateExpGraph = function () {
     var bbox = document.querySelector('g.dagre').getBBox();
     var sc = defaultScale();
-//    return [200 - sc * bbox.width / 2 - 10, 600 - sc * bbox.height / 2 - 10];
-    return [0,0];
+    var el = $('#exp_graph');
+    var w = 300; // el.width();
+    var h = 509; //el.height();
+    console.log(sc,w,bbox.width,h,bbox.height);
+    return [ w/2 - sc * bbox.width / 2 - 10,h/2 - sc * bbox.height / 2 - 10];
+//    return [0,0];
 };
 
 var currentScale = 1;
 
 var defaultTransform = function () {
     var sc = defaultScale();
-    var tl = defaultTranslate();
+    var tl = defaultTranslateExpGraph();
     return 'scale(' + sc + ') translate(' + tl[0] + ',' + tl[1] + ')';
 };
 
@@ -100,6 +105,7 @@ graphWrapperSizeChanged = function (el,invisible) {
     div.css('left', w + 80);
     var h = $('#graph_buttons').height() + 73;
     $('#svgWrapper').height(el.height() - h);
+    //resetExpGraphZoom();
 };
 
 Template.d3graph.disabled_if_locked = function () {
@@ -255,7 +261,8 @@ Template.d3graph.events({
         event.preventDefault();
     },
     'click #resetzoom': function () {
-        resetZoom();
+//        resetZoom();
+        resetExpGraphZoom();
     },
     'click #newsamplebtn': function (evt, tmpl) {
         var eid = getCurrentExpId();
@@ -325,8 +332,6 @@ tryDraw = function (graph) {
             //    svg.attr('transform',defaultTransform());
             // var exp = getCurrentExp();
             var gr = {translate: null, scale: null}; // exp.view ? exp.view.graph;
-            translate = gr.translate || defaultTranslate();
-            scale = gr.scale || defaultScale();
             first = true;
         } else {
             g = svg.select("g.dagre");
@@ -337,8 +342,18 @@ tryDraw = function (graph) {
         svg.selectAll('g.node div.id_in_graph').on('mousedown', mouseDown);
         svg.selectAll('g.edgeLabel div.id_in_edge').on('mousedown', mouseDownEdge);
 
-        var zm = d3.behavior.zoom().scaleExtent([0.2, 1.5]).scale(scale || 1).translate(translate || [0,0]).on("zoom", redrawExpGraph);
+        var gr = {translate: null, scale: null}; // exp.view ? exp.view.graph;
+        translate = translate || defaultTranslateExpGraph();
+        scale = scale || defaultScale();
+
+        console.log(defaultTranslateExpGraph());
+
+        var zm = d3.behavior.zoom().scaleExtent([0.2, 1.5]).scale(scale || 1).translate(translate).on("zoom", redrawExpGraph);
            // .on('zoomend',zoomEnd(this));
+        if(first){
+            translate = gr.translate || defaultTranslateExpGraph();
+            scale = gr.scale || defaultScale();
+        }
 
         d3.event = {translate: translate,scale: scale};
         redrawExpGraph();
@@ -354,7 +369,7 @@ tryDraw = function (graph) {
 var zm;
 
 function resetZoom() {
-    translate = defaultTranslate();
+    translate = defaultTranslateExpGraph();
     scale = defaultScale();
     d3.event = {translate: translate, scale: scale};
     var zm = d3.behavior.zoom().scaleExtent([0.2, 1.5]).scale(scale || 1).translate(translate || [0,0]).on("zoom", redrawExpGraph);
@@ -389,6 +404,15 @@ var scale;
 resetExpGraphZoom = function(){
     translate = null;
     scale = null;
+    var el = document.querySelector('g.dagre');
+    var bbox = el ? el.getBBox() : null;
+//    if(bbox && bbox.width > 0 && bbox.height > 0){
+//        console.log('resetExpGraphZoom: graphOffset found.');
+//        graphOffset = {x: bbox.width/2, y: bbox.height/2};
+//    }else{
+//        console.log('resetExpGraphZoom: graphOffset not found.');
+//        graphOffset = {x: 0, y: 0};
+//    }
 }
 
 var downx, downscalex = Math.NaN;

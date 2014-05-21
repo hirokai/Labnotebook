@@ -268,6 +268,7 @@ var scale;
 resetSampleGraphZoom = function(){
     translate = null;
     scale = null;
+    //graphOffset = {x: 100, y: 100};
 }
 
 function genGraphvizSampleGraph() {

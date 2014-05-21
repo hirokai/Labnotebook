@@ -320,10 +320,12 @@ var defaultDrawEdgePaths = function(g, root) {
   return svgEdgePaths;
 };
 
+graphOffset = Session.get('graph_offset') ? {x: Session.get('graph_offset').x || 0, y: Session.get('graph_offset').y || 0} : {x: 0, y: 0};
+
 function defaultPositionNodes(g, svgNodes, svgNodesEnter) {
   function transform(u) {
     var value = g.node(u);
-    return 'translate(' + value.x + ',' + value.y + ')';
+    return 'translate(' + (value.x + graphOffset.x) + ',' + (value.y + graphOffset.y) + ')';
   }
 
   // For entering nodes, position immediately without transition
@@ -338,7 +340,7 @@ function defaultPositionEdgeLabels(g, svgEdgeLabels) {
   function transform(e) {
     var value = g.edge(e);
     var point = findMidPoint(value.points);
-    return 'translate(' + point.x + ',' + point.y + ')';
+    return 'translate(' + (point.x + graphOffset.x)+ ',' + (point.y+ graphOffset.y) + ')';
   }
 
   // For entering edge labels, position immediately without transition
@@ -367,8 +369,8 @@ function defaultPositionEdgePaths(g, svgEdgePaths) {
     points.push(intersectRect(target, p1));
 
     return d3.svg.line()
-      .x(function(d) { return d.x; })
-      .y(function(d) { return d.y; })
+      .x(function(d) { return d.x + graphOffset.x; })
+      .y(function(d) { return d.y + graphOffset.y; })
       .interpolate(interpolate)
       .tension(tension)
       (points);

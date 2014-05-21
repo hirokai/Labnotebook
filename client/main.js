@@ -62,6 +62,7 @@ Meteor.startup(function () {
     Session.setDefault('info_shown', {protocol: true, sample: true, step: true, sheet: true});
 
     Session.setDefault('editing_sample_title', false);
+    Session.setDefault('graph_offset',{x: 100, y: 100});
 
 //Reset every time reloaded.
     Session.set('editing_node_in_graph', null);
