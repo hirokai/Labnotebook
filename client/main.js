@@ -248,13 +248,14 @@ mkGoogleSheet = function(eid,callback){
     Meteor.call('getGoogle',function(err,res){
         if(!err){
             var url = "https://www.googleapis.com/upload/drive/v2/files";
-            var Auth = 'Bearer ' + res.accessToken;
 
             gapi.auth.authorize({client_id: '599783734738-9ttlsfq55256kd1u0hmdtj9ohfn80170.apps.googleusercontent.com',
                 scope: 'https://www.googleapis.com/auth/drive.file',
                 immediate: true
             },function(auth){
                 console.log(auth);
+//                var Auth = 'Bearer ' + res.accessToken;
+                var Auth = 'Bearer ' + auth.access_token;
                 var id = '1IwHJnhvoFc9YVGMXbdUvjQONZ0SwWA2FB4U1DeHQhrc';
 
                 var contentType = 'text/csv';

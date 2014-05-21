@@ -141,17 +141,17 @@ Template.sample.rendered = function () {
     //ga('send', 'event', 'view', 'sample', Meteor.userId(),getCurrentSampleId());
     var self = this;
 
-
+    var scr = document.createElement('script');
+    scr.setAttribute('data-app-key','25sae7ccebrdan6');
+    scr.setAttribute('type','text/javascript');
+    scr.setAttribute('id','dropboxjs');
+    scr.setAttribute('src',"https://www.dropbox.com/static/api/2/dropins.js");
+    document.body.appendChild(scr);
 
     self.node = self.find("#sample_graph");
     if (!self.handle) {
         self.handle = Deps.autorun(function () {
-            var scr = document.createElement('script');
-            scr.setAttribute('data-app-key','25sae7ccebrdan6');
-            scr.setAttribute('type','text/javascript');
-            scr.setAttribute('id','dropboxjs');
-            scr.setAttribute('src',"https://www.dropbox.com/static/api/2/dropins.js");
-            document.body.appendChild(scr);
+
 
             drawSampleGraph();
             var wrapper = $('#sample_graph_wrapper');
