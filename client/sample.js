@@ -54,19 +54,72 @@ Template.sample.events({
         Deps.flush(); // force DOM redraw, so we can focus the edit field
         activateInput(tmpl.find("#sampletitle_input"));
     },
-    'change .fileUploader': function (e) {
-        var files = event.target.files;
-        for (var i = 0, ln = files.length; i < ln; i++) {
-            var fsFile = new FS.File(files[i]);
-            fsFile.owner = Meteor.userId() || 'sandbox';
-            fsFile.sample = Session.get('current_view_id').sample;
-            AttachmentsFS.insert(fsFile, function (err, fileObj) {
-                if (!err) console.log('Saved');
-                //Inserted new doc with ID fileObj._id, and kicked off the data upload using HTTP
-            });
-        }
+    'click #dropbox' : function(e){
+        e.preventDefault();
+        Dropbox.choose({
+            linkType: "preview",
+            multiselect: true,
+            success: function(files) {
+                _.map(files,function(file){
+                   console.log(file);
+                    Samples.update(getCurrentSampleId(),{$push: {data: {url: file.link, type: 'dropbox', name: file.name, icon: file.icon}}});
+                });
+            },
+            cancel:  function() {}
+        });
+    },
+    'click #gdrive': function(){
+        createPicker();
+    },
+    'change #localfile': function(evt){
+        var f = evt.target.files[0];
+        console.log(f);
+        var reader = new FileReader();
+        reader.onload = function(res){
+            console.log(res);
+        };
+        reader.readAsBinaryString(f);
+    },
+    'dragover #localfile': function(evt){
+        evt.preventDefault();
+    },
+    'dragenter #localfile': function(evt){
+        $(evt.target).addClass('dragover');
+    },
+    'dragleave #localfile': function(evt){
+        $(evt.target).removeClass('dragover');
+    },
+    'drop #localfile': function(evt){
+        evt.preventDefault();
+        evt.stopPropagation();
+
+        console.log(evt);
+
+        var file = evt.originalEvent.dataTransfer.files[0],
+            reader = new FileReader();
+        reader.onload = function (event) {
+            console.log(event.target);
+//            holder.style.background = 'url(' + event.target.result + ') no-repeat center';
+        };
+        console.log(file);
+        reader.readAsDataURL(file);
+
+        return false;
+    },
+    'click .unlink_data': function(evt){
+        var url = $(evt.target).attr('data-url');
+        var s = getCurrentSample();
+        var newdata = _.filter(s.data,function(d){
+           return d.url != url;
+        });
+        Samples.update(s._id, {$set: {data: newdata}});
     }
 });
+
+Template.sample.data_where = function(d){
+    var d = this;
+    return d.type == 'dropbox' ? 'Dropbox' : (d.type == 'gdrive' ? 'Google Drive' : '');
+};
 
 Template.sample.formatDate = function (d) {
     return formatDate(d);
@@ -87,16 +140,26 @@ Template.sample.exps_used = function () {
 Template.sample.rendered = function () {
     //ga('send', 'event', 'view', 'sample', Meteor.userId(),getCurrentSampleId());
     var self = this;
+
+
+
     self.node = self.find("#sample_graph");
     if (!self.handle) {
         self.handle = Deps.autorun(function () {
+            var scr = document.createElement('script');
+            scr.setAttribute('data-app-key','25sae7ccebrdan6');
+            scr.setAttribute('type','text/javascript');
+            scr.setAttribute('id','dropboxjs');
+            scr.setAttribute('src',"https://www.dropbox.com/static/api/2/dropins.js");
+            document.body.appendChild(scr);
+
             drawSampleGraph();
             var wrapper = $('#sample_graph_wrapper');
             var setSize = function (el) {
             };
             wrapper.resizable({
                 maxHeight: 1000,
-                maxWidth: 800,
+                maxWidth: 450,
                 minHeight: 100,
                 minWidth: 100,
                 resize: function (evt) {
@@ -356,3 +419,82 @@ var defaultTranslate = function () {
 
     return [0,0];
 };
+
+
+
+// The API developer key obtained from the Google Developers Console.
+var developerKey = 'AIzaSyBWQOGSOkQfRiqoaFz41MG7N1TtY1EJUHI';
+
+// The Client ID obtained from the Google Developers Console.
+
+//For localhost
+var clientId = '599783734738-9ttlsfq55256kd1u0hmdtj9ohfn80170.apps.googleusercontent.com';
+
+//For labnote.meteor.com
+//var clientId = '599783734738-9lrna9alf397cphjt6q2jkd5odtchrm3.apps.googleusercontent.com';
+
+// Scope to use to access user's photos.
+var scope = ['https://www.googleapis.com/auth/photos'];
+
+var pickerApiLoaded = false;
+var oauthToken;
+
+// Use the API Loader script to load google.picker and gapi.auth.
+function onApiLoad() {
+    gapi.load('auth', {'callback': onAuthApiLoad});
+    gapi.load('picker', {'callback': onPickerApiLoad});
+}
+
+onApiLoad();
+
+function onAuthApiLoad() {
+    window.gapi.auth.authorize(
+        {
+            'client_id': clientId,
+            'scope': scope,
+            'immediate': true
+        },
+        handleAuthResult);
+}
+
+function onPickerApiLoad() {
+    pickerApiLoaded = true;
+ //   createPicker();
+}
+
+function handleAuthResult(authResult) {
+    if (authResult && !authResult.error) {
+        oauthToken = authResult.access_token;
+        //createPicker();
+    }
+}
+
+// Create and render a Picker object for picking user Photos.
+function createPicker() {
+    if (pickerApiLoaded && oauthToken) {
+        var picker = new google.picker.PickerBuilder().
+            addView(google.picker.ViewId.DOCS).
+            addView(google.picker.ViewId.FOLDERS).
+            enableFeature(google.picker.Feature.MULTISELECT_ENABLED).
+            setOAuthToken(oauthToken).
+            setDeveloperKey(developerKey).
+            setCallback(pickerCallback).
+            build();
+        picker.setVisible(true);
+    }
+}
+
+// A simple callback implementation.s
+function pickerCallback(data) {
+    if (data[google.picker.Response.ACTION] == google.picker.Action.PICKED) {
+        var docs = data[google.picker.Response.DOCUMENTS];
+        console.log(docs);
+        _.map(docs,function(doc){
+            var url = doc[google.picker.Document.URL];
+            if(url){
+                Samples.update(getCurrentSampleId(),{$push: {data: {url: url, type: 'gdrive', original_id: doc.id, name: doc.name, icon: doc.iconUrl}}});
+                console.log(getCurrentSample());
+            }
+        });
+    }
+}

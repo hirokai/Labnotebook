@@ -143,8 +143,10 @@ showMessage = function (msg) {
 
 Hooks.onLoggedIn = function () {
     Meteor.call('currentUser', function (err, user) {
-        showMessage('Welcome, ' + user.first_name + '!');
-        Session.set('currentUser', user);
+        if(!err && user){
+            showMessage('Welcome, ' + (user.first_name || user.given_name) + '!');
+            Session.set('currentUser', user);
+        }
     });
 };
 
@@ -248,13 +250,8 @@ mkGoogleSheet = function(eid,callback){
             var url = "https://www.googleapis.com/upload/drive/v2/files";
             var Auth = 'Bearer ' + res.accessToken;
 
-            gapi.client.setApiKey('AIzaSyBWQOGSOkQfRiqoaFz41MG7N1TtY1EJUHI');
-            gapi.client.load('spreadsheet','v3',function(){
-
-            });
-
             gapi.auth.authorize({client_id: '599783734738-9ttlsfq55256kd1u0hmdtj9ohfn80170.apps.googleusercontent.com',
-                scope: 'https://www.googleapis.com/auth/drive.file https://spreadsheets.google.com/feeds',
+                scope: 'https://www.googleapis.com/auth/drive.file',
                 immediate: true
             },function(auth){
                 console.log(auth);
@@ -263,9 +260,6 @@ mkGoogleSheet = function(eid,callback){
                 var contentType = 'text/csv';
                // var contentType = 'application/vnd.google-apps.spreadsheet';
 
-                const boundary = '-------314159265358979323846';
-                const delimiter = "\r\n--" + boundary + "\r\n";
-                const close_delim = "\r\n--" + boundary + "--";
 
                 var exp = Experiments.findOne(eid);
                 if(!exp) return;
@@ -275,6 +269,14 @@ mkGoogleSheet = function(eid,callback){
                     'title': title,
                     'mimeType': contentType
                 };
+                const boundary = '-------314159265358979323846';
+                const delimiter = "\r\n--" + boundary + "\r\n";
+                const close_delim = "\r\n--" + boundary + "--";
+
+                var headers = {
+                    'Content-Type': 'multipart/mixed; boundary="' + boundary + '"',
+                    Authorization: Auth
+                 };
 
                 var csvData = mkCsv(eid);
                 if(!csvData) return;
@@ -285,30 +287,67 @@ mkGoogleSheet = function(eid,callback){
                         JSON.stringify(metadata) +
                         delimiter +
                         'Content-Type: ' + contentType + '\r\n' +
-                  //      'Content-Transfer-Encoding: base64\r\n' +
+                        //      'Content-Transfer-Encoding: base64\r\n' +
                         '\r\n' +
                         csvData +
                         close_delim;
 
-                console.log(multipartRequestBody);
 
-                var request = gapi.client.request({
-                    'path': '/upload/drive/v2/files',
-                    'method': 'POST',
-                    'params': {'uploadType': 'multipart', convert: true},
-                    'headers': {
-                        'Content-Type': 'multipart/mixed; boundary="' + boundary + '"',
-                        Authorization: Auth
-                    },
-                    'body': multipartRequestBody});
-                request.execute(function(res){
-                    console.log(res);
-                    console.log(res.id);
-                    var url = 'https://drive.google.com/spreadsheets/d/' + res.id;
-                    callback({url: url,success:true});
-                });
+                var docId = exp.gdrive_id;
+
+
+                if(docId){
+                    //Update
+                    updateCSV(eid,docId,headers,multipartRequestBody,function(res){
+                        if(res.success){
+                            callback(res);
+                        }else{
+                            addNewCSV(eid,headers,multipartRequestBody,callback);
+                        }
+                    });
+                }else{
+                    //New
+                    addNewCSV(eid,headers,multipartRequestBody,callback);
+                }
             });
 
+        }
+    });
+};
+
+var updateCSV = function(eid,docId,headers,multipartRequestBody,callback){
+
+    var request = gapi.client.request({
+        'path': '/upload/drive/v2/files/'+docId,
+        'method': 'PUT',
+        'params': {'uploadType': 'multipart', convert: true},
+        'headers': headers,
+        'body': multipartRequestBody});
+    request.execute(function(res){
+        if(res.id){
+            Experiments.update(eid,{$set: {gdrive_id: res.id}});
+            var url = 'https://drive.google.com/spreadsheets/d/' + res.id;
+            callback({url: url,success:true, id:res.id});
+        }else{
+            callback({success: false, error: 'Update failed.'});
+        }
+    });
+};
+
+var addNewCSV = function (eid,headers,multipartRequestBody,callback) {
+    var request = gapi.client.request({
+        'path': '/upload/drive/v2/files',
+        'method': 'POST',
+        'params': {'uploadType': 'multipart', convert: true},
+        'headers': headers,
+        'body': multipartRequestBody});
+    request.execute(function(res){
+        if(res.id){
+            Experiments.update(eid,{$set: {gdrive_id: res.id}});
+            var url = 'https://drive.google.com/spreadsheets/d/' + res.id;
+            callback({url: url,success:true, id:res.id});
+        }else{
+            callback({success: false, error: 'Insert failed.'});
         }
     });
 };
@@ -321,5 +360,37 @@ mkCsv = function(eid){
     var exp = Experiments.findOne(eid);
     if(!exp) return null;
 
-    return 'Experiment: ,'+exp.name+','+moment(exp.date).format('M/D/YYYY');
+    var runs = getExpRuns(eid).fetch();
+
+    var data = getTableData(exp,runs,[],[]);
+    var cols = colNames(runs);
+    var d2 = addHeaderCells(data, colNames(runs), rowNames2(exp));
+    console.log(data,d2);
+    var str = _.map(d2,function(row){
+       return _.map(row,function(s){
+           return (s ? s.replace(',','_').replace('"','').replace("'",'') : '') + ',';
+       }).join('') + '\r\n  ';
+//           return s ? s.replace(',',"\,").replace('"','\\"').replace("'","\\''") +',' : ',';}).join('') + '\r\n  ';
+    }).join('');
+//    console.log(str);
+    return 'Generated by https://labnote.meteor.com/'+'\r\n'+
+        'Experiment,'+exp.name+','+moment(exp.date).format('M/D/YYYY')+'\r\n'+
+        'Exported time,'+moment().format('M/D/YYYY HH:mm:ss')+'\r\n' +
+        (exp.locked ? 'Experiment finished (data frozen)' : '') + '\r\n'+
+        '\r\n' +
+        'Samples\r\n' +
+        '\r\n' +
+        'Steps\r\n' +
+        str;
 }
+
+addHeaderCells = function(data,cols,rows){
+  var d2 = [['Step','Property'].concat(cols)];
+    console.log(cols,d2);
+
+    var d3 = d2.concat(_.map(data,function(r,i){
+        var prop = rows[i].prop + (rows[i].plan ? ': plan' : '') + (rows[i].actual ? ': actual' : '');
+        return [rows[i].op, prop].concat(r);
+    }));
+    return d3;
+};

@@ -364,33 +364,48 @@ updateDBAccordingToCell = function (runid, opid, paramname, newval, oldval) {
     if (!paramname || paramname == '') {
         return;
     }
-    var op = ExpRuns.findOne(runid).ops[opid];
-    var k, v;
-    if (op) {
-        var params = op.params;
-        var newparams = _.map(params, function (param) {
-            if (param.name == paramname) {
-                param.value = newval;
-                return param;
-            } else {
-                return param;
+    if(paramname == '__note'){
+        console.log('updateDBAccordingToCell: note')
+        var obj = {};
+        obj['ops.'+opid+'.note'] = newval;
+        ExpRuns.update(runid, {$set: obj});
+        addLog({type: 'run', op: 'updatenote', id: runid,
+            params: {oldval: oldval, newval: newval}});
+    }else{
+//        return null; //stub
+        var op = ExpRuns.findOne(runid).ops[opid];
+        var k, v;
+        if (op) {
+            var params = op.params;
+            if(!params || params.length == 0){
+                params = _.map(Operations.findOne(opid).params,function(p){
+                    return {name: p.name};
+                });
             }
-        });
-        op.params = newparams;
-        k = 'ops.' + opid + '.params';
-        v = newparams;
-    } else {
-        op = {};
-        op.params = {name: paramname, value: newval};
-        k = 'ops.' + opid;
-        v = op;
+            var newparams = _.map(params, function (param) {
+                if (param.name == paramname) {
+                    param.value = newval;
+                    return param;
+                } else {
+                    return param;
+                }
+            });
+            op.params = newparams;
+            k = 'ops.' + opid + '.params';
+            v = newparams;
+        } else {
+            op = {};
+            op.params = {name: paramname, value: newval};
+            k = 'ops.' + opid;
+            v = op;
+        }
+        var obj = {};
+        obj[k] = v;
+        console.log(obj);
+        ExpRuns.update(runid, {$set: obj});
+        addLog({type: 'run', op: 'updateparam', id: runid,
+            params: {name: paramname, oldval: oldval, newval: newval}});
     }
-    var obj = {};
-    obj[k] = v;
-    console.log(obj);
-    ExpRuns.update(runid, {$set: obj});
-    addLog({type: 'run', op: 'updateparam', id: runid,
-        params: {name: paramname, oldval: oldval, newval: newval}});
 };
 
 changeTypeParent = function (tid, newparent, oldparent) {

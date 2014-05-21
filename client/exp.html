@@ -20,20 +20,25 @@
                         <input type="checkbox"> Sheet
                     </label>
                 </div>
-                <div class="btn-group" data-toggle="buttons">
-                    <!--<button type="button" id='savelayout' class="btn btn-sm btn-default">Save layout</button>-->
-                    {{#if locked}}
-                    <button type="button" id='unfinishexp' class="btn btn-sm btn-primary">Unfreeze Exp</button>
-                    <button type="button" id='deleteexp' class="btn btn-sm btn-danger" disabled>Delete Exp</button>
-                    {{else}}
-                    <button type="button" id='dumpexp' class="btn btn-sm btn-primary">Dump Exp</button>
-                    <button type="button" id='finishexp' class="btn btn-sm btn-primary">Finish Exp</button>
-                    <button type="button" id='deleteexp' class="btn btn-sm btn-danger">Delete Exp</button>
-                    {{/if}}
-                </div>
+                <!--<div class="btn-group" data-toggle="buttons">-->
+                    <!--&lt;!&ndash;<button type="button" id='savelayout' class="btn btn-sm btn-default">Save layout</button>&ndash;&gt;-->
+                    <!--{{#if locked}}-->
+                    <!--<button type="button" id='unfinishexp' class="btn btn-sm btn-primary">Unfreeze Exp</button>-->
+                    <!--<button type="button" id='deleteexp' class="btn btn-sm btn-danger" disabled>Delete Exp</button>-->
+                    <!--{{else}}-->
+                    <!--<button type="button" id='dumpexp' class="btn btn-sm btn-primary">Save to Google Drive</button>-->
+                    <!--<button type="button" id='finishexp' class="btn btn-sm btn-primary">Finish Exp</button>-->
+                    <!--<button type="button" id='deleteexp' class="btn btn-sm btn-danger">Delete Exp</button>-->
+                    <!--{{/if}}-->
+                <!--</div>-->
+
+
+
+
             </div>
         </div>
-        <div>
+        <div id='exp_title'>
+
     {{#if editing_title}}
     <h2>
         <input value='{{exp_name}}' id='exptitle_input'/>
@@ -41,16 +46,41 @@
     </h2>
 
         {{else}}
+
     <h2 id='exptitle'>{{exp_name}}</h2>
 
           {{/if}}
+                   </div>
+        {{#if locked}}
+        <div id='date_exp'>
+           {{formatDate date}}
         </div>
-
+        {{else}}
         <div id='date_exp'>
             Date: <input type="text" id="exp_datepicker" value='{{formatDate date}}' {{disabled_if_locked}}/>
         </div>
+        {{/if}}
 
-
+        <div class="btn-group" data-toggle="buttons" id='top_menu'>
+            <button type="button" class="btn btn-sm btn-default dropdown-toggle" data-toggle="dropdown">
+                <span class='glyphicon glyphicon-book'></span> <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu pull-left" role="menu">
+                <!--<li><a href="#" id='unfinishexp'>Unfreeze exp</a></li>                     -->
+                <li><a id='dumpexp' class='' href='#'>Save to Google Drive</a></li>
+                {{#if locked}}
+                <li><a id='unfinishexp' class='' href='#'>Undo finishing exp</a></li>
+                {{else}}
+                <li><a id='finishexp' class='' href='#'>Finish exp</a></li>
+                {{/if}}
+                <li class="divider"></li>
+                {{#if locked}}
+                <li><a id='' class='' href='#' style='color: #ff8167; '>Delete exp</a></li>
+                {{else}}
+                <li><a id='deleteexp' class='danger' href='#'>Delete exp</a></li>
+                {{/if}}
+            </ul>
+        </div>
 
     </div>
 

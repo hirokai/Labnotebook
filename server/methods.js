@@ -96,28 +96,10 @@ Meteor.methods({
         return {success: true};
 
     },
-    dumpMyDB: function (owner) {
-        if (owner == Meteor.userId()) {
-
-            fs.writeFile(pathtosave, dat, 'utf-8');
-//            Router.go('/'+name);
-        }
-    },
     calendarTest: function(a,b,c,d){
         gCal.insertEvent(a,b,c,d);
     },
-    dumpExpToGoogleSheets: function(eid){
-        mkGoogleSheet(eid);
-    },
     getGoogle: function(){
-//        var Auth = 'Bearer ' + Meteor.user().services.google.accessToken;
-//       Meteor.http.get('https://script.google.com/macros/s/AKfycbwIs2M-gxTkPWUVKcbtTEdntafTx72dwi8np6Ri1dLuMAqdZpk/exec',
-//
-//           {params: {key: 'AIzaSyBWQOGSOkQfRiqoaFz41MG7N1TtY1EJUHI'},
-//               headers: {Authorization: Auth}},
-//        function(err,res){
-//           console.log(err,res);
-//       })
        return Meteor.user().services.google;
     }
 });

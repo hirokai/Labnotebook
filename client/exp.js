@@ -215,9 +215,10 @@ Template.exp.events({
         Samples.remove(this._id);
     },
     'click #finishexp': function() {
-        var msg = 'Once you finish the experiment, you cannot change it, and the copy of data is saved in your Google Drive. Are you sure?'
+        var msg = 'This command will make the experiment read only, and the copy of data is saved in your Google Drive. Are you sure?'
         if(window.confirm(msg)){
             freezeExp(this._id);
+            mkGoogleSheet(getCurrentExpId());
         }
     },
     'click #unfinishexp': function() {
@@ -229,7 +230,8 @@ Template.exp.events({
     'click #dumpexp': function(){
         mkGoogleSheet(getCurrentExpId(),function(res){
             if(res.url){
-                window.open(res.url);
+                showMessage('Experiment was exported to : <a href="'+ res.url+'">Google Drive</a>');
+            //    window.open(res.url);
             }
         });
 //       Meteor.call('dumpExpToGoogleSheets',getCurrentExpId())

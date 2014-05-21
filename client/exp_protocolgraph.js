@@ -154,11 +154,11 @@ function genGraphvizGraph() {
     var graph = new dagreD3.Digraph();
 //    console.log(samples,edges);
     _.each(samples, function (s) {
-        var l = "<div style='padding: 10px;' class='id_in_graph' data-id='" + s._id + "'>" + s.name + "</div>";
+        var l = "<div style='padding: 10px;font-size: 14px;' class='id_in_graph' data-id='" + s._id + "'>" + s.name + "</div>";
         graph.addNode(s._id, {label: l, custom_id: s._id});
     });
     _.map(edges, function (e) {
-        graph.addEdge(null, e.from._id, e.to._id, {label: "<div style='padding: 5px;font-size: 10px;' class='id_in_edge' data-id='" + e.id + "'>" + e.name + "</div>", custom_id: e.id});
+        graph.addEdge(null, e.from._id, e.to._id, {label: "<div style='padding: 5px;font-size: 14px;' class='id_in_edge' data-id='" + e.id + "'>" + e.name + "</div>", custom_id: e.id});
     });
     return graph;
 }

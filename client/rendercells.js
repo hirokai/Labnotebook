@@ -14,87 +14,28 @@ renderCells = function (eid) {
     });
     // console.log(runs,runids);
 
-    function getTableData() {
-
-//        console.log(exp.protocol.operations);
-        var exp = getCurrentExp();
-        experimentLocked = exp.locked;
-        var arr = _.map(exp.protocol.operations, function (opid) {
-            var op = Operations.findOne(opid);
-            if (op) {
-                row_opids.push(opid);
-                row_paramnames.push('');
-                var pss = [_.map(runs, function (run, idx) {
-                    //console.log(run,idx,opid);
-                    return formatDateTime(getOpTimestamp(run._id, opid));
-                })
-                ];
-                pss = pss.concat(_.map(op.params, function (param) {
-                    var row = getRowData(exp, opid, param);
-                    row_opids.push(opid);
-                    row_paramnames.push(param.name);
-//                console.log(row);
-                    return row;
-                }));
-                return pss;
-            }
-            else {
-                return [];
-            }
-
-        });
-        //    console.log(arr);
-        return _.flatten(arr, true);
-    }
-
-    function colNames() {
-        return getExpRuns(eid).map(function (run) {
-            return run.name;
-        });
-    }
-
-    function getRowData(exp, opid, param) {
-        var runs =  getExpRuns(eid);
-        //   console.log(param);
-        return runs.map(function (run, runidx) {
-            return getOpParam(run._id, opid, param.name);
-        });
-    }
 
 
-    function rowNames() {
-        var e = getCurrentExp();
-        var opids = e.protocol.operations;
-        //A bit ad hoc...
-        var ops = sortById(Operations.find({_id: {$in: opids}}).fetch(), opids);
-//        var exp = getCurrentExp();
-        var cs = _.flatten(_.map(ops, function (op) {
-            return [op.name + ": <br>Time"].concat(_.map(op.params, function (p) {
-                return op.name + ": <br>" + p.name + (p.unit ? " [" + p.unit + "]" : "")
-            }));
-        }));
-        var res = ["Run #"].concat(cs);
-//        console.log(ops,cs,res);
-        return cs;
-    }
+    var exp = getCurrentExp();
+    experimentLocked = exp.locked;
 
-    function cols() {
-        var cs = [];
-        cs.push({type: 'text'});
-        var num_cols = colNames().length - 1;
-        _.each(_.range(0, num_cols), function () {
-            cs.push({
-                type: 'handsontable',
-                handsontable: {
-                    colHeaders: false,
-                    data: colorData
-                }
-            });
-
-        });
-        return cs;
-
-    }
+//    function cols() {
+//        var cs = [];
+//        cs.push({type: 'text'});
+//        var num_cols = colNames().length - 1;
+//        _.each(_.range(0, num_cols), function () {
+//            cs.push({
+//                type: 'handsontable',
+//                handsontable: {
+//                    colHeaders: false,
+//                    data: colorData
+//                }
+//            });
+//
+//        });
+//        return cs;
+//
+//    }
 
     var colors = SampleTypes.find({}, {fields: {name: 1}}).map(function (s) {
         return s.name
@@ -106,18 +47,24 @@ renderCells = function (eid) {
             [color]
         ]);
     }
-    var dat = getTableData();
-    var colnames = colNames();
-    var rownames = rowNames();
-//    console.log(dat);
+    var dat = getTableData(exp,runs,row_opids,row_paramnames);
+    var colnames = colNames(runs);
+    var rownames = rowNames(exp);
+    console.log(dat);
 
-    $("#spreadsheet").handsontable({
+    try{
+    var tbl = $("#spreadsheet").handsontable('getInstance');
+    tbl && tbl.removeHook('afterChange');
+    }catch(e){
+        console.log(e);
+    }
+        $("#spreadsheet").handsontable({
         data: dat,
         manualColumnResize: true,
         startRows: 7,
         startCols: colnames.length,
-        colWidths: _.map(_.range(0, 20), function () {
-            return 80
+        colWidths: _.map(_.range(0, runs.length), function () {
+            return Math.max(80,500/runs.length);
         }),
         rowHeaders: rownames,
         colHeaders: colnames,
@@ -154,4 +101,91 @@ renderCells = function (eid) {
 
     bindDumpButton();
 
+}
+
+getTableData = function(exp,runs,row_opids,row_paramnames) {
+
+//        console.log(exp.protocol.operations);
+    var arr = _.map(exp.protocol.operations, function (opid) {
+        var op = Operations.findOne(opid);
+        if (op) {
+            row_opids.push(opid);
+            row_paramnames.push('');
+            row_opids.push(opid);
+            row_paramnames.push('__note');
+            var pss = [_.map(runs, function (run, idx) {
+                //console.log(run,idx,opid);
+                var t = getOpTimestamp(run._id, opid);
+                var m = moment(t);
+                if(t){
+                    if(m.format('YYYYMMDD') == moment(exp.date).format('YYYYMMDD')){
+                        return t ? moment(t).format('H:mm:ss') : '';
+                    }else{
+                        return t ? moment(t).format('MM/DD/YYYY H:mm:ss') : '';
+                    }
+                }else{
+                    return '';
+                }
+
+            })
+            ];
+            pss = pss.concat([_.map(runs,function(run){
+                return run.ops[opid].note;
+            })]);
+            pss = pss.concat(_.flatten(_.map(op.params, function (param) {
+                var rowplan = _.map(_.range(0,runs.length),function(i){return ''});
+                var rowactual = getRowData(exp._id, opid, param);
+                row_opids.push(opid);
+                row_paramnames.push("");
+                row_opids.push(opid);
+                row_paramnames.push(param.name);
+//                console.log(row);
+                return [rowplan,rowactual];
+            }),true));
+            return pss;
+        }
+        else {
+            return [];
+        }
+
+    });
+    //    console.log(arr);
+    return _.flatten(arr, true);
+}
+
+function getRowData(eid, opid, param) {
+    var runs =  getExpRuns(eid);
+    //   console.log(param);
+    return runs.map(function (run, runidx) {
+        return getOpParam(run._id, opid, param.name);
+    });
+}
+
+colNames = function(runs){
+    return runs.map(function (run) {
+        return run.name;
+    });
+}
+
+rowNames = function(exp) {
+    return _.map(rowNames2(exp),function(obj){return obj.op + ": <br>" + obj.prop + (obj.plan ? ': plan' : '') + (obj.actual ? ': actual' : '');});
+}
+
+//Structured version
+rowNames2 = function(exp) {
+    var opids = exp.protocol.operations;
+    //A bit ad hoc...
+    var ops = sortById(Operations.find({_id: {$in: opids}}).fetch(), opids);
+//        var exp = getCurrentExp();
+    var cs = _.map(ops, function (op) {
+        var arr =  [{op: op.name, prop: "Time"},{op: op.name, prop: "Note"}];
+        if(op.params && op.params.length > 0){
+            _.map(op.params, function (p) {
+                arr.push({op: op.name, prop: p.name + (p.unit ? " [" + p.unit + "]" : ""), plan: true});
+                arr.push({op: op.name, prop: p.name + (p.unit ? " [" + p.unit + "]" : ""), actual: true});
+            });
+        }
+        return arr;
+    });
+    return _.flatten(cs);
 }

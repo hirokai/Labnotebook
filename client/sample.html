@@ -1,4 +1,8 @@
 <template name='sample'>
+
+
+
+
     {{#if editing_title}}
     <h2>
         <input value='{{name}}' id='sampletitle_input'/>
@@ -27,19 +31,21 @@
         This sample is not used in any experiment.
         {{/if}}
     </div>
-    <section>
-        <h3>Sample type</h3>
-        <div>Type: <a href='/type/{{sampletype._id}}'><i>{{sampletype.name}}</i></a></div>
-        <!--<div>Classes: <ul class='flatlist'>{{#each classes}}<li><i>{{name}}</i></li>{{/each}}</ul></div>-->
-    </section>
-    <section>
-        <h3>Sample history</h3>
-        <div id='sample_graph_wrapper'>
-            <svg id='sample_graph'>        </svg>
-        </div>
-    </section>
-    <section>
-        <h3>Experiments using sample</h3>
+    <div class="">
+        <div id="sample_left">
+            <section>
+                <h3>Sample type</h3>
+                <div>Type: <a href='/type/{{sampletype._id}}'><i>{{sampletype.name}}</i></a></div>
+                <!--<div>Classes: <ul class='flatlist'>{{#each classes}}<li><i>{{name}}</i></li>{{/each}}</ul></div>-->
+            </section>
+            <section>
+                <h3>Sample history</h3>
+                <div id='sample_graph_wrapper'>
+                    <svg id='sample_graph'>        </svg>
+                </div>
+            </section>
+            <section>
+                <h3>Experiments using sample</h3>
     <span>
     <table class='table' id='sample_exptable'>
 
@@ -63,28 +69,59 @@
         </tbody>
     </table>
     </span>
-    </section>
-    <section>
-        <h3>Note</h3>
-        <textarea name="" id="samplenote" cols="30" rows="10">{{note}}</textarea>
-        <button type="button" id='savesamplenote' class="btn btn-primary">Save</button>
-        <button type="button" id='cancelsamplenote' class="btn btn-default">Cancel</button>
+            </section>
 
-    </section>
-    <!--<section>-->
 
-    <!--<h3>Data</h3>-->
-    <!--<input name="files" type="file" class="fileUploader" multiple>-->
+        </div>
+        <div id="sample_right">
 
-    <!--<ul>-->
-    <!--{{#each data}}-->
-    <!--<li>-->
-    <!--{{original.name}}, {{_id}}, {{this.formattedSize}}. {{cfsFileUrl fileHandler}}-->
+            <section>
+                <h3>Note</h3>
+                <textarea name="" id="samplenote" cols="30" rows="10">{{note}}</textarea>
+                <button type="button" id='savesamplenote' class="btn btn-sm btn-primary">Save</button>
+                <button type="button" id='cancelsamplenote' class="btn btn-sm btn-default">Cancel</button>
+            </section>
+            <section id='sample-data'>
 
-    <!--</li>-->
-    <!--{{/each}}-->
+                <h3>Data</h3>
+                <span>
+                    Add:&nbsp;
+                    <button type="button" id="dropbox" class="btn btn-sm">Dropbox</button>
+                    <button type="button" id="gdrive" class="btn btn-sm">Google Drive</button>
+	                <!--<input class='btn btn-sm' type="file" id="localfile" value='Local'>-->
+	                <!--<div class='btn btn-default' type="file" id="localfile" value='Local'>Drop local files</div>-->
+                </span>
+                <table>
+                    <tr>
+                        <th class='sample_data_name'>Name</th>
+                        <th class='sample_data_where'>Where</th>
+                        <th class='sample_data_edit'>Unlink</th>
+                    </tr>
+                    {{#each data}}
+                    <tr>
+                        <td class='sample_data_name'>
+                            <img src="{{icon}}" width='25' height='25' alt=""/>
+                            <a href='{{url}}'>{{name}}</a>
+                        </td>
+                        <td class='sample_data_where'>
+                            {{data_where}}
+                        </td>
+                        <td class='sample_data_edit'>
+                            <span class='unlink_data link glyphicon glyphicon-remove' data-url='{{url}}'></span>
+                        </td>
 
-    <!--</ul>-->
-    <!--</section>-->
+                    </tr>
+                    {{/each}}
+
+                </table>
+            </section>
+
+
+        </div>
+
+    </div>
+
+
+
 
 </template>
