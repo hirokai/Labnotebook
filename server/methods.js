@@ -44,9 +44,15 @@ Meteor.methods({
         if (g) {
             var name = g.name;
             var email = g.email;
-//      console.log(g,name,email);
-            return (name && email) ? {name: name, email: email, first_name: g.given_name, last_name: g.family_name, google: g} : null;
+//      console.log(u,g,name,email);
+//            return (name && email) ? {name: name, email: email, first_name: g.given_name, last_name: g.family_name, google: g} : null;
+            return {name: name, email: email, first_name: g.given_name, last_name: g.family_name, google: g};
         } else {
+            if(!u){
+                console.log('currentUser(): User not found.')
+            }else{
+                console.log('currentUser(): Google not found.')
+            }
             return null;
         }
 //      return Meteor.userId();
@@ -100,7 +106,8 @@ Meteor.methods({
         gCal.insertEvent(a,b,c,d);
     },
     getGoogle: function(){
-       return Meteor.user().services.google;
+       var u = Meteor.user();
+       return u ? (u.services ? u.services.google : null) : null;
     }
 });
 

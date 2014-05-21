@@ -1,8 +1,4 @@
 <template name='sample'>
-
-
-
-
     {{#if editing_title}}
     <h2>
         <input value='{{name}}' id='sampletitle_input'/>
@@ -87,7 +83,12 @@
                 <span>
                     Add:&nbsp;
                     <button type="button" id="dropbox" class="btn btn-sm">Dropbox</button>
+                    {{#if loggedin}}
                     <button type="button" id="gdrive" class="btn btn-sm">Google Drive</button>
+                    {{else}}
+                    <button type="button" id="gdrive" class="btn btn-sm" disabled>Google Drive</button>
+                    <span class='explain_small'>You need to login to use Google Drive</span>
+                    {{/if}}
 	                <!--<input class='btn btn-sm' type="file" id="localfile" value='Local'>-->
 	                <!--<div class='btn btn-default' type="file" id="localfile" value='Local'>Drop local files</div>-->
                 </span>

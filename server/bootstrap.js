@@ -24,6 +24,7 @@ removeUser = function (uid) {
         ExpRuns.remove({owner: uid});
         Logs.remove({owner: uid});
         Config.remove({owner: uid});
+        Meteor.users.update(uid, {$set : { "resume.loginTokens" : [] }});
         Meteor.users.remove(uid);
     }
 };
@@ -31,7 +32,7 @@ removeUser = function (uid) {
 //Create user DB for the user of user ID uid.
 initializeDB = function (uid) {
 
-    console.log(uid);
+    console.log('Initializing DB for: '+uid);
 
     uid = uid || "sandbox";
 
@@ -122,7 +123,7 @@ initializeDB = function (uid) {
     Logs.remove({owner: uid});
 
     Config.remove({owner: uid});
-    var u = Meteor.users.findOne(Meteor.userId());
+    var u = Meteor.users.findOne(uid);
     var email = u ? u.services.google.email : null;
     Config.insert({owner: uid, values: {logemail: email, logemail_auto: false}});
 

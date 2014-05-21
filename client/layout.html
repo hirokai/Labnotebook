@@ -127,18 +127,21 @@
 
 </template>
 
-        <template name='top_bar'>
-            <span id='message'>
+<template name='top_bar'>
+    {{#if localhost}}
+        <span class='danger'>Local</span>
+    {{/if}}
+    <span id='message'>
 
-            </span>
+    </span>
 
-            <span id='username' style='float: right;font-size: 11px;margin-top:4px;'>
-                {{#if loggedin}}
-                    Signed in as {{user.name}} <br>({{user.email}})
-                {{/if}}
-            </span>
+    <span id='username' style='float: right;font-size: 11px;margin-top:4px;'>
+        {{#if loggedin}}
+            Signed in as {{user.name}} {{#if user.email}}<br>({{user.email}}){{/if}}
+        {{/if}}
+    </span>
 
-        </template>
+</template>
 
 <template name="lists">
     <div id='listmenu-wrapper'>

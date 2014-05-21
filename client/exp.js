@@ -232,9 +232,14 @@ Template.exp.events({
             if(res.url){
                 showMessage('Experiment was exported to : <a href="'+ res.url+'">Google Drive</a>');
             //    window.open(res.url);
+            }else{
+                showMessage('Error during saving the exp.');
             }
         });
 //       Meteor.call('dumpExpToGoogleSheets',getCurrentExpId())
+    },
+    'click #showreport': function(){
+        mkPdf(getCurrentExp());
     },
     'click #deleteexp': function () {
         var eid = getCurrentExpId();

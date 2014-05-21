@@ -136,3 +136,7 @@ getCurrentSample = function(){
 getCurrentSampleId = function(){
     return Session.get('current_view_id').sample;
 };
+
+callAndShow = function(name){
+    Meteor.call(name,function(err,res){console.log(res);});
+}

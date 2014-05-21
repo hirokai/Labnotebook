@@ -1,3 +1,12 @@
+Template.sample.loggedin = function () {
+    //   console.log(Meteor.user());
+    Meteor.call('currentUser', function (err, user) {
+        Session.set('currentUser', user);
+    });
+    return Session.get('currentUser') != null;
+};
+
+
 Template.sample.typeclasses = function () {
     var ids = SampleTypes.findOne(this._id).classes || [];
 //    console.log(this._id,ids,SampleTypes.findOne(this._id));
@@ -142,7 +151,7 @@ Template.sample.rendered = function () {
     var self = this;
 
     var scr = document.createElement('script');
-    scr.setAttribute('data-app-key','25sae7ccebrdan6');
+    scr.setAttribute('data-app-key',Meteor.settings.public.dropbox.api_key);
     scr.setAttribute('type','text/javascript');
     scr.setAttribute('id','dropboxjs');
     scr.setAttribute('src',"https://www.dropbox.com/static/api/2/dropins.js");
@@ -420,68 +429,31 @@ var defaultTranslate = function () {
     return [0,0];
 };
 
-
-
-// The API developer key obtained from the Google Developers Console.
-var developerKey = 'AIzaSyBWQOGSOkQfRiqoaFz41MG7N1TtY1EJUHI';
-
-// The Client ID obtained from the Google Developers Console.
-
-//For localhost
-var clientId = '599783734738-9ttlsfq55256kd1u0hmdtj9ohfn80170.apps.googleusercontent.com';
-
-//For labnote.meteor.com
-//var clientId = '599783734738-9lrna9alf397cphjt6q2jkd5odtchrm3.apps.googleusercontent.com';
-
-// Scope to use to access user's photos.
-var scope = ['https://www.googleapis.com/auth/photos'];
-
-var pickerApiLoaded = false;
-var oauthToken;
-
-// Use the API Loader script to load google.picker and gapi.auth.
-function onApiLoad() {
-    gapi.load('auth', {'callback': onAuthApiLoad});
-    gapi.load('picker', {'callback': onPickerApiLoad});
-}
-
-onApiLoad();
-
-function onAuthApiLoad() {
-    window.gapi.auth.authorize(
-        {
-            'client_id': clientId,
-            'scope': scope,
-            'immediate': true
-        },
-        handleAuthResult);
-}
-
-function onPickerApiLoad() {
-    pickerApiLoaded = true;
- //   createPicker();
-}
-
-function handleAuthResult(authResult) {
-    if (authResult && !authResult.error) {
-        oauthToken = authResult.access_token;
-        //createPicker();
-    }
-}
-
 // Create and render a Picker object for picking user Photos.
 function createPicker() {
-    if (pickerApiLoaded && oauthToken) {
-        var picker = new google.picker.PickerBuilder().
-            addView(google.picker.ViewId.DOCS).
-            addView(google.picker.ViewId.FOLDERS).
-            enableFeature(google.picker.Feature.MULTISELECT_ENABLED).
-            setOAuthToken(oauthToken).
-            setDeveloperKey(developerKey).
-            setCallback(pickerCallback).
-            build();
-        picker.setVisible(true);
-    }
+    Meteor.call('getGoogle',function(err,res){
+        if(err) {
+            console.log('Error in Google Auth');
+            console.log(err);
+            return;
+        }
+        gapi.load('picker', {'callback': function(){
+            var oauthToken = res.accessToken;
+            var developerKey = Meteor.settings.public.gdrive.developer_key;
+            if (oauthToken) {
+                var picker = new google.picker.PickerBuilder().
+                    addView(google.picker.ViewId.DOCS).
+                    addView(google.picker.ViewId.FOLDERS).
+                    addView(google.picker.ViewId.PHOTOS).
+                    enableFeature(google.picker.Feature.MULTISELECT_ENABLED).
+                    setOAuthToken(oauthToken).
+                    setDeveloperKey(developerKey).
+                    setCallback(pickerCallback).
+                    build();
+                picker.setVisible(true);
+            }
+        }});
+    });
 }
 
 // A simple callback implementation.s

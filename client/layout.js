@@ -2,6 +2,10 @@ Template.top_bar.userId = function () {
     return Meteor.userId();
 };
 
+Template.top_bar.localhost = function() {
+    return Meteor.settings.public.localhost;
+};
+
 Template.top_bar.user = function () {
     //console.log(Meteor.user());
     Meteor.call('currentUser', function (err, user) {

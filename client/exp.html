@@ -61,12 +61,15 @@
         </div>
         {{/if}}
 
-        <div class="btn-group" data-toggle="buttons" id='top_menu'>
+        <div class="btn-group" data-toggle="buttons" id='exp_menu'>
             <button type="button" class="btn btn-sm btn-default dropdown-toggle" data-toggle="dropdown">
                 <span class='glyphicon glyphicon-book'></span> <span class="caret"></span>
             </button>
             <ul class="dropdown-menu pull-left" role="menu">
                 <!--<li><a href="#" id='unfinishexp'>Unfreeze exp</a></li>                     -->
+                <li><a id='expinfo' class='' href='#'>Info</a></li>
+                <li class="divider"></li>
+                <li><a id='showreport' class='' href='#'>Report as PDF</a></li>
                 <li><a id='dumpexp' class='' href='#'>Save to Google Drive</a></li>
                 {{#if locked}}
                 <li><a id='unfinishexp' class='' href='#'>Undo finishing exp</a></li>

@@ -3,13 +3,10 @@ Meteor.startup(function () {
         [
             //'https://www.googleapis.com/auth/calendar',
             'https://www.googleapis.com/auth/userinfo.profile',
-            'https://www.googleapis.com/auth/drive.file'
+            'https://www.googleapis.com/auth/drive.file',
+            'https://www.googleapis.com/auth/photos'
            // 'https://www.googleapis.com/auth/tasks'
            ]}}, {requestOfflineToken: {google: true}});
-
-//    Meteor
-//    gapi.client.setApiKey('AIzaSyBWQOGSOkQfRiqoaFz41MG7N1TtY1EJUHI');
-
 
 // Define Minimongo collections to match server/publish.js.
     Presets = new Meteor.Collection("presets");
@@ -79,29 +76,10 @@ Meteor.startup(function () {
         }
     });
 
-////presetsHandle = Meteor.subscribe('presets');
-//experimentsHandle = Meteor.subscribe('experiments');
-//
-//all_exprunsHandle = Meteor.subscribe('all-expruns');
-//
-////datesHandle = Meteor.subscribe('dates');
-//sampletypesHandle = Meteor.subscribe('sampletypes');
-//typeclassesHandle = Meteor.subscribe('typeclasses');
-//
-////all_operationsHandle = Meteor.subscribe('operations');
-//
-//
-////samplegroupsHandle = Meteor.subscribe('samplegroups');
-////var arrowsHandle = Meteor.subscribe('arrows');
-//samplesHandle = Meteor.subscribe('samples');
     configHandle = Meteor.subscribe('config');
-
-//attachmentsHandle = Meteor.subscribe('attachments');
 
 });
 
-
-//logsHandle = Meteor.subscribe('logs','all');
 
 ////////// Helpers for in-place editing //////////
 
@@ -183,80 +161,25 @@ GA = function (code) {
     })();
 };
 
-
-mkGoogleSheetOld = function(eid){
-    var url = "https://www.googleapis.com/upload/drive/v2/files";
-
-    gapi.client.setApiKey('AIzaSyBWQOGSOkQfRiqoaFz41MG7N1TtY1EJUHI');
-
-    Meteor.call('getGoogle',function(err,res){
-        if(!err){
-            var Auth = 'Bearer ' + res.accessToken;
-            var contentType = 'application/vnd.google-apps.spreadsheet';
-
-            const boundary = '-------314159265358979323846';
-            const delimiter = "\r\n--" + boundary + "\r\n";
-            const close_delim = "\r\n--" + boundary + "--";
-
-            var exp = Experiments.findOne(eid);
-            if(!exp) return;
-
-            var title = 'Experiment on '+moment(exp.date).format('YYYY-MM-DD')+': '+exp.name;
-            var metadata = {
-                'title': title,
-                'mimeType': contentType
-            };
-
-            var base64Data = '';
-            var multipartRequestBody =
-                delimiter +
-                    'Content-Type: application/json\r\n\r\n' +
-                    JSON.stringify(metadata) +
-                    delimiter +
-                    'Content-Type: ' + contentType + '\r\n' +
-                    'Content-Transfer-Encoding: base64\r\n' +
-                    '\r\n' +
-                    base64Data +
-                    close_delim;
-
-            console.log(multipartRequestBody);
-
-            Meteor.http.post(url,{
-                params: {key: 'AIzaSyBWQOGSOkQfRiqoaFz41MG7N1TtY1EJUHI',
-                    uploadType: 'multipart'
-                },
-                headers: {
-                    'Content-Type': 'multipart/mixed; boundary="' + boundary + '"'
-                    ,'Authorization': Auth
-                },
-                content: multipartRequestBody
-            },    function(err, result){
-                console.log(result)
-                return(result.id)
-            });
-        }
-    });
-   // var Auth = 'Bearer ' + Meteor.user().services.google.accessToken
-
-
-};
-
 mkGoogleSheet = function(eid,callback){
     callback = callback || function(){};
 
+    var csvData = mkCsv(eid);
+    if(!csvData) return;
 
     Meteor.call('getGoogle',function(err,res){
         if(!err){
             var url = "https://www.googleapis.com/upload/drive/v2/files";
 
-            gapi.auth.authorize({client_id: '599783734738-9ttlsfq55256kd1u0hmdtj9ohfn80170.apps.googleusercontent.com',
+            gapi.auth.authorize({
+                client_id: Meteor.settings.public.gdrive.client_id,
                 scope: 'https://www.googleapis.com/auth/drive.file',
                 immediate: true
             },function(auth){
-                console.log(auth);
+                if(!auth) return;
+//                console.log(auth);
 //                var Auth = 'Bearer ' + res.accessToken;
                 var Auth = 'Bearer ' + auth.access_token;
-                var id = '1IwHJnhvoFc9YVGMXbdUvjQONZ0SwWA2FB4U1DeHQhrc';
 
                 var contentType = 'text/csv';
                // var contentType = 'application/vnd.google-apps.spreadsheet';
@@ -279,9 +202,6 @@ mkGoogleSheet = function(eid,callback){
                     Authorization: Auth
                  };
 
-                var csvData = mkCsv(eid);
-                if(!csvData) return;
-
                 var multipartRequestBody =
                     delimiter +
                         'Content-Type: application/json\r\n\r\n' +
@@ -293,9 +213,7 @@ mkGoogleSheet = function(eid,callback){
                         csvData +
                         close_delim;
 
-
                 var docId = exp.gdrive_id;
-
 
                 if(docId){
                     //Update
@@ -311,7 +229,6 @@ mkGoogleSheet = function(eid,callback){
                     addNewCSV(eid,headers,multipartRequestBody,callback);
                 }
             });
-
         }
     });
 };
@@ -327,7 +244,7 @@ var updateCSV = function(eid,docId,headers,multipartRequestBody,callback){
     request.execute(function(res){
         if(res.id){
             Experiments.update(eid,{$set: {gdrive_id: res.id}});
-            var url = 'https://drive.google.com/spreadsheets/d/' + res.id;
+            var url = getSpreadsheetUrl(res.id);
             callback({url: url,success:true, id:res.id});
         }else{
             callback({success: false, error: 'Update failed.'});
@@ -345,45 +262,13 @@ var addNewCSV = function (eid,headers,multipartRequestBody,callback) {
     request.execute(function(res){
         if(res.id){
             Experiments.update(eid,{$set: {gdrive_id: res.id}});
-            var url = 'https://drive.google.com/spreadsheets/d/' + res.id;
+            var url = getSpreadsheetUrl(res.id);
             callback({url: url,success:true, id:res.id});
         }else{
             callback({success: false, error: 'Insert failed.'});
         }
     });
 };
-
-myFunc = function(res){
-    console.log('myFunc!!', res);
-}
-
-mkCsv = function(eid){
-    var exp = Experiments.findOne(eid);
-    if(!exp) return null;
-
-    var runs = getExpRuns(eid).fetch();
-
-    var data = getTableData(exp,runs,[],[]);
-    var cols = colNames(runs);
-    var d2 = addHeaderCells(data, colNames(runs), rowNames2(exp));
-    console.log(data,d2);
-    var str = _.map(d2,function(row){
-       return _.map(row,function(s){
-           return (s ? s.replace(',','_').replace('"','').replace("'",'') : '') + ',';
-       }).join('') + '\r\n  ';
-//           return s ? s.replace(',',"\,").replace('"','\\"').replace("'","\\''") +',' : ',';}).join('') + '\r\n  ';
-    }).join('');
-//    console.log(str);
-    return 'Generated by https://labnote.meteor.com/'+'\r\n'+
-        'Experiment,'+exp.name+','+moment(exp.date).format('M/D/YYYY')+'\r\n'+
-        'Exported time,'+moment().format('M/D/YYYY HH:mm:ss')+'\r\n' +
-        (exp.locked ? 'Experiment finished (data frozen)' : '') + '\r\n'+
-        '\r\n' +
-        'Samples\r\n' +
-        '\r\n' +
-        'Steps\r\n' +
-        str;
-}
 
 addHeaderCells = function(data,cols,rows){
   var d2 = [['Step','Property'].concat(cols)];
