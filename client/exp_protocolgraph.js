@@ -1,7 +1,3 @@
-// copyright vida.io 2013
-// source code license: BSD
-// d3js library is from Mike Bostock
-
 var defaultScale = function () {
     var len = findProtocolSamplesInExp(getCurrentExpId()).length;
     var bbox = document.querySelector('g.dagre').getBBox();
@@ -276,6 +272,7 @@ Template.d3graph.events({
         _.map(sids,function(sid){
             deleteSampleFromProtocol(eid, sid);
         });
+        Session.set('selected_nodes',[]);
     },
     'click #newinputbtn': function () {
         var edge = Session.get('selected_edges')[0];

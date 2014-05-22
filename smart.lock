@@ -16,7 +16,8 @@
       "collectionFS": {},
       "collection2": {},
       "external-file-loader": {},
-      "oauthjs": {}
+      "oauthjs": {},
+      "sp-epic-editor": {}
     },
     "packages": {
       "bootstrap-3": {
@@ -93,6 +94,11 @@
         "git": "https://github.com/nifticubes/meteor-oauthjs.git",
         "tag": "v0.0.4",
         "commit": "0dcf60d87bcd7dcf6d1d17f258682298ce4d06aa"
+      },
+      "sp-epic-editor": {
+        "git": "https://bitbucket.org/parhelium/sp-epic-editor",
+        "tag": "v0.0.3",
+        "commit": "1de330c49a955411d40647bdfdf6a3625c7447e6"
       },
       "blaze-layout": {
         "git": "https://github.com/EventedMind/blaze-layout.git",

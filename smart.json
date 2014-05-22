@@ -14,6 +14,7 @@
     "collectionFS": {},
     "collection2": {},
     "external-file-loader": {},
-    "oauthjs": {}
+    "oauthjs": {},
+    "sp-epic-editor": {}
   }
 }

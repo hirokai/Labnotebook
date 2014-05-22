@@ -157,6 +157,13 @@ Template.sample.rendered = function () {
     scr.setAttribute('src',"https://www.dropbox.com/static/api/2/dropins.js");
     document.body.appendChild(scr);
 
+    var editor = new EpicEditor({
+        container: 'samplenote',
+        basePath: '',
+        button: {fullscreen: false},
+        theme: {editor: 'themes/editor/epic-light.css'}
+    }).load();
+
     self.node = self.find("#sample_graph");
     if (!self.handle) {
         self.handle = Deps.autorun(function () {
@@ -224,7 +231,7 @@ function drawSampleGraph(){
         //    svg.attr('transform',defaultTransform());
         // var exp = getCurrentExp();
         var gr = {translate: null, scale: null}; // exp.view ? exp.view.graph;
-        translate = gr.translate || defaultTranslate();
+        translate = gr.translate || defaultTranslateSampleGraph();
         scale = gr.scale || defaultScale();
         first = true;
     } else {
@@ -234,6 +241,12 @@ function drawSampleGraph(){
 
     var layout = renderer.run(graph, g);
 
+    if(first){
+        translate = gr.translate || defaultTranslateSampleGraph();
+        scale = gr.scale || defaultScale();
+    }
+    console.log(translate,scale);
+
 
         svg.selectAll('g.node div.id_in_graph').on('mousedown', mouseDownSampleGraph);
         svg.selectAll('g.node div.id_in_graph').on('dblclick', dblclickSampleGraph);
@@ -241,7 +254,7 @@ function drawSampleGraph(){
 
   //  g.attr("transform", "translate(" + d3.event.translate + ")" + " scale(" + d3.event.scale + ")");
   //  console.log(translate,scale);
-        var zm = d3.behavior.zoom().scaleExtent([0.2, 1.5]).scale(scale || 1).translate(translate || [0,0]).on("zoom", redrawSampleGraph);
+        var zm = d3.behavior.zoom().scaleExtent([0.2, 1.5]).scale(scale).translate(translate).on("zoom", redrawSampleGraph);
     d3.event = {translate: translate,scale: scale};
     redrawSampleGraph();
 //    var g = svg.select('g.dagre');
@@ -253,9 +266,7 @@ function drawSampleGraph(){
 
 function redrawSampleGraph() {
 //    console.log("here", d3.event.translate, d3.event.scale);
-    var svg = d3.select('#sample_graph');
-    var g = svg.select('g.dagre');
-   // var tl = defaultTranslate();
+    var g = d3.select('#sample_graph g.dagre');
     translate = d3.event.translate;
     scale = d3.event.scale;
     return g.attr("transform", "translate(" + d3.event.translate + ")" + " scale(" + d3.event.scale + ")");
@@ -425,10 +436,18 @@ function mouseDownEdgeSampleGraph() {
 var defaultScale = function () {
     return 1;
 }
-var defaultTranslate = function () {
 
-    return [0,0];
+defaultTranslateSampleGraph = function () {
+    var bbox = document.querySelector('g.dagre').getBBox();
+    var sc = defaultScale();
+    var el = $('#exp_graph');
+    var w = 400; // el.width();
+    var h = 300; //el.height();
+    console.log(sc,w,bbox.width,h,bbox.height);
+    return [ w/2 - sc * bbox.width / 2 - 10,h/2 - sc * bbox.height / 2 - 10];
+//    return [0,0];
 };
+
 
 // Create and render a Picker object for picking user Photos.
 function createPicker() {
