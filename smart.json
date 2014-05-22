@@ -11,10 +11,7 @@
     "event-hooks": {},
     "jqTree": {},
     "Handsontable": {},
-    "collectionFS": {},
-    "collection2": {},
     "external-file-loader": {},
-    "oauthjs": {},
     "sp-epic-editor": {}
   }
 }

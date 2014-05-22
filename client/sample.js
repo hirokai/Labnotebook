@@ -457,9 +457,12 @@ function createPicker() {
             console.log(err);
             return;
         }
+        console.log(res);
         gapi.load('picker', {'callback': function(){
             var oauthToken = res.accessToken;
             var developerKey = Meteor.settings.public.gdrive.developer_key;
+            gapi.client.setApiKey(developerKey);
+            console.log(oauthToken,developerKey);
             if (oauthToken) {
                 var picker = new google.picker.PickerBuilder().
                     addView(google.picker.ViewId.DOCS).

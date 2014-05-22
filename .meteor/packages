@@ -10,7 +10,6 @@ spiderable
 jquery
 less
 accounts-google
-accounts-ui
 
 iron-router
 blaze-layout
@@ -26,31 +25,15 @@ underscore-string-latest
 event-hooks
 jqTree
 Handsontable
-collectionFS
-cfs-gridfs
 numeral
 
-cfs-base-package
-cfs-file
-cfs-collection
-cfs-collection-filters
-cfs-access-point
-cfs-worker
-cfs-upload-http
-cfs-filesaver
-cfs-storage-adapter
 http-methods
 data-man
-cfs-upload-ddp
 http-publish
-cfs-tempstore
 power-queue
 reactive-list
-cfs-graphicsmagick
-cfs-ejson-file
-cfs-filesystem
 d3
 coffeescript
 external-file-loader
-oauthjs
 sp-epic-editor
+service-configuration

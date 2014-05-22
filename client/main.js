@@ -1,12 +1,13 @@
 Meteor.startup(function () {
-    Accounts.ui.config({requestPermissions: {google:
-        [
-            //'https://www.googleapis.com/auth/calendar',
-            'https://www.googleapis.com/auth/userinfo.profile',
-            'https://www.googleapis.com/auth/drive.file',
-            'https://www.googleapis.com/auth/photos'
-           // 'https://www.googleapis.com/auth/tasks'
-           ]}}, {requestOfflineToken: {google: true}});
+//    Accounts.ui.config({requestPermissions: {google:
+//        [
+//            //'https://www.googleapis.com/auth/calendar',
+//            'https://www.googleapis.com/auth/userinfo.profile',
+//            'https://www.googleapis.com/auth/drive.file',
+////            'https://www.googleapis.com/auth/drive.readonly',
+//            'https://www.googleapis.com/auth/photos'
+//           // 'https://www.googleapis.com/auth/tasks'
+//           ]}}, {requestOfflineToken: {google: false}});
 
 // Define Minimongo collections to match server/publish.js.
     Presets = new Meteor.Collection("presets");
@@ -50,6 +51,7 @@ Meteor.startup(function () {
     Session.setDefault('selected_edges', []);
     Session.setDefault('selected_ops', []);
     Session.setDefault('exp_graph_shrink',true);
+    Session.setDefault('hide_intermediates',true);
 
 
     Session.setDefault('visible_addstepdiv', false);
@@ -80,6 +82,21 @@ Meteor.startup(function () {
     });
 
     configHandle = Meteor.subscribe('config');
+    cfg = Config.findOne();
+
+    //Auto backup every 24 hours.
+    if(cfg && (moment().valueOf() - (cfg.lastBackupOn || 0)) / (1000*60*60*24) > 1){
+        dumpDBToGDrive(function(res){
+            if(res.url){
+                showMessage('Database snapshot was auto-saved to : <a href="'+ res.url+'">Google Drive</a>');
+                //    window.open(res.url);
+                var cfg = Config.findOne();
+                Config.update(cfg._id, {$set: {lastBackupOn: moment().valueOf()}});
+            }else{
+               // showMessage('Error during saving the exp.');
+            }
+        });
+    }
 
 });
 
@@ -112,14 +129,16 @@ Meteor.startup(function () {
 
 var timer;
 
-showMessage = function (msg) {
+showMessage = function (msg,time) {
+    time = time || 3000;
     var el = $('#message');
     el.removeClass('hidden');
     el.html(msg);
-    timer = null;
+    if(timer)
+        window.clearTimeout(timer);
     timer = window.setTimeout(function () {
         el.addClass('hidden');
-    }, 3000);
+    }, time);
 };
 
 Hooks.onLoggedIn = function () {

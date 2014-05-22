@@ -13,11 +13,11 @@
                     <label class="btn btn-sm btn-default  {{#if info_active 'sample'}}active{{/if}}"  id='sample_shown'>
                         <input type="checkbox"> Samples
                     </label>
-                    <label class="btn btn-sm btn-default {{#if info_active 'step'}}active{{/if}}" id='step_shown'>
-                        <input type="checkbox"> Steps
-                    </label>
+                    <!--<label class="btn btn-sm btn-default {{#if info_active 'step'}}active{{/if}}" id='step_shown'>-->
+                        <!--<input type="checkbox"> Steps-->
+                    <!--</label>-->
                     <label class="btn btn-sm btn-default {{#if info_active 'sheet'}}active{{/if}}" id='sheet_shown'>
-                        <input type="checkbox"> Sheet
+                        <input type="checkbox"> Steps
                     </label>
                 </div>
                 <!--<div class="btn-group" data-toggle="buttons">-->
@@ -103,7 +103,10 @@
                     <!--&lt;!&ndash;<button id='assignsamplesbtn' {{disable_runsamples_btn}} class="btn btn-xs btn-default" type="button">Assign samples</button>&ndash;&gt;-->
                 <!--</div>-->
             </div>
-
+            <div style='margin: 8px 0px;'>
+                <input type="checkbox" id='hide_intermediates' {{hide_intermediates}}/>
+                <span style='font-size: 12px'>Hide intermediate samples</span>
+            </div>
             <table id='sampleinfotable'>
                 <tr>
                     <th></th>
@@ -208,83 +211,83 @@
                 {{/each}}
             </table>
         </section>
-        <section id='sec-protocol' class="{{#unless info_active 'step'}}hidden{{/unless}}">
-        <h3>Steps</h3>
-            <div class='explain'><ul>
-                <li>Click operation name to change settings</li>
-                <li>Click button to enter time point. Alt-click to remove it.</li>
-            </ul>
-                </div>
-        <table class='table' id='protocoltable'>
-            <thead>
-            <tr>
-                <th>Operation</th>
-                <th>Params</th>
-                <th>Edit</th>
-                {{#each runs}}
-                <th>{{name}}</th>
-                {{/each}}
-            </tr>
+        <!--<section id='sec-protocol' class="{{#unless info_active 'step'}}hidden{{/unless}}">-->
+        <!--<h3>Steps</h3>-->
+            <!--<div class='explain'><ul>-->
+                <!--<li>Click operation name to change settings</li>-->
+                <!--<li>Click button to enter time point. Alt-click to remove it.</li>-->
+            <!--</ul>-->
+                <!--</div>-->
+        <!--<table class='table' id='protocoltable'>-->
+            <!--<thead>-->
+            <!--<tr>-->
+                <!--<th>Operation</th>-->
+                <!--<th>Params</th>-->
+                <!--<th>Edit</th>-->
+                <!--{{#each runs}}-->
+                <!--<th>{{name}}</th>-->
+                <!--{{/each}}-->
+            <!--</tr>-->
 
-            </thead>
-            <tbody>
-            {{#each protocol_operations}}
-            <tr class='step {{op_selected}}'>
-                <td class='step_table'>
-                    <span class='step_table_name link'>
-                    {{index}}:&nbsp;
-                    {{this.name}}
-                    </span>
-                </td>
-                <td class='params'>
-                    <ul class='flatlist'>
-                        {{#each params}}
-                        <li>
-                            {{name}}
-                        </li>
-                        {{/each}}
+            <!--</thead>-->
+            <!--<tbody>-->
+            <!--{{#each protocol_operations}}-->
+            <!--<tr class='step {{op_selected}}'>-->
+                <!--<td class='step_table'>-->
+                    <!--<span class='step_table_name link'>-->
+                    <!--{{index}}:&nbsp;-->
+                    <!--{{this.name}}-->
+                    <!--</span>-->
+                <!--</td>-->
+                <!--<td class='params'>-->
+                    <!--<ul class='flatlist'>-->
+                        <!--{{#each params}}-->
+                        <!--<li>-->
+                            <!--{{name}}-->
+                        <!--</li>-->
+                        <!--{{/each}}-->
 
-                    </ul>
-                </td>
-                <td class='step_table step_table_edit'>
-                    {{#unless ../locked}}
-                        <span class='glyphicon glyphicon-remove link stepdelete'></span>
-                    {{/unless}}
-                </td>
-                {{#each runs}}
-                {{#with operation_run ../_id _id}}
-                <td class='stepcell'>
-                    {{#if timestamp}}
-                    <span class='timepoint link'  data-runid='{{../_id}}' data-operation='{{../../_id}}'>
-                                              {{formatTime timestamp}}
+                    <!--</ul>-->
+                <!--</td>-->
+                <!--<td class='step_table step_table_edit'>-->
+                    <!--{{#unless ../locked}}-->
+                        <!--<span class='glyphicon glyphicon-remove link stepdelete'></span>-->
+                    <!--{{/unless}}-->
+                <!--</td>-->
+                <!--{{#each runs}}-->
+                <!--{{#with operation_run ../_id _id}}-->
+                <!--<td class='stepcell'>-->
+                    <!--{{#if timestamp}}-->
+                    <!--<span class='timepoint link'  data-runid='{{../_id}}' data-operation='{{../../_id}}'>-->
+                                              <!--{{formatTime timestamp}}-->
 
-                    </span>
-                    {{else}}
+                    <!--</span>-->
+                    <!--{{else}}-->
 
 
-                    <button class="entertime btn btn-xs btn-primary" type="button" data-operation='{{../../_id}}' data-runid='{{../_id}}'>
-                        <span class="glyphicon glyphicon-ok"></span>
-                    </button>
-                    <button class="edittime btn btn-xs btn-primary" type="button" data-operation='{{../../_id}}' data-runid='{{../_id}}'>
-                        <span class="glyphicon glyphicon-pencil"></span>
-                    </button>
-                    {{/if}}
-                </td>
-                {{/with}}
-                {{/each}}
-            </tr>
-            {{/each}}
+                    <!--<button class="entertime btn btn-xs btn-primary" type="button" data-operation='{{../../_id}}' data-runid='{{../_id}}'>-->
+                        <!--<span class="glyphicon glyphicon-ok"></span>-->
+                    <!--</button>-->
+                    <!--<button class="edittime btn btn-xs btn-primary" type="button" data-operation='{{../../_id}}' data-runid='{{../_id}}'>-->
+                        <!--<span class="glyphicon glyphicon-pencil"></span>-->
+                    <!--</button>-->
+                    <!--{{/if}}-->
+                <!--</td>-->
+                <!--{{/with}}-->
+                <!--{{/each}}-->
+            <!--</tr>-->
+            <!--{{/each}}-->
 
-            </tbody>
-        </table>
+            <!--</tbody>-->
+        <!--</table>-->
 
-        <!--<a href="#" id='addsteplink'><span id='addstepexpand'>{{#if addstephidden}}+{{else}}-{{/if}}</span>&nbsp;Add a step</a>-->
-        <!--<div id='definenewstepdiv' style='{{#if addstephidden}}display:none;{{/if}}'>-->
-            <!--{{> define_step}}-->
-        <!--</div>-->
-        </section>
+        <!--&lt;!&ndash;<a href="#" id='addsteplink'><span id='addstepexpand'>{{#if addstephidden}}+{{else}}-{{/if}}</span>&nbsp;Add a step</a>&ndash;&gt;-->
+        <!--&lt;!&ndash;<div id='definenewstepdiv' style='{{#if addstephidden}}display:none;{{/if}}'>&ndash;&gt;-->
+            <!--&lt;!&ndash;{{> define_step}}&ndash;&gt;-->
+        <!--&lt;!&ndash;</div>&ndash;&gt;-->
+        <!--</section>-->
         <section id='sec-run' class="{{#unless info_active 'sheet'}}hidden{{/unless}}">
-            <h3>Sheet</h3>
+            <h3>Steps</h3>
             <div id='spreadsheet'></div>
         </section>
     </div>

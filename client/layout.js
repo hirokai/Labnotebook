@@ -15,13 +15,17 @@ Template.top_bar.user = function () {
 };
 
 Template.top_bar.loggedin = function () {
-    //   console.log(Meteor.user());
-    Meteor.call('currentUser', function (err, user) {
-        Session.set('currentUser', user);
-    });
-    return Session.get('currentUser') != null;
+    return !!Meteor.userId();
+//    //   console.log(Meteor.user());
+//    Meteor.call('currentUser', function (err, user) {
+//        Session.set('currentUser', user);
+//    });
+//    return Session.get('currentUser') != null;
 };
 
+Template.layout.loginShown = function(){
+  return !Meteor.userId() && Accounts.loginServicesConfigured();
+};
 
 Template.layout.email = function () {
     var user = Session.get('currentUser');
@@ -77,8 +81,31 @@ Template.layout.events({
         $('#help_modal').modal();
     },
     'click #dumpdb': function () {
-        var owner = Meteor.userId() || 'sandbox';
-        window.open('/alldb_dump/' + owner);
+        showMessage('Exporting database to Google Drive...',10000);
+        dumpDBToGDrive(function(res){
+            if(res.url){
+                showMessage('All database was exported to : <a href="'+ res.url+'">Google Drive</a>');
+                //    window.open(res.url);
+                var cfg = Config.findOne();
+                Config.update(cfg._id, {$set: {lastBackupOn: moment().valueOf()}});
+            }else{
+                showMessage('Error during saving the exp.');
+            }
+        });
+    },
+    'click #logout': function(){
+        Meteor.logout();
+    },
+    'click #loginButton': function(){
+        Meteor.loginWithGoogle({
+            requestPermissions: [
+                'https://www.googleapis.com/auth/userinfo.profile',
+                'https://www.googleapis.com/auth/drive.file',
+                'https://www.googleapis.com/auth/photos'
+            ],
+            requestOfflineToken: true
+//            forceApprovalPrompt: true
+        });
     },
     'click #senddb': function () {
         var user = Session.get('currentUser');

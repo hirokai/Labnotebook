@@ -17,9 +17,15 @@
   <ul class="dropdown-menu pull-right" role="menu">
       <li><a href="#" id='showprefs'>Preferences</a></li>
       <li><a href="#" id='showhelp'>Show help</a></li>
-    <li>                <span id='loginButtons'>
-      {{> loginButtons}}
-          </span></li>
+      {{#if loginShown}}
+    <li>                <a id='loginButton' href='#'>
+        Log in
+      <!--{{> loginButtons}}-->
+          </a></li>
+      {{/if}}
+      {{#if loggedin}}
+      <li><a id='logout' class='' href='#'>Log out</a></li>
+      {{/if}}
       <li class="divider"></li>
       <li><a id='dumpdb' class='' href='#'>Backup all database</a></li>
       {{#if loggedin}}
@@ -106,16 +112,24 @@
                               <tr><td>Editing parameters on spreadsheet</td><td>80%</td></tr>
                               <tr><td>Cross browser support</td><td>50%</td></tr>
                               <tr><td>Logging</td><td>30%</td></tr>
-                              <tr><td>Attachement of data</td><td>0%</td></tr>
+                              <tr><td>Attachement of data</td><td>80%</td></tr>
                               <tr><td>Multi Exp tab</td><td>0%</td></tr>
                               <tr><td>Preset tab</td><td>0%</td></tr>
                           </table>
 
                       </div>
+                      <div>
+                          <h3>About Google login</h3>
+                          You can revoke the permission to this app from:
+                          <a href='https://security.google.com/settings/security/permissions'>https://security.google.com/settings/security/permissions</a>
+                      </div>
+                      <div>
+                          <h3>About author</h3>
+                          <p>Author: Hiro Kai (hkai@berkeley.edu)</p>
 
-                      <p>Author: Hiro Kai (hkai@berkeley.edu)</p>
+                          <p>Github repo: <a href="https://github.com/hirokai/Labnotebook">https://github.com/hirokai/Labnotebook</a></p>
+                      </div>
 
-                      <p>Github repo: <a href="https://github.com/hirokai/Labnotebook">https://github.com/hirokai/Labnotebook</a></p>
                   </div>
                   <div class="modal-footer">
 

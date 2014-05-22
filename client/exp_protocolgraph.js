@@ -192,7 +192,8 @@ Template.d3graph.events({
     'click #insertnode': function () {
         var eid = getCurrentExpId();
         var sids = Session.get('selected_nodes');
-        var s = newSampleToProtocol(eid, generalSampleType(), 'Sample');
+        var exp = Experiments.findOne(eid);
+        var s = newSampleToProtocol(eid, generalSampleType(), getNewSampleName(exp));
         var op = newOpToProtocol(eid, 'Step', [sids[0]], [s]);
         var op2 = newOpToProtocol(eid, 'Step', [s], [sids[1]]);
     },
@@ -223,8 +224,9 @@ Template.d3graph.events({
         var eid = getCurrentExpId();
         if (from && eid) {
             var sfrom = Samples.findOne(from);
-            var to = newSampleToProtocol(eid, sfrom.sampletype_id, 'Sample');
-            var name = getNewStepName(Experiments.findOne(eid));
+            var exp = Experiments.findOne(eid);
+            var to = newSampleToProtocol(eid, sfrom.sampletype_id, getNewSampleName(exp));
+            var name = getNewStepName(exp);
             var op = newOpToProtocol(eid, name, [from], [to]);
             Session.set('selected_nodes', [to]);
             return op;
@@ -237,8 +239,9 @@ Template.d3graph.events({
         var eid = getCurrentExpId();
         if (to && eid) {
             var sto = Samples.findOne(to);
-            var from = newSampleToProtocol(eid, sto.sampletype_id, 'Sample');
-            var name = getNewStepName(Experiments.findOne(eid));
+            var exp = Experiments.findOne(eid);
+            var from = newSampleToProtocol(eid, sto.sampletype_id, getNewSampleName(exp));
+            var name = getNewStepName(exp);
             var op = newOpToProtocol(eid, name, [from], [to]);
             Session.set('selected_nodes', [from]);
             return op;
@@ -282,9 +285,12 @@ Template.d3graph.events({
 //        resetZoom();
         resetExpGraphZoom();
     },
+    'click #deselect': function(){
+        Session.set('selected_nodes',[]);
+    },
     'click #newsamplebtn': function (evt, tmpl) {
         var eid = getCurrentExpId();
-        var sid = newSampleToProtocol(eid, generalSampleType(), 'Sample');
+        var sid = newSampleToProtocol(eid, generalSampleType(), getNewSampleName(this));
         Session.set('selected_nodes', [sid]);
     },
     'click #deletesamplebtn': function () {
@@ -299,7 +305,7 @@ Template.d3graph.events({
     'click #newinputbtn': function () {
         var edge = Session.get('selected_edges')[0];
         if (edge) {
-            var sid = newSampleToProtocol(getCurrentExpId(), generalSampleType(), 'Sample');
+            var sid = newSampleToProtocol(getCurrentExpId(), generalSampleType(), getNewSampleName(this));
             var opid = Operations.findOne(edge)._id;
             addNewInputToOp(opid, sid);
         }
@@ -307,7 +313,7 @@ Template.d3graph.events({
     'click #newoutputbtn': function () {
         var edge = Session.get('selected_edges')[0];
         if (edge) {
-            var sid = newSampleToProtocol(getCurrentExpId(), generalSampleType(), 'Sample');
+            var sid = newSampleToProtocol(getCurrentExpId(), generalSampleType(), getNewSampleName(this));
             var opid = Operations.findOne(edge)._id;
             addNewOutputToOp(opid, sid);
         }
@@ -513,6 +519,17 @@ function mouseDownEdge() {
     Session.set('selected_edges', edges);
     d3.event.preventDefault();
     //   console.log(edges,opids,id);
+}
+
+function getNewSampleName(exp) {
+    var sids = exp.protocol.samples;
+    for(var i=1;i<1000;i++){
+        var name = 'Sample ' + i;
+        var s = Samples.findOne({_id: {$in: sids}, name: name});
+        if(!s){
+            return name;
+        }
+    }
 }
 
 function getNewStepName(exp) {

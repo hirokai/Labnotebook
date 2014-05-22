@@ -7,7 +7,7 @@ root.mkCsv = (eid) ->
 
   data = getTableData(exp, runs, [], []);
   cols = colNames(runs);
-  d2 = addHeaderCells(data, colNames(runs), rowNames2(exp));
+  d2 = adjustData(data);
   console.log(data, d2);
   str = arrayToCsv(d2)
 
@@ -17,7 +17,7 @@ root.mkCsv = (eid) ->
   s_str = arrayToCsv(
     _.map sids, (ss) ->
       s = Samples.findOne(ss.sample)
-      [s.name, ss.run, s._id, moment(s.timestamp).format('M/D/YYYY'), s.note]
+      if s then [s.name, s.run, s._id, moment(s.timestamp).format('M/D/YYYY'), s.note] else ['Error','',ss.sample,'','']
   )
 
 
@@ -65,4 +65,66 @@ root.mkPdf = (exp) ->
   window.open(str)
 
 
-root.getSpreadsheetUrl = (id) -> 'https://drive.google.com/spreadsheets/d/' + id
+root.getSpreadsheetUrl = (id) -> 'https://drive.google.com/spreadsheets/d/' + id # + '/preview'
+
+root.getGDriveFileUrl = (id) -> 'https://drive.google.com/file/d/' + id # + '/preview'
+
+root.adjustData = (dat) ->
+  dat
+
+root.dumpDBToGDrive = (callback) ->
+  callback = callback || () -> {}
+  console.log 'dumpDB...'
+  Meteor.call 'getJSONOfWholeDB', (err,str) ->
+    if !str
+      callback({success: false})
+      return
+    gapi.auth.authorize
+      client_id: Meteor.settings.public.gdrive.client_id
+      scope: 'https://www.googleapis.com/auth/drive.file'
+      immediate: true
+    , (auth) ->
+      console.log(auth)
+      return unless auth
+
+      contentType = 'text/plain'
+      metadata =
+        title: 'Labnotebook Database dump as of ' + moment().format('YYYY-MM-DD hh:mm:ss')
+        mimeType: contentType
+      boundary = '-------314159265358979323846';
+      delimiter = "\r\n--" + boundary + "\r\n";
+      close_delim = "\r\n--" + boundary + "--";
+
+      Auth = 'Bearer ' + auth.access_token;
+
+
+      headers =
+        'Content-Type': 'multipart/mixed; boundary="' + boundary + '"'
+        Authorization: Auth
+
+      multipartRequestBody =
+        delimiter +
+        'Content-Type: application/json\r\n\r\n' +
+        JSON.stringify(metadata) +
+        delimiter +
+        'Content-Type: ' + contentType + '\r\n\r\n' +
+        str + '\r\n' +
+        close_delim;
+
+      request = gapi.client.request({
+        'path': '/upload/drive/v2/files',
+        'method': 'POST',
+        'params': {'uploadType': 'multipart'},
+        'headers': headers,
+        'body': multipartRequestBody});
+      request.execute (res) ->
+        if res.id
+          addLog
+            type: 'database'
+            op: 'dumpall'
+            params:
+              gdrive_id: res.id
+          url = getGDriveFileUrl(res.id)
+          callback({url: url,success:true, id:res.id})
+        else
+          callback({success: false, error: 'Insert failed.'})

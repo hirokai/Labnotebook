@@ -3,11 +3,20 @@ Meteor.startup(function () {
     if (Experiments.find({owner: 'sandbox'}).count() == 0) {
         initializeDB("sandbox");
     }
+    // first, remove configuration entry in case service is already configured
+    ServiceConfiguration.configurations.remove({
+        service: "google"
+    });
+    ServiceConfiguration.configurations.insert({
+        service: "google",
+        clientId: Meteor.settings.public.gdrive.client_id,
+        secret: Meteor.settings.public.gdrive.secret
+    });
 });
 
 // Support for playing D&D: Roll 3d6 for dexterity
 Accounts.onCreateUser(function (options, user) {
-    initializeDB(user);
+    initializeDB(user._id);
     return user;
 });
 

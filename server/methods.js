@@ -102,6 +102,15 @@ Meteor.methods({
         return {success: true};
 
     },
+//    dumpDBOnServer: function(){
+//        dumpDBToGDrive(function(res){
+//            console.log(res);
+//        });
+//    },
+    getJSONOfWholeDB: function(){
+        var obj = dump_allmydb(Meteor.userId());
+        return JSON.stringify(obj);
+    },
     calendarTest: function(a,b,c,d){
         gCal.insertEvent(a,b,c,d);
     },

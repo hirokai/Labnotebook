@@ -30,6 +30,10 @@ Template.exp.disabled_if_locked = function () {
     return this.locked ? 'disabled' : '';
 };
 
+Template.exp.hide_intermediates = function () {
+    return Session.get('hide_intermediates') ? 'checked' : '';
+};
+
 Template.exp.protocol_samples = function () {
     try{
         var eid = getCurrentExpId();
@@ -39,11 +43,11 @@ Template.exp.protocol_samples = function () {
         if(samples.length > 1){
             var ins = findInputsOfExp(exp);
             var outs = findOutputsOfExp(exp);
-            return _.map(samples, function (s) {
+            return _.compact(_.map(samples, function (s) {
                 s.input = _.contains(ins, s._id);
                 s.output = _.contains(outs, s._id);
-                return s;
-            });
+                return Session.get('hide_intermediates') ? ((s.input || s.output) ? s : null) : s;
+            }));
         }else if(samples.length == 1){
             var s = samples[0];
             s.input = true;
@@ -192,6 +196,10 @@ Template.exp.events({
         var date = new Date(evt.target.value).getTime();
         changeDateOfExp(getCurrentExpId(), date);
     },
+    'change #hide_intermediates': function(evt){
+        var checked = $(evt.target).is(':checked');
+        Session.set('hide_intermediates',checked);
+    },
     'click .step_sample_list': function () {
         //     Router.go('sample',{_id: this._id});
     },
@@ -217,6 +225,7 @@ Template.exp.events({
         }
     },
     'click #dumpexp': function(){
+        showMessage('Exporting as spreadsheet to Google Drive...', 5000);
         mkGoogleSheet(getCurrentExpId(),function(res){
             if(res.url){
                 showMessage('Experiment was exported to : <a href="'+ res.url+'">Google Drive</a>');
@@ -260,6 +269,15 @@ Template.exp.events({
         var runid = ee.attr('data-runid');
         setOpTimestamp(runid, opid, new Date().getTime());
     },
+    'click .entertime_sheet': function (evt, tmpl) {
+        console.log('entertime_sheet');
+        if(getCurrentExp().locked)return;
+        var ee = getButton(evt.target);
+        var opid = ee.attr('data-operation');
+        var runid = ee.attr('data-runid');
+        console.log();
+        setOpTimestamp(runid, opid, new Date().getTime());
+    },
     'click .edittime': function (evt, tmpl) {
         if(getCurrentExp().locked)return;
         var ee = getButton(evt.target);
@@ -285,6 +303,18 @@ Template.exp.events({
             var runid = ee.attr('data-runid');
             Session.set('runopinfo_for', {op: opid, run: runid});
             $('#runop_info').modal();
+        }
+    },
+    'mousedown .timepoint_sheet': function (evt) {
+        if(evt.button != 0) return;
+        if(getCurrentExp().locked)return;
+        console.log(evt);
+        if (evt.altKey) {
+            var ee = getParentOrSelf(evt.target,'DIV');
+            var opid = ee.attr('data-operation');
+            var runid = ee.attr('data-runid');
+            console.log(ee,opid,runid)
+            setOpTimestamp(runid, opid, null);
         }
     },
     'change #protocol_shown': function (evt) {
@@ -434,6 +464,14 @@ Template.exp.events({
     'click .step_table_name': function () {
         Session.set('opinfo_for', this._id);
         var params = Operations.findOne(this._id).params;
+        Session.set('op_param_list', params);
+        $('#op_info').modal();
+    },
+    'click .stepname_sheet': function(evt){
+        var e = $(evt.target);
+        var opid = e.attr('data-operation');
+        Session.set('opinfo_for', opid);
+        var params = Operations.findOne(opid).params;
         Session.set('op_param_list', params);
         $('#op_info').modal();
     }
@@ -777,8 +815,16 @@ Template.op_info.events({
     },
     'click #makenewparambtn': function () {
         var params = Session.get('op_param_list') || [];
-        params.push({name: 'Param ' + (params.length + 1), type: 'text', unit: ''})
+        params.push({name: getNewParamName(params), type: 'text', unit: ''})
         Session.set('op_param_list', params);
+    },
+    'shown.bs.modal #op_info': function(){
+        $('#opinfo_name').select();
+    },
+    'keydown #opinfo_name': function(evt){
+        if(evt.keyCode == 13){
+            $('#save_op_info').click();
+        }
     }
 });
 
@@ -793,6 +839,16 @@ Template.op_info.disabled_if_locked = function () {
     return this.locked ? 'disabled' : '';
 };
 
+function getNewParamName(params){
+    var names = _.map(params,function(p){return p.name;});
+    for(var i = 1; i < 1000; i++){
+        var n = 'Param ' + i;
+        if(!_.contains(names,n)){
+            return n;
+        }
+    }
+    return 'Param';
+}
 
 //stub: complete this.
 var paramTypeDict =

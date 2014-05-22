@@ -118,6 +118,12 @@ getButton = function(el){
     return ee;
 };
 
+getParentOrSelf = function(el,tag){
+    var e = $(el);
+    var ee = e.prop('tagName') == tag ? e : e.parent(tag);
+    return ee;
+};
+
 
 getCurrentExp = function(){
     var eid = getCurrentExpId();
