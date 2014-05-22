@@ -219,8 +219,6 @@
             <thead>
             <tr>
                 <th>Operation</th>
-                <th>Input</th>
-                <th>Output</th>
                 <th>Params</th>
                 <th>Edit</th>
                 {{#each runs}}
@@ -237,16 +235,6 @@
                     {{index}}:&nbsp;
                     {{this.name}}
                     </span>
-                </td>
-                <td><ul class='flatlist'>{{#each step_input}}
-                    <li><span class='step_sample_list'>{{name}}</span></li>
-                    {{/each}}
-                </ul>
-                </td>
-                <td><ul class='flatlist'>{{#each step_output}}
-                    <li><span class='step_sample_list'>{{name}}</span></li>
-                    {{/each}}
-                </ul>
                 </td>
                 <td class='params'>
                     <ul class='flatlist'>
@@ -696,7 +684,10 @@ Not found.
             <div style='margin: 8px 0px;'>
                 <button id='deselect' class="btn btn-xs btn-default" type="button">Select none</button>
                 <button id='resetzoom' class="btn btn-xs btn-default" type="button">Reset zoom</button>
-
+            </div>
+            <div style='margin: 8px 0px;'>
+                <input type="checkbox" id='shrink_nodes' {{shrink_nodes}}/>
+                <span style='font-size: 12px'>Shrink intermediate samples</span>
             </div>
 
         </div>

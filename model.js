@@ -134,6 +134,14 @@ addNewOutputToOp = function (opid, sid) {
 deleteSampleFromProtocol = function (eid, sid) {
     Experiments.update(eid, {$pull: {'protocol.samples': sid}});
     removeOpsAboutSample(eid, sid);
+    Samples.remove(sid);
+
+    //Remove rank info to make graph recalculate them.
+    var sids = Experiments.findOne(eid).protocol.samples;
+    _.map(sids,function(s){
+        Samples.update(s, {$unset: {rank: ""}});
+    })
+
     addLog({type: 'protocol_sample', op: 'delete', id: sid, params: {exp: eid}});
 };
 
@@ -494,6 +502,11 @@ findInputsOfExp = function(exp){
     return _.difference(samples,ins);
 };
 
+isInputOrOutputOfExp = function(exp,sid){
+    var ins = findInputsOfExp(exp);
+    var outs = findOutputsOfExp(exp);
+    return _.contains(ins,sid) || _.contains(outs,sid);
+}
 findRunWithSampleAsOutput = function (sid) {
     var runs = ExpRuns.find({samplelist: sid});
 //    console.log(runs.count());

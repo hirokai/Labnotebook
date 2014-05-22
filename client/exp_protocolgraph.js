@@ -1,9 +1,9 @@
 var defaultScale = function () {
     var len = findProtocolSamplesInExp(getCurrentExpId()).length;
-    var bbox = document.querySelector('g.dagre').getBBox();
+    var bbox = document.querySelector('#exp_graph g.dagre').getBBox();
     //console.log(bbox);
     if (bbox.width > 0 && bbox.height > 0) {
-        var v = Math.min(200 / bbox.width, 450 / bbox.height);
+        var v = Math.min(250 / bbox.width, 450 / bbox.height, 2);
         return v;
     } else {
         if (len <= 6) {
@@ -43,7 +43,7 @@ Template.d3graph.rendered = function () {
             var eid = getCurrentExpId();
             //    var ops = eid ? Operations.find({exp_id: eid}).fetch() : [];
             try {
-                var graph = genGraphvizGraph();
+                var graph = mkDagreGraph();
                 if (graph) {
                     tryDraw(graph);
                 }
@@ -131,6 +131,9 @@ getProtocolEdges = function (eid) {
     return edges;
 };
 
+Template.d3graph.shrink_nodes = function () {
+    return Session.get('exp_graph_shrink') ? 'checked' : '';
+};
 
 Template.d3graph.twonodes_edit_disabled = function () {
     return (Session.get('selected_nodes').length == 2) ? '' : 'disabled';
@@ -148,15 +151,31 @@ Template.d3graph.oneedge_edit_disabled = function () {
     return (Session.get('selected_edges').length == 1) ? '' : 'disabled';
 };
 
+hasNoRunSample = function(eid,psid) {
+  var sids = _.compact(ExpRuns.find({exp: eid}).map(function(run){
+     return run.samples[psid];
+  }));
+  return sids.length == 0;
+};
 
-function genGraphvizGraph() {
+
+function mkDagreGraph() {
     var eid = getCurrentExpId();
     var samples = findProtocolSamplesInExp(eid);
     var edges = getProtocolEdges(eid);
     var graph = new dagreD3.Digraph();
 //    console.log(samples,edges);
+
+    var shrink = Session.get('exp_graph_shrink');
+
     _.each(samples, function (s) {
-        var l = "<div style='padding: 10px;font-size: 14px;' class='id_in_graph' data-id='" + s._id + "'>" + s.name + "</div>";
+        var l;
+        if(shrink && !isInputOrOutputOfExp(Experiments.findOne(eid), s._id)){
+            l = "<div style='padding: 8px;font-size: 14px;' class='id_in_graph' data-id='" + s._id + "'></div>";
+        }else{
+            l = "<div style='padding: 8px;font-size: 14px;' class='id_in_graph' data-id='" + s._id + "'>" + s.name + "</div>";
+        }
+
         graph.addNode(s._id, {label: l, custom_id: s._id});
     });
     _.map(edges, function (e) {
@@ -203,9 +222,10 @@ Template.d3graph.events({
         var from = Session.get('selected_nodes')[0];
         var eid = getCurrentExpId();
         if (from && eid) {
-            var to = newSampleToProtocol(eid, generalSampleType(), 'Sample');
-            var op = newOpToProtocol(eid, 'Step', [from], [to]);
-            console.log(from,to,op);
+            var sfrom = Samples.findOne(from);
+            var to = newSampleToProtocol(eid, sfrom.sampletype_id, 'Sample');
+            var name = getNewStepName(Experiments.findOne(eid));
+            var op = newOpToProtocol(eid, name, [from], [to]);
             Session.set('selected_nodes', [to]);
             return op;
         } else {
@@ -216,8 +236,10 @@ Template.d3graph.events({
         var to = Session.get('selected_nodes')[0];
         var eid = getCurrentExpId();
         if (to && eid) {
-            var from = newSampleToProtocol(eid, generalSampleType(), 'Sample');
-            var op = newOpToProtocol(eid, 'Step', [from], [to]);
+            var sto = Samples.findOne(to);
+            var from = newSampleToProtocol(eid, sto.sampletype_id, 'Sample');
+            var name = getNewStepName(Experiments.findOne(eid));
+            var op = newOpToProtocol(eid, name, [from], [to]);
             Session.set('selected_nodes', [from]);
             return op;
         } else {
@@ -293,6 +315,10 @@ Template.d3graph.events({
     'click #deleteopbtn': function () {
         var edge = Session.get('selected_edges')[0];
         removeOp(edge);
+    },
+    'change #shrink_nodes': function(evt){
+        var checked = $(evt.target).is(':checked');
+        Session.set('exp_graph_shrink',checked);
     }
 });
 
@@ -335,7 +361,10 @@ tryDraw = function (graph) {
             //  svg.attr('transform',defaultTransform());
         }
         var layout = renderer.run(graph, g);
-        //    console.log(layout);
+        console.log(layout);
+        possiblyUpdateRank(getCurrentExp(),layout);
+
+//        console.log(ranks);
         svg.selectAll('g.node div.id_in_graph').on('mousedown', mouseDown);
         svg.selectAll('g.edgeLabel div.id_in_edge').on('mousedown', mouseDownEdge);
 
@@ -484,4 +513,36 @@ function mouseDownEdge() {
     Session.set('selected_edges', edges);
     d3.event.preventDefault();
     //   console.log(edges,opids,id);
+}
+
+function getNewStepName(exp) {
+    var opids = exp.protocol.operations;
+    for(var i=1;i<1000;i++){
+        var name = 'Step ' + i;
+        var op = Operations.findOne({_id: {$in: opids}, name: name});
+        if(!op){
+            return name;
+        }
+    }
+}
+
+function possiblyUpdateRank(exp,layout) {
+    var sids = exp.protocol.samples;
+    var opids = exp.protocol.operations;
+    var updating = Samples.find({_id: {$in: sids}, rank: {$exists: true}}).count() <
+        Samples.find({_id: {$in: sids}}).count()
+        || Operations.find({_id: {$in: opids}, rank: {$exists: true}}).count() <
+        Operations.find({_id: {$in: opids}}).count();
+    if(updating){
+        var ranks = {};
+        _.map(layout._nodes, function(n,k){
+            ranks[k] = n.value.rank;
+            Samples.update(k,{$set: {rank: n.value.rank || 0}});
+        });
+        _.map(opids,function(opid){
+            var op = Operations.findOne(opid);
+            var rank = _.min(_.map(op.output,function(s){return ranks[s];}));
+            Operations.update(opid,{$set: {rank: rank}});
+        });
+    }
 }

@@ -30,6 +30,7 @@ Router.map(function () {
 //                Session.set('selected_edges', []);
                 Session.set('selected_ops', []);
 
+
 //                Session.set('info_shown', obj);
 
                 Session.set('exp_sampletable_selection',{from: null, to: null});

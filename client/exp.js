@@ -35,18 +35,11 @@ Template.exp.protocol_samples = function () {
         var eid = getCurrentExpId();
         var exp = Experiments.findOne(eid);
         var sids = exp.protocol.samples;
-        var samples = Samples.find({_id: {$in: sids}}).fetch();
+        var samples = Samples.find({_id: {$in: sids}},{sort: {rank: 1}}).fetch();
         if(samples.length > 1){
-            var edges = getProtocolEdges(eid);
-            var es = _.map(edges, function (edge) {
-                return [edge.from._id, edge.to._id];
-            });
-            var sorted = toposort(es);
-
             var ins = findInputsOfExp(exp);
             var outs = findOutputsOfExp(exp);
-            return _.map(sorted, function (id, i) {
-                var s = _.findWhere(samples, {_id: id});
+            return _.map(samples, function (s) {
                 s.input = _.contains(ins, s._id);
                 s.output = _.contains(outs, s._id);
                 return s;
@@ -139,12 +132,8 @@ Template.exp.protocol_operations = function () {
     // var e = getCurrentExp();
     var opids = this.protocol.operations;
 
-    //A bit ad hoc...
-    var ops = sortById(Operations.find({_id: {$in: opids}}).fetch(), opids);
-    return _.map(ops, function (op, i) {
-        op.index = i + 1;
-        return op;
-    });
+    return Operations.find({_id: {$in: opids}},{sort: {rank: 1}})
+        .map(function(op,i){op.index = i+1; return op;});
 };
 
 Template.exp.step_input = function () {

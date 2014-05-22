@@ -49,6 +49,8 @@ Meteor.startup(function () {
     Session.setDefault('selected_nodes', []);
     Session.setDefault('selected_edges', []);
     Session.setDefault('selected_ops', []);
+    Session.setDefault('exp_graph_shrink',true);
+
 
     Session.setDefault('visible_addstepdiv', false);
 

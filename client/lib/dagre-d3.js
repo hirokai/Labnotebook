@@ -333,6 +333,7 @@ function defaultPositionNodes(g, svgNodes, svgNodesEnter) {
 
   this._transition(svgNodes)
       .style('opacity', 1)
+      .attr('data-rank',function(u){return g.node(u).rank;})
       .attr('transform', transform);
 }
 
