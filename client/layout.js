@@ -18,6 +18,22 @@ Template.top_bar.user = function () {
     return Session.get('currentUser');
 };
 
+Template.layout.rendered = function(){
+    Config.find({},{fields: {'values.logemail_interval_hours': true, 'values.logemail_auto': true}}).observeChanges({
+        changed: function(id,fields){
+            console.log(id,fields);
+            var hours = fields.values.logemail_interval_hours;
+            var auto = fields.values.logemail_auto;
+            if(!auto){
+                Meteor.call('stopAutoBackup', Meteor.userId());
+            }else{
+                Meteor.call('setupAutoBackup',Meteor.userId(),hours);
+            }
+        }
+    });
+//    console.log(Config.find({},{limit: 1, fields: {'values.logemail_interval_hours': true, 'values.logemail_auto': true}}).fetch());
+};
+
 Template.top_bar.loggedin = function () {
     return !!Meteor.userId();
 //    //   console.log(Meteor.user());
@@ -25,6 +41,10 @@ Template.top_bar.loggedin = function () {
 //        Session.set('currentUser', user);
 //    });
 //    return Session.get('currentUser') != null;
+};
+
+Template.layout.config = function(){
+  return Config.findOne();
 };
 
 Template.layout.loginShown = function(){
@@ -86,12 +106,12 @@ Template.layout.events({
     },
     'click #dumpdb': function () {
         showMessage('Exporting database to Google Drive...',10000);
-        dumpDBToGDrive(function(res){
+        dumpDBToGDrive(Meteor.userId(), function(res){
             if(res.url){
                 showMessage('All database was exported to : <a href="'+ res.url+'">Google Drive</a>');
                 //    window.open(res.url);
                 var cfg = Config.findOne();
-                Config.update(cfg._id, {$set: {lastBackupOn: moment().valueOf()}});
+                Config.update(cfg._id, {$set: {'values.lastBackupOn': moment().valueOf()}});
             }else{
                 showMessage('Error during saving the exp.');
             }
@@ -133,10 +153,11 @@ Template.layout.events({
         }
     },
     'click #cfg_save': function () {
-        var cfg = Config.findOne()
+        var cfg = Config.findOne();
         var value = cfg.values || {};
         value.logemail = $('#cfg_email').val();
-        value.logemail_auto = $('#cfg_email_auto').is(':checked');
+        value.logemail_auto = $('#cfg_auto_backup').is(':checked');
+        value.logemail_interval_hours = parseInt($('input[name=email]:checked', '#backup_freq').val());
         if (validConfig(value)) {
             console.log(value);
             Config.update(cfg._id, {$set: {values: value}});
@@ -149,7 +170,12 @@ Template.layout.events({
     }
 });
 
+Template.layout.freq_radio_checked = function(v){
+     return v == this.logemail_interval_hours ? 'checked' : '';
+};
+
 function validConfig(cfg) {
     var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-    return re.test(cfg.logemail);
+    var int = cfg.logemail_interval_hours;
+    return re.test(cfg.logemail) && int >= 1 && int <= 10000;
 }

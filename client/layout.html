@@ -62,19 +62,29 @@
                     <h4 class="modal-title" id="prefsLabel">Preferences</h4>
                 </div>
                 <div class="modal-body">
+                    {{#with config}}
                     <table class='table'>
                         <tr>
                             <th>Name</th>
                             <th>Value</th>
                         </tr>
                         <tr>
+                            <td>Automatic export (database snapshot to Google Drive, sending change log by email)</td>
+                            <td><input type="checkbox" id='cfg_auto_backup' {{is_logemail_auto}} />
+                                <form id='backup_freq' action="">
+                                    <input type="radio" name="email" value="720" {{freq_radio_checked 720}}> 30 days
+                                    <input type="radio" name="email" value="168" {{freq_radio_checked 168}}> Every week<br>
+                                    <input type="radio" name="email" value="24" {{freq_radio_checked 24}}> Everyday
+                                    <input type="radio" name="email" value="1" {{freq_radio_checked 1}}> Every hour
+                                </form>
+                            </td>
+                        </tr>
+                        <tr>
                             <td>Email address to send log:</td>
                             <td><input type="text" id='cfg_email' value='{{config.logemail}}'/></td>
                         </tr>
-                        <tr>
-                            <td>Automatically sending the log daily</td>
-                            <td><input type="checkbox" id='cfg_email_auto' {{is_logemail_auto}} /></td>
-                        </tr>                    </table>
+                    </table>
+                    {{/with}}
 
                 </div>
                 <div class="modal-footer">

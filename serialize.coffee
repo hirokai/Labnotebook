@@ -75,16 +75,20 @@ root.adjustData = (dat) ->
   _.map dat, (row) ->
     if row.length == numcol then row else [''].concat row
 
-root.dumpDBToGDrive = (callback) ->
+root.dumpDBToGDrive = (uid,callback) ->
   callback = callback || () -> {}
   console.log 'dumpDB...'
-  Meteor.call 'getJSONOfWholeDB', (err,str) ->
+  Meteor.call 'getJSONOfWholeDB', uid, (err,str) ->
     if !str
+      console.log 'Failed to obtain JSON.'
       callback({success: false})
       return
-    Meteor.call 'getGoogle', (err,auth) ->
-      console.log(auth)
-      return unless auth
+    Meteor.call 'getGoogle', uid, (err,auth) ->
+#      console.log(err,auth)
+      if !auth
+        console.log 'getGoogle failed.'
+        callback {success: false}
+        return
 
       contentType = 'text/plain'
       metadata =
@@ -115,7 +119,7 @@ root.dumpDBToGDrive = (callback) ->
       HTTP.post(
         'https://www.googleapis.com/upload/drive/v2/files?uploadType=multipart&convert=false',
         {content: multipartRequestBody, headers: headers}, (err,res) ->
-          console.log(err,res);
+#          console.log(err,res);
           id = res.data.id;
           if id
             addLog
@@ -123,8 +127,9 @@ root.dumpDBToGDrive = (callback) ->
               op: 'dumpall'
               params:
                 gdrive_id: id
-            url = getGDriveFileUrl(id)
-            callback({url: url,success:true, id: id});
+            url = root.getGDriveFileUrl(id)
+#            console.log(callback);
+            callback({url: url, success:true, id: id});
           else
             callback({success: false, error: 'Insert failed.'});
       )

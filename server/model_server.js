@@ -89,3 +89,71 @@ isValidID = function(str){
     var re = /^[23456789ABCDEFGHJKLMNPQRSTWXYZabcdefghijkmnopqrstuvwxyz]{17}$/;
     return re.test(str);
 };
+
+
+//
+// Background jobs
+//
+
+var def_interval_hours = 24;  // 24 hours
+
+checkAutoBackup = function(uid,failcount){
+    failcount = failcount || 0;
+    if(failcount > 5) return;
+
+    var cfg = Config.findOne(uid);
+    if(!cfg || !cfg.logemail_auto) return;
+
+    var interval_min;
+    try{
+        interval_min = (cfg.values.logemail_interval_hours || def_interval_hours)*60;
+    }catch(e){
+        interval_min = def_interval_hours * 60;
+    }
+
+    uid = uid || this.userId;
+    var cfg = Config.findOne({owner: uid});
+    if(!cfg){
+        console.log('Config not foun.')
+        return;
+    }
+
+    var timelapse = (moment().valueOf() - (cfg.values.lastBackupOn || 0)) / (1000*60);
+    console.log('checkAutoBackup(): '+numeral(timelapse).format('0.0')+' min passed from last auto backup. '+numeral(interval_min-timelapse).format('0.0')+' min to wait.')
+
+    //timelapse / min
+    if(cfg && cfg.values.logemail_auto && (interval_min - timelapse)/interval_min < 0.1){
+        console.log('Time has come. Doing backup...');
+        Meteor.call('sendLogByEmail', function (err, res) {
+            //    console.log(err, res);
+            if (res.success) {
+                console.log('Autobackup email sent to ' + cfg.values.logemail);
+                addLog({op: 'autobackup', type: 'db', id: null, params: {target: 'email', email_to: cfg.values.logemail}});
+            } else {
+                console.log('Error occured.')
+            }
+        });
+
+        dumpDBToGDrive(uid, function(res){
+            if(res.url){
+                showMessage('Database snapshot was auto-saved to : <a href="'+ res.url+'">Google Drive</a>');
+                //    window.open(res.url);
+                var t = moment().valueOf();
+                Config.update(cfg._id, {$set: {'values.lastBackupOn': t}});
+                addLog({type:'db',op:'autobackup',params: {target: 'gdrive'}});
+                console.log('Next backup check will be run in ~'+interval_min+' min.');
+            }else{
+                console.log('Error during saving the exp.');
+                console.log('Next backup run will be run immediately');
+                checkAutoBackup(uid,failcount+1);
+            }
+        });
+
+    }
+};
+
+getLatestLogs = function(uid){
+    var from = Config.findOne({owner: uid}).values.lastLogExportedAt;
+    return Logs.find({owner: uid, timestamp: {$gt: from}}).fetch();
+};
+

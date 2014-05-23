@@ -658,7 +658,11 @@ resetTypeParent = function () {
 
 addLog = function (o) {
     var obj = {};
-    obj.owner = Meteor.userId() || 'sandbox';
+    try{
+        obj.owner = Meteor.userId() || 'sandbox';
+    }catch(e){
+        obj.owner = this.userId || 'sandbox';
+    }
     obj.timestamp = new Date().getTime();
     obj.date = moment(obj.timestamp).format('YYYYMMDD');
 
@@ -679,3 +683,4 @@ guid = function () {
     return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
         s4() + '-' + s4() + s4() + s4();
 };
+

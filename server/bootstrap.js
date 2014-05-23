@@ -14,6 +14,32 @@ Meteor.startup(function () {
     });
 });
 
+backupTimer = {};
+
+startTimer = function(uid){
+    //3 min
+    //  if(timer[uid]) Meteor.clearInterval(timer[uid]);
+    checkAutoBackup(uid);
+    var interval;
+    try{
+        interval = Config.findOne(uid).values.logemail_interval_hours || 24;
+    }catch(e){
+        interval = 24;
+    }
+    //Timer interval is 10% of logging interval, so that error of timing is within ~10%.
+    // In checkAutoBackup function, the time after last backup is calculated, so offset is adjusted there.
+    var int2 = Math.max(1000*60*10, 1000*60*60*interval/10); //Minimum 10 minute.
+    backupTimer[uid] = Meteor.setInterval(function(){checkAutoBackup(uid);},int2);
+};
+
+Hooks.onLoggedIn = function (uid) {
+    startTimer(uid);
+};
+
+Hooks.onLoggedOut = function (uid) {
+//    if(timer[uid]) Meteor.clearInterval(timer[uid]);
+};
+
 // Support for playing D&D: Roll 3d6 for dexterity
 Accounts.onCreateUser(function (options, user) {
     console.log(user);
@@ -136,7 +162,7 @@ initializeDB = function (uid) {
     var u = Meteor.users.findOne(uid);
     console.log(u);
     var email = u ? u.services.google.email : null;
-    Config.insert({owner: uid, values: {logemail: email, logemail_auto: false}});
+    Config.insert({owner: uid, values: {logemail: email, logemail_auto: false, logemail_interval_hours: 24}});
 
 };
 

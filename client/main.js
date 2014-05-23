@@ -83,68 +83,13 @@ Meteor.startup(function () {
 
     configHandle = Meteor.subscribe('config');
 
-    checkAuthToken();
-
-});
-
-checkAuthToken = function(token){
-    Meteor.call('getGoogle',function(err,res){
-        console.log('checkAuthToken(): Current authtoken: '+res.accessToken);
-        $.post('https://www.googleapis.com/oauth2/v1/tokeninfo',
-            {access_token: token || res.accessToken},
-            function(res){
-                console.log(res);
-                if(res.error || res.expires_in <= 60){
-                    Meteor.call('doRefreshToken');
-                }else{
-                    var time = (res.expires_in - 50)*1000;
-                    Meteor.setTimeout(checkAuthToken,time);
-                    console.log('checkAuthToken(): will check again '+(time/1000)+' sec later.');
-                }
-            });
+    Meteor.call('checkAuthTokenOnServer',function(err,res){
+        if(err)
+            console.log('AuthToken expiration monitoring failed on server.');
+        else
+        console.log('AuthToken expiration monitoring started on server.');
     });
-};
-
-checkAutoBackup = function(){
-    if(configHandle.ready()){
-        var cfg = Config.findOne();
-
-        var timelapse = (moment().valueOf() - (cfg.lastBackupOn || 0)) / (1000*60);
-        console.log('checkAutoBackup(): '+numeral(timelapse).format('0.0')+' min passed from last auto backup.')
-
-        //timelapse / min
-        if(cfg && cfg.values.logemail_auto && timelapse > 60){
-            console.log('Time has come. Doing backup...');
-            dumpDBToGDrive(function(res){
-                if(res.url){
-                    showMessage('Database snapshot was auto-saved to : <a href="'+ res.url+'">Google Drive</a>');
-                    //    window.open(res.url);
-                    var cfg = Config.findOne();
-                    var t = moment().valueOf();
-                    Config.update(cfg._id, {$set: {lastBackupOn: t}});
-                    addLog({type:'db',op:'autobackup',params: {target: 'gdrive'}});
-                }else{
-                    // showMessage('Error during saving the exp.');
-                }
-            });
-            Meteor.call('sendLogByEmail', function (err, res) {
-                console.log(err, res);
-                if (res.success) {
-                    showMessage('Autobackup email sent to ' + cfg.values.logemail);
-                    addLog({op: 'autobackup', type: 'db', id: null, params: {target: 'email', email_to: cfg.values.logemail}});
-                } else {
-                    showMessage('Error occured.')
-                }
-            });
-            Meteor.setTimeout(checkAutoBackup,1000*60*60);  // 60 min later.
-            console.log('Next backup check will be run in ~60 min.');
-        }else{
-            Meteor.setTimeout(checkAutoBackup,1000*60*1);  // 1 min later.
-            console.log('Next backup check will be run in ~1 min.');
-        }
-    }
-};
-
+});
 
 ////////// Helpers for in-place editing //////////
 
@@ -193,12 +138,6 @@ Hooks.onLoggedIn = function () {
             Session.set('currentUser', user);
         }
     });
-    var timer = Meteor.setInterval(function(){
-        if(configHandle.ready()){
-           Meteor.clearInterval(timer);
-           checkAutoBackup();
-        }
-    },1000);
 };
 
 Hooks.onLoggedOut = function () {
