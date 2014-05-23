@@ -112,22 +112,20 @@ root.dumpDBToGDrive = (callback) ->
 
 #      console.log(multipartRequestBody,headers);
 
-      req = gapi.client.request
-        'path': '/upload/drive/v2/files'
-        'method': 'POST'
-        'params': {'uploadType': 'multipart'}
-        'headers': headers
-        'body': multipartRequestBody,
-      req.execute (res) ->
-          console.log res
-          if res.id
+      HTTP.post(
+        'https://www.googleapis.com/upload/drive/v2/files?uploadType=multipart&convert=false',
+        {content: multipartRequestBody, headers: headers}, (err,res) ->
+          console.log(err,res);
+          id = res.data.id;
+          if id
             addLog
               type: 'database'
               op: 'dumpall'
               params:
-                gdrive_id: res.id
-            url = getGDriveFileUrl(res.id)
-            callback {url: url,success:true, id:res.id}
+                gdrive_id: id
+            url = getGDriveFileUrl(id)
+            callback({url: url,success:true, id: id});
           else
-            callback {success: false, error: 'Insert failed.'}
+            callback({success: false, error: 'Insert failed.'});
+      )
 
