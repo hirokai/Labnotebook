@@ -70,7 +70,10 @@ root.getSpreadsheetUrl = (id) -> 'https://drive.google.com/spreadsheets/d/' + id
 root.getGDriveFileUrl = (id) -> 'https://drive.google.com/file/d/' + id # + '/preview'
 
 root.adjustData = (dat) ->
-  dat
+  console.log dat
+  numcol = dat[0].length
+  _.map dat, (row) ->
+    if row.length == numcol then row else [''].concat row
 
 root.dumpDBToGDrive = (callback) ->
   callback = callback || () -> {}
@@ -79,11 +82,7 @@ root.dumpDBToGDrive = (callback) ->
     if !str
       callback({success: false})
       return
-    gapi.auth.authorize
-      client_id: Meteor.settings.public.gdrive.client_id
-      scope: 'https://www.googleapis.com/auth/drive.file'
-      immediate: true
-    , (auth) ->
+    Meteor.call 'getGoogle', (err,auth) ->
       console.log(auth)
       return unless auth
 
@@ -95,7 +94,7 @@ root.dumpDBToGDrive = (callback) ->
       delimiter = "\r\n--" + boundary + "\r\n";
       close_delim = "\r\n--" + boundary + "--";
 
-      Auth = 'Bearer ' + auth.access_token;
+      Auth = 'Bearer ' + auth.accessToken;
 
 
       headers =
@@ -111,20 +110,24 @@ root.dumpDBToGDrive = (callback) ->
         str + '\r\n' +
         close_delim;
 
-      request = gapi.client.request({
-        'path': '/upload/drive/v2/files',
-        'method': 'POST',
-        'params': {'uploadType': 'multipart'},
-        'headers': headers,
-        'body': multipartRequestBody});
-      request.execute (res) ->
-        if res.id
-          addLog
-            type: 'database'
-            op: 'dumpall'
-            params:
-              gdrive_id: res.id
-          url = getGDriveFileUrl(res.id)
-          callback({url: url,success:true, id:res.id})
-        else
-          callback({success: false, error: 'Insert failed.'})
+#      console.log(multipartRequestBody,headers);
+
+      req = gapi.client.request
+        'path': '/upload/drive/v2/files'
+        'method': 'POST'
+        'params': {'uploadType': 'multipart'}
+        'headers': headers
+        'body': multipartRequestBody,
+      req.execute (res) ->
+          console.log res
+          if res.id
+            addLog
+              type: 'database'
+              op: 'dumpall'
+              params:
+                gdrive_id: res.id
+            url = getGDriveFileUrl(res.id)
+            callback {url: url,success:true, id:res.id}
+          else
+            callback {success: false, error: 'Insert failed.'}
+

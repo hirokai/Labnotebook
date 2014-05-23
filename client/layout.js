@@ -10,6 +10,10 @@ Template.top_bar.user = function () {
     //console.log(Meteor.user());
     Meteor.call('currentUser', function (err, user) {
         Session.set('currentUser', user);
+        cfg = Config.findOne();
+        if(user.email && cfg && !cfg.values.logemail){
+            Config.update(cfg._id,{$set: {'values.logemail': user.email}});
+        }
     });
     return Session.get('currentUser');
 };
@@ -96,9 +100,13 @@ Template.layout.events({
     'click #logout': function(){
         Meteor.logout();
     },
+    'click #logoutAllClients': function(){
+        Meteor.call('logoutAll');
+    },
     'click #loginButton': function(){
         Meteor.loginWithGoogle({
             requestPermissions: [
+                'https://www.googleapis.com/auth/userinfo.email',
                 'https://www.googleapis.com/auth/userinfo.profile',
                 'https://www.googleapis.com/auth/drive.file',
                 'https://www.googleapis.com/auth/photos'
@@ -128,8 +136,9 @@ Template.layout.events({
         var cfg = Config.findOne()
         var value = cfg.values || {};
         value.logemail = $('#cfg_email').val();
-        value.logemail_auto = $('cfg_email_auto').is(':checked');
+        value.logemail_auto = $('#cfg_email_auto').is(':checked');
         if (validConfig(value)) {
+            console.log(value);
             Config.update(cfg._id, {$set: {values: value}});
             $('#prefs_modal').modal('hide');
         } else {

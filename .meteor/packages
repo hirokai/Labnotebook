@@ -28,12 +28,9 @@ Handsontable
 numeral
 
 http-methods
-data-man
-http-publish
-power-queue
-reactive-list
 d3
 coffeescript
 external-file-loader
 sp-epic-editor
 service-configuration
+http

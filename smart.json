@@ -12,6 +12,8 @@
     "jqTree": {},
     "Handsontable": {},
     "external-file-loader": {},
-    "sp-epic-editor": {}
+    "sp-epic-editor": {},
+    "numeral": {},
+    "http-methods": {}
   }
 }

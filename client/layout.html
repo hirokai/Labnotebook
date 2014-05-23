@@ -25,6 +25,7 @@
       {{/if}}
       {{#if loggedin}}
       <li><a id='logout' class='' href='#'>Log out</a></li>
+      <li><a id='logoutAllClients' class='' href='#'>Log out all clients</a></li>
       {{/if}}
       <li class="divider"></li>
       <li><a id='dumpdb' class='' href='#'>Backup all database</a></li>
@@ -151,7 +152,8 @@
 
     <span id='username' style='float: right;font-size: 11px;margin-top:4px;'>
         {{#if loggedin}}
-            Signed in as {{user.name}} {{#if user.email}}<br>({{user.email}}){{/if}}
+        <img src='{{user.google.picture}}' width='30' height='30' title='{{user.name}}'>
+            {{user.email}}
         {{/if}}
     </span>
 

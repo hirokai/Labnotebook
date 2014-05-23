@@ -14,7 +14,9 @@
       "jqTree": {},
       "Handsontable": {},
       "external-file-loader": {},
-      "sp-epic-editor": {}
+      "sp-epic-editor": {},
+      "numeral": {},
+      "http-methods": {}
     },
     "packages": {
       "bootstrap-3": {
@@ -81,6 +83,16 @@
         "git": "https://bitbucket.org/parhelium/sp-epic-editor",
         "tag": "v0.0.3",
         "commit": "1de330c49a955411d40647bdfdf6a3625c7447e6"
+      },
+      "numeral": {
+        "git": "https://github.com/vsivsi/meteor-numeral.git",
+        "tag": "v1.5.3",
+        "commit": "bdc97fc69bee7dadae1fc0f97fa6d9d76a03e73d"
+      },
+      "http-methods": {
+        "git": "https://github.com/CollectionFS/Meteor-http-methods.git",
+        "tag": "v0.0.22",
+        "commit": "5b0f7723f49436b8a0a930f284ed05f0b26021fe"
       },
       "blaze-layout": {
         "git": "https://github.com/EventedMind/blaze-layout.git",

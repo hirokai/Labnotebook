@@ -10,12 +10,13 @@ Meteor.startup(function () {
     ServiceConfiguration.configurations.insert({
         service: "google",
         clientId: Meteor.settings.public.gdrive.client_id,
-        secret: Meteor.settings.public.gdrive.secret
+        secret: Meteor.settings.gdrive.secret
     });
 });
 
 // Support for playing D&D: Roll 3d6 for dexterity
 Accounts.onCreateUser(function (options, user) {
+    console.log(user);
     initializeDB(user._id);
     return user;
 });
@@ -133,6 +134,7 @@ initializeDB = function (uid) {
 
     Config.remove({owner: uid});
     var u = Meteor.users.findOne(uid);
+    console.log(u);
     var email = u ? u.services.google.email : null;
     Config.insert({owner: uid, values: {logemail: email, logemail_auto: false}});
 

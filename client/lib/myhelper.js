@@ -144,5 +144,5 @@ getCurrentSampleId = function(){
 };
 
 callAndShow = function(name){
-    Meteor.call(name,function(err,res){console.log(res);});
+    Meteor.call(name,function(err,res){console.log(err,res);});
 }
