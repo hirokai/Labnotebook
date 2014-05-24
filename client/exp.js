@@ -106,12 +106,11 @@ Template.exp.op_selected = function () {
 };
 
 Template.exp.formatTime = function (v) {
-    return v ? moment(new Date(v)).format("H:mm") : null;
+    return v ? moment(v).format("H:mm") : null;
 };
 
 Template.exp.formatDate = function (v) {
-    var d = new Date(v);
-    return '' + (d.getMonth() + 1) + '/' + d.getDate() + '/' + d.getFullYear();
+    return moment(v).format('M/D/YYYY');
 };
 
 Template.exp.all_samples = function () {
@@ -603,7 +602,11 @@ Template.sample_info.type = function () {
 };
 
 Template.sample_info.time_made = function () {
-    return formatDateTime(this.timestamp);
+    return moment(this.timestamp).format('MM/DD/YYYY');
+};
+
+Template.sample_info.exp_made = function () {
+    return findExpMakingSample(this._id);
 };
 
 Template.sample_info.op_sampletype = function (sid) {
@@ -958,7 +961,7 @@ Template.runop_info.events({
 Template.runop_info.formatTime = function (v) {
 //    console.log(v);
     if (v) {
-        var s = moment(new Date(v)).format("h:m:s A");
+        var s = moment(v).format("h:m:s A");
 //        console.log(s);
         return s;
     } else {
@@ -973,7 +976,7 @@ Template.runop_info.disabled_if_locked = function () {
 
 Template.runop_info.formatDate = function (v) {
     //Use exp's date for new entry.
-    return v ? moment(new Date(v)).format("M/D/YYYY") : moment(new Date(getCurrentExp().date)).format("M/D/YYYY");
+    return v ? moment(v).format("M/D/YYYY") : moment(getCurrentExp().date).format("M/D/YYYY");
 };
 //
 //var enforceModalFocusFn = $.fn.modal.Constructor.prototype.enforceFocus;
@@ -1039,7 +1042,7 @@ function newRunSamplesForSelection(useSerialNames) {
 function mkSampleName(runid){
     var run = ExpRuns.findOne(runid);
     var exp = Experiments.findOne(run.exp);
-    var date = moment(new Date(exp.date)).format('M/D/YY');
+    var date = moment(exp.date).format('M/D/YY');
     var exists = true;
     var num = 0; // (getExpRunIndex(runid)+1);
     var str;

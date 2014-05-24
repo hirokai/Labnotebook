@@ -72,7 +72,7 @@ Template.lists.group_selected = function (type) {
 };
 
 Template.exp_list.formatDate = function (d) {
-    return formatDate(d);
+    return moment(d).format('M/D/YYYY');
 };
 
 Template.exp_list.lists = function () {
@@ -305,7 +305,7 @@ Template.layout.title = function () {
         } else if (type == 'log') {
             str = "Log: "
             var e = Logs.findOne(id.log);
-            name = e ? moment(new Date(e.timestamp)).format('M/D/YYYY') : "";
+            name = e ? moment(e.timestamp).format('M/D/YYYY') : "";
         } else if (type == 'multiexp') {
         }
         return name + ": " + str + " - Lab notebook"
@@ -318,7 +318,7 @@ Template.layout.title = function () {
 Template.log_list.lists = function () {
     var logs = Logs.find({}, {sort: {timestamp: -1}}, {fields: {timestamp: 1}}).fetch();
     return _.map(_.groupBy(logs, function (log) {
-        return moment(new Date(log.timestamp)).format('YYYY/M/D');
+        return moment(log.timestamp).format('YYYY/M/D');
     }), function (v) {
         return v;
     });
@@ -326,13 +326,13 @@ Template.log_list.lists = function () {
 
 Template.log_list.date = function () {
 //    console.log(this);
-    return moment(new Date(this[0].timestamp)).format('M/D/YYYY');
+    return moment(this[0].timestamp).format('M/D/YYYY');
 };
 
 
 Template.log_list.events({
     'mousedown .list-name-div': function (evt) {
-        var ts = moment(new Date(this[0].timestamp)).format('YYYYMMDD');
+        var ts = moment(this[0].timestamp).format('YYYYMMDD');
         Router.go('log', {date: ts});
     }
 });

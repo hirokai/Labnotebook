@@ -1,15 +1,5 @@
 Meteor.startup(function () {
-//    Accounts.ui.config({requestPermissions: {google:
-//        [
-//            //'https://www.googleapis.com/auth/calendar',
-//            'https://www.googleapis.com/auth/userinfo.profile',
-//            'https://www.googleapis.com/auth/drive.file',
-////            'https://www.googleapis.com/auth/drive.readonly',
-//            'https://www.googleapis.com/auth/photos'
-//           // 'https://www.googleapis.com/auth/tasks'
-//           ]}}, {requestOfflineToken: {google: false}});
 
-// Define Minimongo collections to match server/publish.js.
     Presets = new Meteor.Collection("presets");
     Experiments = new Meteor.Collection("experiments");
     ExpRuns = new Meteor.Collection("expruns");
@@ -26,15 +16,6 @@ Meteor.startup(function () {
     Session.setDefault('list_type', 'exp');
     Session.setDefault('current_view_id', {exp: null, sample: null, sampletype: null, multiexp: null, date: null, log: null});
     Session.setDefault('list_sortby', {exp: 'date', sample: 'date', sampletype: 'hierarchy', multiexp: 'date'});
-
-// Name of currently selected tag for filtering
-    Session.setDefault('tag_filter', null);
-
-// When adding tag to a todo, ID of the todo
-    Session.setDefault('editing_addtag', null);
-
-// When editing a list name, ID of the list
-    Session.setDefault('editing_listname', null);
 
 // When editing todo text, ID of the todo
     Session.setDefault('editing_itemname', null);
@@ -62,7 +43,6 @@ Meteor.startup(function () {
 
     Session.setDefault('choosing_sample_for', {run: null, sample: null})
 
-
     Session.setDefault('info_shown', {protocol: true, sample: true, step: true, sheet: true});
 
     Session.setDefault('editing_sample_title', false);
@@ -71,13 +51,9 @@ Meteor.startup(function () {
 //Reset every time reloaded.
     Session.set('editing_node_in_graph', null);
 
-// Subscribe to 'lists' collection on startup.
-// Select a list once data has arrived.
     listsHandle = Meteor.subscribe('lists', function () {
         if (!Session.get('list_id')) {
             var list = Lists.findOne({}, {sort: {name: 1}});
-            //  if (list)
-            //  Router.setList(list._id);
         }
     });
 
@@ -96,31 +72,9 @@ Meteor.startup(function () {
 //    });
 });
 
-////////// Helpers for in-place editing //////////
-
-// Returns an event map that handles the "escape" and "return" keys and
-// "blur" events on a text input (given by selector) and interprets them
-// as "ok" or "cancel".
-
-
-function renderDate(ts) {
-//    console.log(ts);
-    var t = new Date(ts);
-    return "" + (t.getMonth() + 1) + "/" + t.getDate();
-}
-
-////////// Tracking selected list in URL //////////
-
-
-//Router = new TodosRouter;
-
 Meteor.startup(function () {
-    $.ready(function () {
-        $('#datepicker').datePicker();
-    });
     Hooks.init();
 });
-
 
 var timer;
 
@@ -188,11 +142,9 @@ mkGoogleSheet = function(eid,callback){
         if(!err){
                 console.log(res);
                 var Auth = 'Bearer ' + res.accessToken;
-//                var Auth = 'Bearer ' + auth.access_token;
 
                 var contentType = 'text/csv';
                // var contentType = 'application/vnd.google-apps.spreadsheet';
-
 
                 var exp = Experiments.findOne(eid);
                 if(!exp) return;

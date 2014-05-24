@@ -5,7 +5,7 @@ Template.log.date = function () {
 };
 
 Template.log.formatTime = function (timestamp) {
-    return moment(new Date(timestamp)).format('H:mm\'ss"')
+    return moment(timestamp).format('H:mm\'ss"')
 };
 
 var opnametable = {

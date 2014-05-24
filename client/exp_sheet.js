@@ -252,12 +252,18 @@ var stepNameColumnRenderer = function(instance, td, row, col, prop, value, cellP
     }
 }
 
+// Show date only when the runop time is differnt from exp date,
 var formatRunOpTime = function(m,expdate){
     var txt;
     if(m.format('YYYYMMDD') == moment(expdate).format('YYYYMMDD')){
         txt = m.format('H:mm:ss');
     }else{
-        txt = m.format('MM/DD/YYYY H:mm:ss');
+        var v = moment.duration(Math.abs(expdate - m.valueOf()));
+        if(v.asYears() < 1){
+            txt = m.format('M/D H:mm:ss');
+        }else{
+            txt = m.format('M/D/YYYY H:mm:ss');
+        }
     }
     return txt;
 };

@@ -41,11 +41,20 @@ The repository for [Electronic labnote prototype](http://labnote.meteor.com/). B
 * Analysis over multiple experiments.
     * Aggregated view of experimental parameters.
 
-## Language and technologies used
 
-* JavaScript
+## License
+
+This software is distributed under New BSD license.
+
+Author: Hiroyuki Kai (hkai@berkeley.edu)
+
+## Libraries used
+
 * [Meteor](http://meteor.com)
 * [Bootstrap](http://getbootstrap.com/)
 * [D3.js](http://d3js.org/)
 * [dagre-d3](https://github.com/cpettitt/dagre-d3)
-* etc.
+* Handsontable
+* Datetimepicker
+* JsPDF
+* Topological sort

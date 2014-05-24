@@ -139,3 +139,94 @@ td.params {
     background: rgb(255, 146, 82);
   }
 }
+
+.step {
+  //  cursor: pointer;
+  &.selected {
+    background: rgb(255, 146, 82);
+  }
+}
+
+#exp_graph_wrapper {
+  margin: 30px;
+  padding: 0px;
+  width: 400px;
+  position: absolute;
+  left: 10px;
+  top: 50px;
+}
+
+
+#stepinput, #stepoutput {
+  width: 180px;
+}
+
+#stepname {
+  width: 180px;
+}
+
+#svgWrapper {
+  background: #d4e6bd;
+  //  border: 2px solid black;
+  -webkit-box-shadow: 2px 4px 22px 1px rgba(0, 0, 0, 0.75);
+  -moz-box-shadow: 2px 4px 22px 1px rgba(0, 0, 0, 0.75);
+  box-shadow: 2px 4px 22px 1px rgba(0, 0, 0, 0.75);
+}
+
+#svgWrapper {
+
+  width: 100%;
+  // height: 100%;
+  padding: 0;
+  margin: 0;
+}
+
+#exp_toolbar_div {
+  float: right;
+  margin: 10px 10px 0px 0px;
+}
+
+#deleteexp {
+  //  position: absolute;
+  //  left: 600px;
+  //  top: 20px;
+}
+
+
+td.stepcell {
+  width: 60px;
+  height: 50px;
+}
+
+#paramtable td {
+  width: 150px;
+  &.paramname_op {
+    width: 300px;
+  }
+  .paramtype {
+    width: 150px;
+  }
+}
+
+#spreadsheet {
+  height: 600px;
+}
+
+.params {
+  width: 150px;
+}
+
+span.timepoint {
+  width: 40px;
+  height: 20px;
+  padding: 5px;
+  &:hover {
+    background: pink;
+  }
+  border-radius: 3px;
+}
+
+#date_exp {
+  margin-left: 15px;
+  padding-bottom: 10px;
+}

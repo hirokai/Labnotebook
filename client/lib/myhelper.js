@@ -47,24 +47,13 @@ formatDateTime = function(v){
     if(!v){
         return null;
     }else{
-//    console.log(v);
-    var d = new Date(v);
-    var m = (d.getMonth() + 1);
-    var day = d.getDate();
-    var y = d.getFullYear();
-    var ds = (m < 10 ? '0'+m : ''+m)+'/'+(day < 10 ? '0'+day : ''+day)+"/"+ y;
-    var ts = ''+d.getHours()+ ':' + d.getMinutes() + "'" + d.getSeconds() + '"';
-    return ds + ' ' + ts;
+        return moment(v).format('MM/DD/YYYY h:m:s');
     }
 };
 
 formatDate2 = function(d){
     if(d){
-    var date = new Date(d);
-    var m = (date.getMonth() + 1);
-    var d = date.getDate();
-    var y = date.getFullYear();
-    return (m < 10 ? '0'+m : ''+m)+'/'+(d < 10 ? '0'+d : ''+d)+"/"+ y;
+        return moment(d).format('MM/DD/YYYY');
     }else{
         return null;
     }
@@ -72,11 +61,7 @@ formatDate2 = function(d){
 
 formatDate = function(d){
     if(d){
-        var date = new Date(d);
-        var m = (date.getMonth() + 1);
-        var d = date.getDate();
-        var y = date.getFullYear();
-        return ''+m+'/'+d+"/"+ y;
+        return moment(d).format('M/D/YYYY');
     }else{
         return null;
     }
@@ -85,8 +70,7 @@ formatDate = function(d){
 
 formatTime = function(v){
 //    console.log(v);
-    var d = new Date(v);
-         return ''+d.getHours()+ ':' + d.getMinutes() + "'" + d.getSeconds() + '"';
+    return moment(d).format('h:m:s');
 };
 
 guid = function() {

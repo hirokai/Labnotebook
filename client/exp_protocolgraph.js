@@ -33,7 +33,7 @@ var defaultTransform = function () {
     return 'scale(' + sc + ') translate(' + tl[0] + ',' + tl[1] + ')';
 };
 
-Template.d3graph.rendered = function () {
+Template.expgraph.rendered = function () {
 //    renderGraphOld(); //force directed graph
     //console.log('rendered called');
     var self = this;
@@ -104,7 +104,7 @@ graphWrapperSizeChanged = function (el,invisible) {
     //resetExpGraphZoom();
 };
 
-Template.d3graph.disabled_if_locked = function () {
+Template.expgraph.disabled_if_locked = function () {
     return this.locked ? 'disabled' : '';
 };
 
@@ -131,23 +131,23 @@ getProtocolEdges = function (eid) {
     return edges;
 };
 
-Template.d3graph.shrink_nodes = function () {
+Template.expgraph.shrink_nodes = function () {
     return Session.get('exp_graph_shrink') ? 'checked' : '';
 };
 
-Template.d3graph.twonodes_edit_disabled = function () {
+Template.expgraph.twonodes_edit_disabled = function () {
     return (Session.get('selected_nodes').length == 2) ? '' : 'disabled';
 };
 
-Template.d3graph.onenode_edit_disabled = function () {
+Template.expgraph.onenode_edit_disabled = function () {
     return (Session.get('selected_nodes').length == 1) ? '' : 'disabled';
 };
 
-Template.d3graph.oneormorenode_edit_disabled = function () {
+Template.expgraph.oneormorenode_edit_disabled = function () {
     return (Session.get('selected_nodes').length > 0) ? '' : 'disabled';
 };
 
-Template.d3graph.oneedge_edit_disabled = function () {
+Template.expgraph.oneedge_edit_disabled = function () {
     return (Session.get('selected_edges').length == 1) ? '' : 'disabled';
 };
 
@@ -184,11 +184,11 @@ function mkDagreGraph() {
     return graph;
 }
 
-Template.d3graph.destroyed = function () {
+Template.expgraph.destroyed = function () {
     this.handle && this.handle.stop();
 };
 
-Template.d3graph.events({
+Template.expgraph.events({
     'click #insertnode': function () {
         var eid = getCurrentExpId();
         var sids = Session.get('selected_nodes');
