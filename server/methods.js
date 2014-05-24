@@ -76,7 +76,7 @@ Meteor.methods({
         var uid = Meteor.userId();
         var t = backupTimer[uid];
         if(t) Meteor.clearInterval(t);
-        startTimer(uid);
+        startBackupTimer(uid);
     },
     stopAutoBackup: function(){
         var t = backupTimer[Meteor.userId()];
@@ -147,7 +147,13 @@ Meteor.methods({
     getGoogle: function(uid){
        var u = Meteor.users.findOne(uid) || Meteor.user();
        // console.log(uid,Meteor.user(),u);
-       return u ? (u.services ? u.services.google : null) : null;
+       var google = u ? (u.services ? u.services.google : null) : null;
+       if(google){
+           google.refreshToken = null; // For security reasons.
+           return google;
+       }else{
+           return refreshToken(uid);
+       }
     }
 });
 
@@ -178,17 +184,23 @@ doFreezeExp = function(eid){
 };
 
 refreshToken = function(uid){
-    var ps = {refresh_token: Meteor.users.findOne(uid).services.google.refreshToken,
+    var user = Meteor.users.findOne(uid);
+    var name = (user.services.google.first_name || user.services.google.given_name) + ' ' + user.services.google.family_name;
+    console.log('refreshToken() invoked for '+name+'('+uid+')');
+    var ps = {refresh_token: user.services.google.refreshToken,
         client_id: Meteor.settings.public.gdrive.client_id,
         client_secret: Meteor.settings.gdrive.secret,
         grant_type: "refresh_token"};
 //    console.log(ps);
     var res = HTTP.call('POST', 'https://accounts.google.com/o/oauth2/token',
-        {params: ps
-        });
-//    console.log(res);
-    Meteor.users.update(uid,{$set: {'services.google.accessToken': res.data.access_token}});
-//    console.log(Meteor.user());
+        {params: ps, timeout: 1000*30});
+    if(res.data && res.data.access_token){
+        console.log('New token: ' + res.data.access_token);
+        Meteor.users.update(uid,{$set: {'services.google.accessToken': res.data.access_token}});
+        return {accessToken: res.data.access_token};
+    }else{
+        return null;
+    }
 };
 
 showMessage = function(msg){console.log(msg);};

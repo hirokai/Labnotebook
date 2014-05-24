@@ -12,11 +12,50 @@ Meteor.startup(function () {
         clientId: Meteor.settings.public.gdrive.client_id,
         secret: Meteor.settings.gdrive.secret
     });
+
+    //For logged in users.
+    Meteor.users.find({ "status.online": true }).observe({
+        added: function(user){
+            var uid = user._id;
+            var name = (user.services.google.first_name || user.services.google.given_name) + ' ' + user.services.google.family_name;
+            console.log('Logged in: '+name+'('+uid+')');
+            startBackupTimer(uid);
+
+            if(refreshTokenTimer[uid])
+                Meteor.clearInterval(refreshTokenTimer[uid]);
+
+            //Ad hoc way? Refresh OAuth every 55 min
+            refreshTokenTimer[uid] = Meteor.setInterval(function(){
+                refreshToken(uid);
+            },1000*60*55);
+        },
+        removed: function(user){
+//    var timer = refreshTokenTimer[uid];
+//    if(timer){
+//        Meteor.clearInterval(timer);
+//    }
+        }
+    });
+
+//    Meteor.users.find({'status.online': true},{fields: {_id: true}}).map(function(user,i){
+//        var uid = user._id;
+//        setTimeout(function(){
+//            startBackupTimer(user._id);
+//
+//            if(refreshTokenTimer[user._id])
+//                Meteor.clearInterval(refreshTokenTimer[user._id]);
+//
+//            //Ad hoc way? Refresh OAuth every 55 min
+//            refreshTokenTimer[user._id] = Meteor.setInterval(function(){
+//                refreshToken(user._id);
+//            },1000*60*1);
+//        },i*1000);
+//    });
 });
 
 backupTimer = {};
 
-startTimer = function(uid){
+startBackupTimer = function(uid){
     //3 min
     //  if(timer[uid]) Meteor.clearInterval(timer[uid]);
     checkAutoBackup(uid);
@@ -30,15 +69,10 @@ startTimer = function(uid){
     // In checkAutoBackup function, the time after last backup is calculated, so offset is adjusted there.
     var int2 = Math.max(1000*60*10, 1000*60*60*interval/10); //Minimum 10 minute.
     backupTimer[uid] = Meteor.setInterval(function(){checkAutoBackup(uid);},int2);
+    console.log('Backup timer was set for: '+uid+' interval: '+interval +' hours.');
 };
 
-Hooks.onLoggedIn = function (uid) {
-    startTimer(uid);
-};
-
-Hooks.onLoggedOut = function (uid) {
-//    if(timer[uid]) Meteor.clearInterval(timer[uid]);
-};
+var refreshTokenTimer = {};
 
 // Support for playing D&D: Roll 3d6 for dexterity
 Accounts.onCreateUser(function (options, user) {

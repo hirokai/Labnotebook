@@ -83,12 +83,17 @@ Meteor.startup(function () {
 
     configHandle = Meteor.subscribe('config');
 
-    Meteor.call('checkAuthTokenOnServer',function(err,res){
-        if(err)
-            console.log('AuthToken expiration monitoring failed on server.');
-        else
-        console.log('AuthToken expiration monitoring started on server.');
-    });
+    //OAuth token refresh. This seems necessary (running it directly from server does not work yet.)
+    Meteor.setInterval(function(){
+        Meteor.call('doRefreshToken');
+    },1000*60*55);
+
+//    Meteor.call('checkAuthTokenOnServer',function(err,res){
+//        if(err)
+//            console.log('AuthToken expiration monitoring failed on server.');
+//        else
+//        console.log('AuthToken expiration monitoring started on server.');
+//    });
 });
 
 ////////// Helpers for in-place editing //////////

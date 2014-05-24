@@ -316,7 +316,7 @@ getOpParam = function (runid, opid, name) {
     try {
         var run = ExpRuns.findOne(runid);
         var op = run ? run.ops[opid] : null;
-        var params = op ? op.params : null;
+        var params = _.compact(op ? op.params : []);
         var p = _.findWhere(params, {name: name});
         return p ? p.value : null;
     } catch (e) {
@@ -332,6 +332,9 @@ getOpTimestamp = function (runid, opid) {
 };
 
 setOpTimestamp = function (runid, opid, timestamp) {
+    if(timestamp && typeof timestamp != 'number')
+        return null;
+
 //    console.log(runid,opid,timestamp);
     if (runid && opid) {
         var run = ExpRuns.findOne(runid);
@@ -368,9 +371,10 @@ setRunOpNote = function (runid, opid, note) {
     }
 };
 
-updateDBAccordingToCell = function (runid, opid, paramname, newval, oldval) {
+updateDBAccordingToCell = function (exp, runid, opid, paramname, newval, oldval) {
+  //  console.log(runid, opid, paramname, newval, oldval);
     if (!paramname || paramname == '') {
-        return;
+        return false;
     }
     if(paramname == '__note'){
         console.log('updateDBAccordingToCell: note')
@@ -379,26 +383,48 @@ updateDBAccordingToCell = function (runid, opid, paramname, newval, oldval) {
         ExpRuns.update(runid, {$set: obj});
         addLog({type: 'run', op: 'updatenote', id: runid,
             params: {oldval: oldval, newval: newval}});
+        return true;
+    }else if(paramname == '__time'){
+        if(newval == ''){
+            setOpTimestamp(runid,opid, null);
+            addLog({type: 'run', op: 'removetime', id: runid,
+                params: {oldval: oldval, newval: null}});
+            return true;
+        }else{
+            var m = momentFromTimeStr(newval,exp.date);
+            if(m.isValid()){
+                setOpTimestamp(runid,opid, m.valueOf());
+                addLog({type: 'run', op: 'updatetime', id: runid,
+                    params: {oldval: oldval, newval: newval}});
+                return true;
+            }else{
+                console.log('updateDBAccordingToCell(): invalid time format.');
+                return false;
+            }
+        }
     }else{
 //        return null; //stub
         var op = ExpRuns.findOne(runid).ops[opid];
         var k, v;
         if (op) {
-            var params = op.params;
-            if(!params || params.length == 0){
-                params = _.map(Operations.findOne(opid).params,function(p){
-                    return {name: p.name};
-                });
-            }
-            var newparams = _.map(params, function (param) {
+            var protocol_params = Operations.findOne(opid).params;
+            var protocol_paramnames = _.compact(_.map(protocol_params,function(p){return p.name;}));
+            if(!_.contains(protocol_paramnames,paramname))
+                return false;
+
+            var runparams = _.compact(op.params || []);
+            var newparams = _.compact(_.map(protocol_params, function (param) {
+         //       console.log(param,paramname);
                 if (param.name == paramname) {
-                    param.value = newval;
-                    return param;
+                    return {name: paramname, value: newval};
                 } else {
-                    return param;
+                    if(param.name){
+                        return _.findWhere(runparams, {name: param.name});
+                    }else{
+                        return null;
+                    }
                 }
-            });
-            op.params = newparams;
+            }));
             k = 'ops.' + opid + '.params';
             v = newparams;
         } else {
@@ -413,6 +439,7 @@ updateDBAccordingToCell = function (runid, opid, paramname, newval, oldval) {
         ExpRuns.update(runid, {$set: obj});
         addLog({type: 'run', op: 'updateparam', id: runid,
             params: {name: paramname, oldval: oldval, newval: newval}});
+        return true;
     }
 };
 
@@ -483,6 +510,7 @@ findInputsOfRun = function(run,exp){
 };
 
 findOutputsOfExp = function(exp){
+    if(!exp) return [];
     var ops = exp.protocol.operations;
     var samples = exp.protocol.samples;
     var ins = _.compact(_.flatten(_.map(ops,function(opid){
@@ -515,6 +543,7 @@ findRunWithSampleAsOutput = function (sid) {
     try {
         runs.forEach(function (run) {
             var exp = Experiments.findOne(run.exp);
+            if(!exp) return;
             var outs = findOutputsOfRun(run, exp);
 //            console.log(run,exp,outs,sid);
             if (_.contains(outs, sid)) {
@@ -682,5 +711,15 @@ guid = function () {
 
     return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
         s4() + '-' + s4() + s4() + s4();
+};
+
+momentFromTimeStr = function(s,expdate){
+    var m = moment(s);
+    if(!m.isValid()){
+        var expday = moment(expdate).format('YYYY-MM-DD ');
+        m = moment(expday+s);
+    }
+    console.log(m, m.format());
+    return m;
 };
 

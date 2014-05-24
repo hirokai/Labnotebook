@@ -33,6 +33,7 @@ Template.sample.made_exp = function(){
 Template.sample.events({
     'click #savesamplenote': function (evt, tmpl) {
         var note = tmpl.find('#samplenote').value;
+        //var note = editor.getElement('editor').body.innerHTML;
         Samples.update(this._id, {$set: {note: note}});
     },
     'click #cancelsamplenote': function (evt, tmpl) {
@@ -146,6 +147,7 @@ Template.sample.exps_used = function () {
     return Experiments.find({_id: {$in: eids}});
 }
 
+var editor;
 Template.sample.rendered = function () {
     //ga('send', 'event', 'view', 'sample', Meteor.userId(),getCurrentSampleId());
     var self = this;
@@ -156,13 +158,17 @@ Template.sample.rendered = function () {
     scr.setAttribute('id','dropboxjs');
     scr.setAttribute('src',"https://www.dropbox.com/static/api/2/dropins.js");
     document.body.appendChild(scr);
-
-    var editor = new EpicEditor({
-        container: 'samplenote',
-        basePath: '',
-        button: {fullscreen: false},
-        theme: {editor: 'themes/editor/epic-light.css'}
-    }).load();
+//
+//    if(editor){
+//        console.log('Unloading EpicEditor');
+//        editor.unload();
+//    }
+//    editor = new EpicEditor({
+//        container: 'samplenote',
+//        basePath: '',
+//        button: {fullscreen: false},
+//        theme: {editor: 'themes/editor/epic-light.css'}
+//    }).load();
 
     self.node = self.find("#sample_graph");
     if (!self.handle) {
@@ -464,9 +470,10 @@ function createPicker() {
             gapi.client.setApiKey(developerKey);
             console.log(oauthToken,developerKey);
             if (oauthToken) {
+                var docsView = new google.picker.DocsView().setIncludeFolders(true).setSelectFolderEnabled(true);
                 var picker = new google.picker.PickerBuilder().
-                    addView(google.picker.ViewId.DOCS).
-                    addView(google.picker.ViewId.FOLDERS).
+                    addView(docsView).
+//                    addView(google.picker.ViewId.FOLDERS).
                     addView(google.picker.ViewId.PHOTOS).
                     enableFeature(google.picker.Feature.MULTISELECT_ENABLED).
                     setOAuthToken(oauthToken).

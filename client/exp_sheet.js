@@ -22,6 +22,7 @@ renderCells = function (eid) {
     experimentLocked = exp.locked;
 
     var dat = getTableData(exp,runs,row_opids,row_paramnames);
+//    console.log(dat);
     var colnames = colNames(runs);
 
     $("#spreadsheet").handsontable('destroy');
@@ -33,7 +34,7 @@ renderCells = function (eid) {
         startRows: 7,
         startCols: colnames.length,
         colWidths: [100,100].concat(_.map(_.range(0, runs.length), function () {
-            return Math.max(80,500/runs.length);
+            return Math.min(150,Math.max(80,400/runs.length));
         })),
 //        rowHeaders: [],
         colHeaders: colnames,
@@ -42,8 +43,11 @@ renderCells = function (eid) {
         cells: function (row, col, prop) {
             var cellProperties = {};
             if (row_paramnames[row] == '__time' && col >= 2) {
-                cellProperties.readOnly = true;
-                cellProperties.renderer = timeCellRenderer;
+                if(dat[row][col] && dat[row][col].run){
+                    cellProperties.readOnly = true;
+                    cellProperties.renderer = timeCellRenderer;
+                }
+//                console.log(row,col,dat[row][col]);
             }
             if(experimentLocked || (row_paramnames[row] != '__time' && col == 0)){
                 cellProperties.readOnly = true;
@@ -57,23 +61,70 @@ renderCells = function (eid) {
             }
             return cellProperties;
         },
-        afterChange: function (change, source) {
+        beforeChange: function(change,source){
+            if(source == 'program')
+               return true;
+
+            _.map(_.range(0,change.length),function(i){
+                var paramname = row_paramnames[change[i][0]];
+                if(paramname == '__time'){
+                    var s = change[i][3];
+                    console.log(s);
+                    if(_.trim(s) == ''){
+                        change[i][3] = '';
+                    }else{
+                        var m = momentFromTimeStr(s,exp.date);
+                        if(m.isValid()){
+                            change[i][3] = formatRunOpTime(m,exp.date);
+                        }else{
+                            change[i] = null;
+                        }
+                    }
+                }
+            });
+            return true;
+        },
+        afterRender: function(){
+            var self = this;
+            var sel = Session.get('exp_sheet_selection');
+            if(sel && sel.length == 4){
+                var c = self.getSelected();
+                if(!c || !(c[0] == sel[0] && c[1] == sel[1] && c[2] == sel[2] && c[3] == sel[3])){
+                    //     self.selectCell(sel[0],sel[1],sel[2],sel[3],true);
+                }
+            }
+        },
+        afterSelection: function(r,c,r2,c2){
+          //  Session.set('exp_sheet_selection', this.getSelected());
+        },
+        afterChange: function (changes, source) {
+            var self = this;
             if (source === 'loadData') {
                 return; //don't save this change
             }
+            _.map(changes,function(change){
 //            console.log(change,source);
-            var opid = row_opids[change[0][0]];
-            var paramname = row_paramnames[change[0][0]];
-            var oldval = change[0][2];
-            var newval = change[0][3];
-            var n = paramname == '__time' ? 2 : 1;
-            var runid = runids[change[0][1] - n];
-            console.log(change, runid, opid, paramname, newval);
-            updateDBAccordingToCell(runid, opid, paramname, newval, oldval);
+                var row = change[0];
+                var col = change[1];
+                var opid = row_opids[row];
+                var paramname = row_paramnames[row];
+                var oldval = change[2];
+                var newval = change[3];
+                var n = paramname == '__time' ? 2 : 1;
+                var runid = runids[col - n];
+                console.log(change, runid, opid, paramname, newval);
+                var res = updateDBAccordingToCell(exp, runid, opid, paramname, newval, oldval);
+                if(res){
+                    //Change happened
+                //    Session.set('exp_sheet_selection', self.getSelected());
+                }
+            });
         }
     });
 
-    function bindDumpButton() {
+
+
+        function bindDumpButton() {
         $('body').on('click', 'button[name=dump]', function () {
             var dump = $(this).data('dump');
             var $container = $(dump);
@@ -98,7 +149,13 @@ getTableData = function(exp,runs,row_opids,row_paramnames) {
             var pss = [[op.name,'Time'].concat(_.map(runs, function (run, idx) {
                 //console.log(run,idx,opid);
                 var t = getOpTimestamp(run._id, opid);
-                return {time: t, exp_date: exp.date, run: run._id, op: opid};
+                var txt;
+                if(t){
+                    var m = moment(t);
+                    return formatRunOpTime(m,exp.date);
+                }else{
+                    return {time: t, exp_date: exp.date, run: run._id, op: opid};
+                }
             })
             )];
             pss = pss.concat([['Note'].concat(_.map(runs,function(run){
@@ -161,12 +218,8 @@ rowNames2 = function(exp) {
 var timeCellRenderer = function (instance, td, row, col, prop, value, cellProperties) {
     if(value.time){
         var m = moment(value.time);
-        var txt;
-        if(m.format('YYYYMMDD') == moment(value.exp_date).format('YYYYMMDD')){
-            txt = m.format('H:mm:ss');
-        }else{
-            txt = m.format('MM/DD/YYYY H:mm:ss');
-        }
+        var text = formatRunOpTime(m);
+
         td.innerHTML = '<div class="timepoint_sheet" data-runid="'+value.run+
             '" data-operation="'+ value.op +'"><i>'+txt+'</i></div>';
     }else{
@@ -198,3 +251,13 @@ var stepNameColumnRenderer = function(instance, td, row, col, prop, value, cellP
         td.setAttribute("rowSpan", ""+(num*2+2));
     }
 }
+
+var formatRunOpTime = function(m,expdate){
+    var txt;
+    if(m.format('YYYYMMDD') == moment(expdate).format('YYYYMMDD')){
+        txt = m.format('H:mm:ss');
+    }else{
+        txt = m.format('MM/DD/YYYY H:mm:ss');
+    }
+    return txt;
+};

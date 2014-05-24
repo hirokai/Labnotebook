@@ -34,3 +34,4 @@ external-file-loader
 sp-epic-editor
 service-configuration
 http
+user-status

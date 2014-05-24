@@ -16,7 +16,8 @@
       "external-file-loader": {},
       "sp-epic-editor": {},
       "numeral": {},
-      "http-methods": {}
+      "http-methods": {},
+      "user-status": {}
     },
     "packages": {
       "bootstrap-3": {
@@ -94,10 +95,20 @@
         "tag": "v0.0.22",
         "commit": "5b0f7723f49436b8a0a930f284ed05f0b26021fe"
       },
+      "user-status": {
+        "git": "https://github.com/mizzao/meteor-user-status.git",
+        "tag": "v0.4.0",
+        "commit": "e2a1c7a4075f28b87b361387688e083a4b047a08"
+      },
       "blaze-layout": {
         "git": "https://github.com/EventedMind/blaze-layout.git",
         "tag": "v0.2.4",
         "commit": "b40e9b0612329288d75cf52ad14a7da64bb8618f"
+      },
+      "timesync": {
+        "git": "https://github.com/mizzao/meteor-timesync.git",
+        "tag": "v0.1.6",
+        "commit": "83067433f511bc13a11ae8c87e9a4d331256915e"
       }
     }
   }

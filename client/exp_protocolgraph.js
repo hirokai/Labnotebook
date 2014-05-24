@@ -367,7 +367,7 @@ tryDraw = function (graph) {
             //  svg.attr('transform',defaultTransform());
         }
         var layout = renderer.run(graph, g);
-        console.log(layout);
+//        console.log(layout);
         possiblyUpdateRank(getCurrentExp(),layout);
 
 //        console.log(ranks);

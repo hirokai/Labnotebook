@@ -15,9 +15,9 @@ root.mkCsv = (eid) ->
   sids = _.flatten(ExpRuns.find({exp: eid}).map((r) ->_.map(r.samples,(v) -> {sample: v, run: r._id})))
 
   s_str = arrayToCsv(
-    _.map sids, (ss) ->
+    [['Name','ID','Time stamp','Note']].concat _.map sids, (ss) ->
       s = Samples.findOne(ss.sample)
-      if s then [s.name, s.run, s._id, moment(s.timestamp).format('M/D/YYYY'), s.note] else ['Error','',ss.sample,'','']
+      if s then [s.name, s._id, moment(s.timestamp).format('M/D/YYYY'), s.note] else ['Error','',ss.sample,'','']
   )
 
 
@@ -73,6 +73,11 @@ root.adjustData = (dat) ->
   console.log dat
   numcol = dat[0].length
   _.map dat, (row) ->
+    row = _.map row, (cell) ->
+      if cell && cell.run # empty time cell
+        ''
+      else
+        cell
     if row.length == numcol then row else [''].concat row
 
 root.dumpDBToGDrive = (uid,callback) ->

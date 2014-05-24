@@ -11,10 +11,10 @@ checkAuthToken = function(token,threshold_sec){
                 if(res.data && res.data.expires_in <= threshold_sec){
                     Meteor.call('doRefreshToken');
                 }else{
-                    var time = (res.data.expires_in - (threshold_sec*0.9))*1000;
-                    if(!time || isNaN(time)) time = 1000*30;
-                    Meteor.setTimeout(checkAuthToken,time);
-                    console.log('checkAuthToken(): expires in: '+res.data.expires_in+' sec, will check again '+(time/1000)+' sec later.');
+//                    var time = (res.data.expires_in - (threshold_sec*0.9))*1000;
+//                    if(!time || isNaN(time)) time = 1000*30;
+//                    Meteor.setTimeout(checkAuthToken,time);
+//                    console.log('checkAuthToken(): expires in: '+res.data.expires_in+' sec, will check again '+(time/1000)+' sec later.');
                 }
             });
     });
