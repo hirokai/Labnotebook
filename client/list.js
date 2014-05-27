@@ -95,6 +95,11 @@ Template.exp_list.selected = function () {
     return Session.get('current_view_id').exp == this._id ? "selected" : "";
 };
 
+Template.exp_list.old_notlocked = function () {
+    console.log(this);
+    return (moment().valueOf() - this.date) > 1000*60*60*24*7 && !this.locked ? 'unfinished' : '';
+}
+
 Template.exp_list.events({
     'mousedown .list-name-div': function (evt) {
         Router.go('exp', {_id: this._id});
@@ -326,20 +331,20 @@ Template.log_list.lists = function () {
 
 Template.log_list.date = function () {
 //    console.log(this);
-    return moment(this[0].timestamp).format('M/D/YYYY');
+    return moment(this).format('M/D/YYYY');
 };
 
 
 Template.log_list.events({
     'mousedown .list-name-div': function (evt) {
-        var ts = moment(this[0].timestamp).format('YYYYMMDD');
+        var ts = moment(this).format('YYYYMMDD');
         Router.go('log', {date: ts});
     }
 });
 
 Template.log_list.selected = function () {
     console.log(this);
-    return Session.get('current_view_id').log == this[0].date ? "selected" : "";
+    return Session.get('current_view_id').log == this ? "selected" : "";
 };
 
 

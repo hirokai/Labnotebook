@@ -153,6 +153,12 @@ Meteor.publish('alllogs', function () {
     return Logs.find({owner: uid}, {fields: {date: 1, timestamp: 1}});
 });
 
+Meteor.publish('logdates', function () {
+    var uid = this.userId || 'sandbox';
+    return _.uniq(Logs.find({owner: uid}, {fields: {date: 1, timestamp: 1}}).map(function(log){return log.date;}));
+});
+
+
 Logs.allow({
     insert: function (userId, doc) {
         // the user must be logged in, and the document must be owned by the user

@@ -17,7 +17,7 @@ newSampleType = function (name, parent, cls) {
     parent = parent || generalSampleType();
     cls = cls || [];
     var st = SampleTypes.insert({owner: owner, name: name, timestamp: new Date().getTime(), classes: cls, tags: [], data: [], parent: parent});
-    addLog({type: 'type', op: 'insert', id: st, params: {name: name, parent: parent}});
+    addLog({type: 'type', op: 'insert', id: st, params: {name: name, parent: parent, tags: [], data: [], classes: cls}});
     return st;
 };
 

@@ -72,7 +72,7 @@ Router.map(function () {
 
     this.route('log', {path: '/log/:date?', layoutTemplate: 'layout',
         onBeforeAction: function () {
-            this.subscribe('alllogs').wait();
+            this.subscribe('logdates').wait();
             if (this.params.date) {
                 this.subscribe('logs', this.params.date).wait();
             }
