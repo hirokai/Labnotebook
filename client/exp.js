@@ -254,13 +254,6 @@ Template.exp.events({
         Deps.flush(); // force DOM redraw, so we can focus the edit field
         activateInput(tmpl.find("#exptitle_input"));
     },
-//    'change #sampletype_select': function (evt, tmpl) {
-//        if(getCurrentExp().locked)return;
-//        var st = evt.target.value;
-////        console.log(st);
-//        Samples.update(this._id, {$set: {sampletype_id: st}});
-//        Session.set('editing_sampletype_id', null);
-//    },
     'click .entertime': function (evt, tmpl) {
         if(getCurrentExp().locked)return;
         var ee = getButton(evt.target);
@@ -379,15 +372,15 @@ Template.exp.events({
             //stub: show run info.
         }
     },
-    'click #savelayout': function(evt){
-        var wrapper = $('#exp_graph_wrapper');
-        var w = wrapper.width();
-        var h = wrapper.height();
-        var eid = getCurrentExpId();
-        var pane = Session.get('info_shown');
-        Experiments.update(eid,{$set: {'view.graph': {width: w, height: h}, 'view.panes': pane}});
-        console.log(getCurrentExp());
-    },
+//    'click #savelayout': function(evt){
+//        var wrapper = $('#exp_graph_wrapper');
+//        var w = wrapper.width();
+//        var h = wrapper.height();
+//        var eid = getCurrentExpId();
+//        var pane = Session.get('info_shown');
+//        Experiments.update(eid,{$set: {'view.graph': {width: w, height: h}, 'view.panes': pane}});
+//        console.log(getCurrentExp());
+//    },
 //    'click .assignsamplebtn': function (evt) {
 //        var ee = getButton(evt.target);
 //        var sid = ee.attr('data-protocolsample');
@@ -495,12 +488,17 @@ Template.exp.events(okCancelEvents(
         ok: function (value) {
             console.log(_.trim(value));
             if (_.trim(value) == '') {
-                window.alert('Title cannot be empty or only spaces.');
+                window.alert('');
             } else {
                 var eid = getCurrentExpId();
-                Experiments.update(eid, {$set: {name: value}});
+                setExpTitle(eid,value,function(err,res){
+                    if(err){
+                        window.alert(err.message);
+                    }else{
+                        Session.set('editing_exp_title', false);
+                    }
+                });
             }
-            Session.set('editing_exp_title', false);
         },
         cancel: function () {
             Session.set('editing_exp_title', false);
@@ -516,8 +514,13 @@ Template.exp.events(okCancelEvents(
     {
         ok: function (value) {
             var id = Session.get('editing_sample_id');
-            Samples.update(id, {$set: {name: value}});
-            Session.set('editing_sample_id', null);
+            setSampleName(id,value,function(err,res){
+                if(err){
+                    window.alert(err.message);
+                }else{
+                    Session.set('editing_sample_id', null);
+                }
+            });
         },
         cancel: function () {
             Session.set('editing_sample_id', null);
@@ -653,12 +656,17 @@ Template.sample_info.events({
         var name = $('#sampleinfo_name').val();
         var note = $('#sample_note').val();
         var type = $('#sample_info_type').val();
-        var array = $('#samplearray').is(':checked');
+//        var array = $('#samplearray').is(':checked');
         var sid = Session.get('sampleinfo_for');
         console.log(sid);
-        Samples.update(sid, {$set: {name: name, note: note, sampletype_id: type, array: array}});
-        $('#sample_info').modal('hide');
-        Session.set('sampleinfo_for', null);
+        setSampleInfo(sid,name,note,type, function(err,res){
+            if(err){
+                window.alert(err.message);
+            }else{
+                $('#sample_info').modal('hide');
+                Session.set('sampleinfo_for', null);
+            }
+        });
     },
     'shown.bs.modal #sample_info': function () {
         activateInput($('#sampleinfo_name'));
@@ -682,21 +690,14 @@ Template.sample_info.events({
         var type = $('#psample_info_type').val();
         var sid = Session.get('protocol_sampleinfo_for');
         var s = Samples.findOne(sid);
-        if (s.sampletype_id == type || getRunSamplesOf(getCurrentExp(), sid).length == 0) {
-            Samples.update(sid, {$set: {name: name, note: note, sampletype_id: type}});
+        var msg = 'There are already associated run samples with this step. '
+            + 'Changing the sample type may break consistentcy of exp data. '
+            + 'Are you sure you want to change the sample type?';
+        if (s.sampletype_id == type || getRunSamplesOf(getCurrentExp(), sid).length == 0 || window.confirm(msg)) {
+            var obj = {name: name, note: note, sampletype_id: type};
+            setProtocolSampleInfo(sid,name,note,type);
             $('#protocol_sample_info').modal('hide');
             Session.set('protocol_sampleinfo_for', null);
-        } else {
-            var msg = 'There are already associated run samples with this step. '
-                + 'Changing the sample type may break consistentcy of exp data. '
-                + 'Are you sure you want to change the sample type?';
-            if (window.confirm(msg)) {
-                Samples.update(sid, {$set: {name: name, note: note, sampletype_id: type}});
-                $('#protocol_sample_info').modal('hide');
-                Session.set('protocol_sampleinfo_for', null);
-            } else {
-
-            }
         }
     },
     'keydown #psampleinfo_name': function (evt) {
@@ -761,7 +762,8 @@ function doUpdateOp() {
         return p.name;
     })).length == params.length) {
         var name = $('#opinfo_name').val();
-        Operations.update(opid, {$set: {'params': params, name: name, note: note}});
+        var obj =  {'params': params, name: name, note: note};
+        updateOpInfo(opid,params,name,note);
         $('#op_info').modal('hide');
         Session.set('opinfo_for', null);
         Session.set('op_param_list', []);

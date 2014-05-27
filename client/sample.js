@@ -34,7 +34,12 @@ Template.sample.events({
     'click #savesamplenote': function (evt, tmpl) {
         var note = tmpl.find('#samplenote').value;
         //var note = editor.getElement('editor').body.innerHTML;
-        Samples.update(this._id, {$set: {note: note}});
+        setSampleNote(this._id,note,function(err,res){
+            if(err){
+                window.alert(err.message);
+            }else{
+            }
+        });
     },
     'click #cancelsamplenote': function (evt, tmpl) {
         var note = Samples.findOne(this._id).note || "";
@@ -49,16 +54,16 @@ Template.sample.events({
             Router.go('sample', {_id: s});
         }
     },
-    'click #renamesample': function () {
-        var name = Samples.findOne(this._id).name;
-        var newname = window.prompt("Enter a new name.", name);
-        Samples.update(this._id, {$set: {name: newname}});
-    },
-    'click #addtypeclass': function (evt, tmpl) {
-        var name = tmpl.find('#nametypeclass').value;
-        var id = newTypeClass(name);
-        Samples.update(this._id, {$push: {classes: id}});
-    },
+//    'click #renamesample': function () {
+//        var name = Samples.findOne(this._id).name;
+//        var newname = window.prompt("Enter a new name.", name);
+//        setSampleName(this._id, newname);
+//    },
+//    'click #addtypeclass': function (evt, tmpl) {
+//        var name = tmpl.find('#nametypeclass').value;
+//        var id = newTypeClass(name);
+//        Samples.update(this._id, {$push: {classes: id}});
+//    },
     'dblclick #sampletitle': function (evt, tmpl) {
         Session.set('editing_sample_title', true);
         Deps.flush(); // force DOM redraw, so we can focus the edit field
@@ -71,8 +76,7 @@ Template.sample.events({
             multiselect: true,
             success: function(files) {
                 _.map(files,function(file){
-                   console.log(file);
-                    Samples.update(getCurrentSampleId(),{$push: {data: {url: file.link, type: 'dropbox', name: file.name, icon: file.icon}}});
+                    addSampleData(getCurrentSampleId(),'dropbox',file.link, file.name, file.icon);
                 });
             },
             cancel:  function() {}
@@ -117,12 +121,9 @@ Template.sample.events({
         return false;
     },
     'click .unlink_data': function(evt){
+        var sid = getCurrentSampleId();
         var url = $(evt.target).attr('data-url');
-        var s = getCurrentSample();
-        var newdata = _.filter(s.data,function(d){
-           return d.url != url;
-        });
-        Samples.update(s._id, {$set: {data: newdata}});
+        removeSampleData(sid,url);
     }
 });
 
@@ -204,8 +205,13 @@ Template.sample.events(okCancelEvents(
     {
         ok: function (value) {
             var sid = getCurrentSampleId();
-            Samples.update(sid, {$set: {name: value}});
-            Session.set('editing_sample_title', false);
+            setSampleName(sid,value,function(err,res){
+                if(err){
+                    window.alert(err.message);
+                }else{
+                    Session.set('editing_sample_id', null);
+                }
+            });
         },
         cancel: function () {
             Session.set('editing_sample_title', false);
@@ -494,8 +500,8 @@ function pickerCallback(data) {
         _.map(docs,function(doc){
             var url = doc[google.picker.Document.URL];
             if(url){
-                Samples.update(getCurrentSampleId(),{$push: {data: {url: url, type: 'gdrive', original_id: doc.id, name: doc.name, icon: doc.iconUrl}}});
-                console.log(getCurrentSample());
+                addSampleData(getCurrentSampleId(),'gdrive',file.link, file.name, file.icon, doc.id);
+//                console.log(getCurrentSample());
             }
         });
     }

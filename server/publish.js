@@ -202,20 +202,6 @@ function isAdmin(uid) {
     }
 }
 
-addLog = function (o) {
-    var obj = {};
-    obj.owner = Meteor.userId() || 'sandbox';
-    obj.timestamp = new Date().getTime();
-    obj.date = moment(obj.timestamp).format('YYYYMMDD');
-    obj.server = true;
-
-    obj.type = o.type;
-    obj.op = o.op;
-    obj.id = o.id;
-    obj.params = o.params;
-    Logs.insert(obj);
-};
-
 dump_allmydb = function (owner) {
     var exp = Experiments.find({owner: owner}).fetch();
     var sample = Samples.find({owner: owner}).fetch();

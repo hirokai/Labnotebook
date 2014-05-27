@@ -27,29 +27,6 @@ Template.lists.events({
     }
 });
 
-// Attach events to keydown, keyup, and blur on "New list" input box.
-Template.lists.events(okCancelEvents(
-    '#new-list',
-    {
-        ok: function (text, evt) {
-            var id = Lists.insert({name: text});
-            Router.setList(id);
-            evt.target.value = "";
-        }
-    }));
-
-Template.lists.events(okCancelEvents(
-    '#list-name-input',
-    {
-        ok: function (value) {
-            Lists.update(this._id, {$set: {name: value}});
-            Session.set('editing_listname', null);
-        },
-        cancel: function () {
-            Session.set('editing_listname', null);
-        }
-    }));
-
 Template.lists.selected = function () {
     return Session.equals('list_id', this._id) ? 'selected' : '';
 };

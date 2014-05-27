@@ -177,6 +177,17 @@ newExp = function (name) {
     return eid;
 };
 
+setExpTitle = function(eid,name){
+    if(_.trim(value) == ''){
+        callback({message: 'Title cannot be empty or only spaces.'});
+    }else{
+        Experiments.update(eid, {$set: {name: name}});
+        addLog({type: 'exp', op: 'settitle', id: eid, params: {name: name}});
+        callback(null,{});
+    }
+};
+
+
 copyProtocolForNewExp = function (eid) {
     var e = Experiments.findOne(eid);
     var prot = e.protocol;
@@ -209,6 +220,11 @@ unfreezeExp = function (eid) {
         doUnfreezeExp(eid);
     }
 };
+
+setDumpGoogleDriveId = function(eid,doc_id){
+    Experiments.update(eid,{$set: {gdrive_id: doc_id}});
+    addLog({op: 'update_gdrive', type: 'exp', params: {doc_id: doc_id}});
+}
 
 expRunUsingThisSampleLocked = function(sid) {
     try{
@@ -589,9 +605,68 @@ findExpMakingSample = function(sid){
 
 }
 
+updateOpInfo = function(opid,params,name,note){
+    var obj = {params: params, name: name, note: note};
+    Operations.update(opid,{$set: obj});
+    addLog({type: 'op', op: 'update', params: obj});
+};
+
+//
+// Samples
+//
+
+setSampleName = function(sid,name,callback){
+    if(_.trim(name) == ''){
+        callback({message: 'Name cannot be empty or only spaces.'});
+    }else{
+        Samples.update(sid, {$set: {name: name}});
+        addLog({type: 'sample', op: 'setname', id: eid, params: {name: name}});
+        callback(null,{});
+    }
+};
+
+setSampleNote = function(sid,note,callback){
+    Samples.update(sid, {$set: {note: note}});
+    addLog({type: 'sample', op: 'setnote', id: eid, params: {note: note}});
+    callback(null,{});
+};
+
+setSampleInfo = function(sid,name,note,type){
+    Samples.update(sid, {$set: {name: name, note: note, sampletype_id: type}});
+    addLog({type: 'sample', op: 'setinfo', id: sid, params: {name: name, note: note, type: type}});
+};
+
+setProtocolSampleInfo = function(sid,name,note,type){
+    return setProtocolSampleInfo(sid,name,note,type);
+};
+
+addSampleData = function(sid, type,url,name,icon,original_id){
+    var obj = {type: type, url: url, name: name, icon: icon, original_id: original_id};
+    Samples.update(sid,{$push: {data: obj}});
+    addLog({type: 'sample', op: 'adddata', id: sid, params: obj});
+};
+
+removeSampleData = function(sid,url){
+    Samples.update(sid, {$pull: {'data.url': url}});
+};
+
 //
 // Sample types
 //
+
+setSampleTypeName = function(sid,name,callback){
+    if(!verifySampleTypeName(name)){
+        callback({message: 'Name has to be unique, non-empty.'});
+    }else{
+        SampleTypes.update(sid, {$set: {name: name}});
+        addLog({type: 'sampletype', op: 'setname', id: eid, params: {name: name}});
+        callback(null,{});
+    }
+};
+
+setSampleTypeNote = function(){
+    SampleTypes.update(this._id, {$set: {note: note}});
+};
 
 findSuperTypes = function (tid) {
     var f = function (from, accum) {

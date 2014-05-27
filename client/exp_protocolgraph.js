@@ -543,7 +543,7 @@ function getNewStepName(exp) {
     }
 }
 
-function possiblyUpdateRank(exp,layout) {
+possiblyUpdateRank = function(exp,layout) {
     var sids = exp.protocol.samples;
     var opids = exp.protocol.operations;
     var updating = Samples.find({_id: {$in: sids}, rank: {$exists: true}}).count() <
@@ -561,5 +561,7 @@ function possiblyUpdateRank(exp,layout) {
             var rank = _.min(_.map(op.output,function(s){return ranks[s];}));
             Operations.update(opid,{$set: {rank: rank}});
         });
+        addLog({type: 'sample',op: 'updaterank'});
+        addLog({type: 'op',op: 'updaterank'});
     }
 }

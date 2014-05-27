@@ -13,6 +13,7 @@ Template.top_bar.user = function () {
         cfg = Config.findOne();
         if(user.email && cfg && !cfg.values.logemail){
             Config.update(cfg._id,{$set: {'values.logemail': user.email}});
+            addLog({type: 'config', op: 'update_logemail', params: {email: user.email}});
         }
     });
     return Session.get('currentUser');
@@ -161,6 +162,7 @@ Template.layout.events({
         if (validConfig(value)) {
             console.log(value);
             Config.update(cfg._id, {$set: {values: value}});
+            addLog({type: 'config', op: 'change', params: values});
             $('#prefs_modal').modal('hide');
         } else {
             window.alert('Not valid values.');

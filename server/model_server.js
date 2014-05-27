@@ -79,8 +79,11 @@ verifyDB = function(uid) {
             })
         });
 
+        addLog({type: 'db',op: 'verify', params: {success: true, corrected: corrected}});
+
         return {success: true, corrected: corrected};
     }catch(e){
+        addLog({type: 'db',op: 'verify', params: {success: false, corrected: corrected}});
         return {success: false, message: e.msg, exception: e};
     }
 };

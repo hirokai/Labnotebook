@@ -120,6 +120,7 @@ Meteor.methods({
             });
             var cid = Config.findOne({owner: Meteor.userId()})._id;
             Config.update(cid,{$set: {'values.lastLogExportedAt': m.valueOf()}});
+            addLog({type: 'db', op: 'sendemail', params: {to: email}});
         } catch (e) {
             console.log(e);
             return {success: false, error: JSON.stringify(e)};
@@ -136,6 +137,7 @@ Meteor.methods({
     },
     logoutAll: function(){
         Meteor.users.update(Meteor.userId(), {$set: { "services.resume.loginTokens" : [] }});
+        addLog({type: 'login', op: 'logoutall'});
     },
     getJSONOfWholeDB: function(uid){
         var obj = dump_allmydb(uid || Meteor.userId());
@@ -169,6 +171,7 @@ doUnfreezeExp = function(eid){
         Operations.update(opid,{$set: {locked: false}});
     });
     Experiments.update({owner: uid, _id: eid},{$set: {locked: false}});
+    addLog({type: 'exp', op: 'unfreeze', id: eid});
 };
 
 doFreezeExp = function(eid){
@@ -181,6 +184,7 @@ doFreezeExp = function(eid){
         Operations.update(opid,{$set: {locked: true}});
     });
     Experiments.update({owner: uid, _id: eid},{$set: {locked: true}});
+    addLog({type: 'exp', op: 'freeze', id: eid});
 };
 
 refreshToken = function(uid){

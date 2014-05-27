@@ -97,7 +97,7 @@ Router.map(function () {
             }
         },
         onAfterAction: function(){
-            Experiments.update(getCurrentExpId(),{$set: {view: {graph: getExpGraphView()}}});
+       //     Experiments.update(getCurrentExpId(),{$set: {view: {graph: getExpGraphView()}}});
         },
         data: function () {
             return Logs.find({date: this.params.date}, {sort: {timestamp: -1}});

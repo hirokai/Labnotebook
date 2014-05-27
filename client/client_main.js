@@ -182,12 +182,12 @@ mkGoogleSheet = function(eid,callback){
                         if(res.success){
                             callback(res);
                         }else{
-                            addNewCSV2(eid,headers,multipartRequestBody,callback);
+                            addNewCSV(eid,headers,multipartRequestBody,callback);
                         }
                     });
                 }else{
                     //New
-                    addNewCSV2(eid,headers,multipartRequestBody,callback);
+                    addNewCSV(eid,headers,multipartRequestBody,callback);
                 }
         }
     });
@@ -203,7 +203,7 @@ var updateCSV = function(eid,docId,headers,multipartRequestBody,callback){
         'body': multipartRequestBody});
     request.execute(function(res){
         if(res.id){
-            Experiments.update(eid,{$set: {gdrive_id: res.id}});
+            setDumpGoogleDriveId(eid,res.id);
             var url = getSpreadsheetUrl(res.id);
             callback({url: url,success:true, id:res.id});
         }else{
@@ -212,28 +212,8 @@ var updateCSV = function(eid,docId,headers,multipartRequestBody,callback){
     });
 };
 
-var addNewCSV = function (eid,headers,multipartRequestBody,callback) {
-//    console.log(multipartRequestBody,headers);
-
-    var request = gapi.client.request({
-        'path': '/upload/drive/v2/files',
-        'method': 'POST',
-        'params': {'uploadType': 'multipart', convert: true},
-        'headers': headers,
-        'body': multipartRequestBody});
-    request.execute(function(res){
-        if(res.id){
-            Experiments.update(eid,{$set: {gdrive_id: res.id}});
-            var url = getSpreadsheetUrl(res.id);
-            callback({url: url,success:true, id:res.id});
-        }else{
-            callback({success: false, error: 'Insert failed.'});
-        }
-    });
-};
-
-//Using raw request.
-addNewCSV2 = function (eid,headers,multipartRequestBody,callback) {
+//Using raw request. This is ussable from server as well. (gapi library only works on client)
+addNewCSV = function (eid,headers,multipartRequestBody,callback) {
 //    console.log(multipartRequestBody,headers);
 
     HTTP.post('https://www.googleapis.com/upload/drive/v2/files?uploadType=multipart&convert=true',
@@ -241,7 +221,7 @@ addNewCSV2 = function (eid,headers,multipartRequestBody,callback) {
             console.log(err,res);
             var id = res.data.id;
             if(id){
-                Experiments.update(eid,{$set: {gdrive_id: id}});
+                setDumpGoogleDriveId(eid,id);
                 var url = getSpreadsheetUrl(id);
                 callback({url: url,success:true, id: id});
             }else{

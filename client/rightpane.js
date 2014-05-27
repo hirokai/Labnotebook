@@ -6,7 +6,7 @@ Template.type.rendered = function () {
 Template.type.events({
     'click #savetypenote': function (evt, tmpl) {
         var note = tmpl.find('#typenote').value;
-        SampleTypes.update(this._id, {$set: {note: note}});
+        setSampleTypeNote(this._id,note);
     },
     'click #canceltypenote': function (evt, tmpl) {
         var note = SampleTypes.findOne(this._id).note || "";
@@ -16,17 +16,22 @@ Template.type.events({
         SampleTypes.remove(this._id);
         Router.go('type');
     },
-    'click #renamesampletype': function () {
-        var name = SampleTypes.findOne(this._id).name;
-        var newname = window.prompt("Enter a new name.", name);
-        if (newname && _.trim(newname))
-            SampleTypes.update(this._id, {$set: {name: newname}});
-    },
-    'click #addtypeclass': function (evt, tmpl) {
-        var name = tmpl.find('#nametypeclass').value;
-        var id = newTypeClass(name);
-        SampleTypes.update(this._id, {$push: {classes: id}});
-    },
+//    'click #renamesampletype': function () {
+//        var name = SampleTypes.findOne(this._id).name;
+//        var newname = window.prompt("Enter a new name.", name);
+//        setSampleTypeName(this._id,newname,function(err,res){
+//            if(err){
+//                window.alert(err.message);
+//            }else{
+//                Session.set('editing_sample_id', null);
+//            }
+//        });
+//    },
+//    'click #addtypeclass': function (evt, tmpl) {
+//        var name = tmpl.find('#nametypeclass').value;
+//        var id = newTypeClass(name);
+//        SampleTypes.update(this._id, {$push: {classes: id}});
+//    },
     'dblclick #typetitle': function (evt, tmpl) {
         var sid = Session.get('current_view_id').sampletype;
         if (!SampleTypes.findOne(sid).system) {
@@ -45,13 +50,14 @@ Template.type.events(okCancelEvents(
     '#typetitle_input',
     {
         ok: function (value) {
-            if (verifySampleTypeName(value)) {
-                var sid = Session.get('current_view_id').sampletype;
-                SampleTypes.update(sid, {$set: {name: value}});
-            } else {
-                window.alert('This name cannot be used. (Name must be unique, nonempty.)');
-            }
-            Session.set('editing_type_title', false);
+            var sid = Session.get('current_view_id').sampletype;
+            setSampleTypeName(sid,value,function(err,res){
+                if(err){
+                    window.alert(err.message);
+                }else{
+                    Session.set('editing_type_title', false);
+                }
+            })
         },
         cancel: function () {
             Session.set('editing_type_title', false);
